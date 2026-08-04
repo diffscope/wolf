@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "dependencies": [
+        "qmsetup",
+        "stdcorelib"
+    ],
+    "features": {
+        "tests": {
+            "description": "Enable test cases support",
+            "dependencies": [
+                "boost-test"
+            ]
+        }
+    },
+    "vcpkg-configuration": {
+        "overlay-ports": [
+            "../vcpkg/ports"
+        ],
+        "overlay-triplets": [
+            "../vcpkg/triplets"
+        ]
+    }
+}
