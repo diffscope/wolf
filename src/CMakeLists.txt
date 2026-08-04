@@ -4,6 +4,8 @@ wolf_init_buildsystem()
 
 add_subdirectory(lib)
 
+add_subdirectory(plugins)
+
 if(WOLF_BUILD_TESTS)
     add_subdirectory(tests)
 endif()

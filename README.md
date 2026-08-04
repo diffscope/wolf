@@ -23,23 +23,30 @@ Each entry is a path to a language manifest:
 ```json
 {
   "$version": "1.0",
-  "id": "mandarin",
+  "id": "cmn",
   "name": "普通话",
-  "class": "org.openvpi.LanguageProvider.PinyinG2p",
+  "class": "ai.svs.MandarinLanguage",
   "level": 1,
-  "schema": { },
-  "configuration": { }
+  "schema": {
+    "phonemes": [ "a", "o", "e", "i", "u", "v" ]
+  },
+  "configuration": {
+    "dict": "./dict.txt",
+    "useTone": true
+  }
 }
 ```
 
 `class` names the provider that implements the language and `level` the API version the manifest was written against. wolf resolves the provider through synthrt's plugin factory, checks it is new enough, and hands it `schema` and `configuration` to interpret. wolf itself never reads inside those two objects, which is what lets one provider describe a dictionary-driven language and another something else entirely.
 
+The split follows the one synthrt already uses. `schema` is what the language declares about itself, which a consumer reads to decide whether it can work with it at all. `configuration` is the resources behind it, and relative paths in it resolve against the manifest's own directory.
+
 A language is referred to like any other contribute:
 
 ```
-vendor/sample=1.0:language/mandarin    # fully qualified
-vendor/sample:language/mandarin        # version resolved from the dependencies
-:language/mandarin                     # within the package doing the referring
+vendor/sample=1.0:language/cmn    # fully qualified
+vendor/sample:language/cmn        # version resolved from the dependencies
+:language/cmn                     # within the package doing the referring
 ```
 
 ## Providing a language
@@ -47,16 +54,23 @@ vendor/sample:language/mandarin        # version resolved from the dependencies
 Implement `wolf::LanguageProvider` and expose it through a `wolf::LanguageProviderPlugin`:
 
 ```cpp
-class PinyinG2pPlugin : public wolf::LanguageProviderPlugin {
+class MandarinProviderPlugin : public wolf::LanguageProviderPlugin {
 public:
-    const char *key() const override { return "org.openvpi.LanguageProvider.PinyinG2p"; }
-    srt::NO<wolf::LanguageProvider> create() override { return srt::NO<PinyinG2p>::create(); }
+    const char *key() const override { return "ai.svs.MandarinLanguage"; }
+    srt::NO<wolf::LanguageProvider> create() override {
+        return srt::NO<MandarinProvider>::create();
+    }
 };
 
-SYNTHRT_EXPORT_PLUGIN(PinyinG2pPlugin)
+SYNTHRT_EXPORT_PLUGIN(MandarinProviderPlugin)
 ```
 
-The plugin is a shared library exporting `synthrt_plugin_instance`, found by its interface id and the key a manifest asks for.
+The plugin is a shared library exporting `synthrt_plugin_instance`, found by its interface id and the key a manifest asks for. `cmn`, in `src/plugins/languageproviders`, is that plugin for Mandarin, and its types are declared in `wolf/Api/Languages/Mandarin/1/MandarinApiL1.h` so a consumer can cast what it produced back to something it can read:
+
+```cpp
+auto spec = pkg.contribute("language", "cmn")->as<wolf::LanguageSpec>();
+auto config = spec->configuration().as<wolf::Api::Mandarin::L1::MandarinConfiguration>();
+```
 
 ## Why wolf must be linked, not loaded
 
