@@ -72,7 +72,7 @@ namespace wolf {
         return Cmn::API_LEVEL;
     }
 
-    srt::Expected<srt::NO<LanguageSchema>>
+    srt::Expected<srt::UNO<LanguageSchema>>
         MandarinProvider::createSchema(const LanguageSpec *spec) const {
         if (!spec) {
             // fatal error: null pointer, return immediately
@@ -83,7 +83,7 @@ namespace wolf {
         }
 
         const auto &schema = spec->manifestSchema();
-        auto result = srt::NO<Cmn::MandarinSchema>::create();
+        auto result = srt::UNO<Cmn::MandarinSchema>::create();
 
         ErrorCollector ec;
 
@@ -120,7 +120,7 @@ namespace wolf {
         return result;
     }
 
-    srt::Expected<srt::NO<LanguageConfiguration>>
+    srt::Expected<srt::UNO<LanguageConfiguration>>
         MandarinProvider::createConfiguration(const LanguageSpec *spec) const {
         if (!spec) {
             // fatal error: null pointer, return immediately
@@ -131,7 +131,7 @@ namespace wolf {
         }
 
         const auto &config = spec->manifestConfiguration();
-        auto result = srt::NO<Cmn::MandarinConfiguration>::create();
+        auto result = srt::UNO<Cmn::MandarinConfiguration>::create();
 
         ErrorCollector ec;
 

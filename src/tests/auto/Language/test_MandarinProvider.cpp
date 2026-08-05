@@ -99,14 +99,14 @@ BOOST_AUTO_TEST_CASE(test_MandarinProvider_LoadsFromAPackage) {
     // The provider ran, and what it produced is its own type rather than the base.
     auto schema = language->schema();
     BOOST_REQUIRE(schema != nullptr);
-    auto mandarinSchema = schema.as<Cmn::MandarinSchema>();
+    auto mandarinSchema = static_cast<Cmn::MandarinSchema *>(schema);
     BOOST_REQUIRE(mandarinSchema != nullptr);
     BOOST_CHECK(mandarinSchema->phonemes.size() == 6);
     BOOST_CHECK(mandarinSchema->phonemes.front() == "a");
 
     auto config = language->configuration();
     BOOST_REQUIRE(config != nullptr);
-    auto mandarinConfig = config.as<Cmn::MandarinConfiguration>();
+    auto mandarinConfig = static_cast<Cmn::MandarinConfiguration *>(config);
     BOOST_REQUIRE(mandarinConfig != nullptr);
     BOOST_CHECK(mandarinConfig->useTone);
     BOOST_CHECK(mandarinConfig->extraDict.empty());

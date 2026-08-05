@@ -63,10 +63,12 @@ namespace wolf {
         int apiLevel() const;
 
         const srt::JsonObject &manifestSchema() const;
-        srt::NO<LanguageSchema> schema() const;
+        /// \note Borrowed. The specification owns it and outlives every use of it.
+        LanguageSchema *schema() const;
 
         const srt::JsonObject &manifestConfiguration() const;
-        srt::NO<LanguageConfiguration> configuration() const;
+        /// \note Borrowed, as \c schema() is.
+        LanguageConfiguration *configuration() const;
 
         /// The directory the description file lives in, which relative paths inside it resolve
         /// against.

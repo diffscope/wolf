@@ -44,10 +44,10 @@ namespace wolf {
         int apiLevel = 0;
 
         JsonObject manifestSchema;
-        NO<LanguageSchema> schema;
+        srt::UNO<LanguageSchema> schema;
 
         JsonObject manifestConfiguration;
-        NO<LanguageConfiguration> configuration;
+        srt::UNO<LanguageConfiguration> configuration;
 
         NO<LanguageProvider> provider = nullptr;
     };
@@ -291,9 +291,9 @@ namespace wolf {
         return impl.manifestSchema;
     }
 
-    NO<LanguageSchema> LanguageSpec::schema() const {
+    LanguageSchema *LanguageSpec::schema() const {
         stdc_impl_t;
-        return impl.schema;
+        return impl.schema.get();
     }
 
     const JsonObject &LanguageSpec::manifestConfiguration() const {
@@ -301,9 +301,9 @@ namespace wolf {
         return impl.manifestConfiguration;
     }
 
-    NO<LanguageConfiguration> LanguageSpec::configuration() const {
+    LanguageConfiguration *LanguageSpec::configuration() const {
         stdc_impl_t;
-        return impl.configuration;
+        return impl.configuration.get();
     }
 
     const fs::path &LanguageSpec::path() const {
@@ -399,7 +399,7 @@ namespace wolf {
                 if (!schema) {
                     return schema.error();
                 }
-                spec_impl->schema = schema.get();
+                spec_impl->schema = schema.take();
 
                 auto config = provider->createConfiguration(langSpec).withContext(
                     Error::InvalidFormat,
@@ -408,7 +408,7 @@ namespace wolf {
                 if (!config) {
                     return config.error();
                 }
-                spec_impl->configuration = config.get();
+                spec_impl->configuration = config.take();
                 spec_impl->provider = provider;
                 return ContribCategory::loadSpec(spec, state);
             }

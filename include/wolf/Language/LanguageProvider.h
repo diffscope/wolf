@@ -14,11 +14,11 @@ namespace wolf {
         virtual int apiLevel() const = 0;
 
         /// Called when \c LanguageSpec loads.
-        virtual srt::Expected<srt::NO<LanguageSchema>>
+        virtual srt::Expected<srt::UNO<LanguageSchema>>
             createSchema(const LanguageSpec *spec) const = 0;
 
         /// Called when \c LanguageSpec loads.
-        virtual srt::Expected<srt::NO<LanguageConfiguration>>
+        virtual srt::Expected<srt::UNO<LanguageConfiguration>>
             createConfiguration(const LanguageSpec *spec) const = 0;
     };
 

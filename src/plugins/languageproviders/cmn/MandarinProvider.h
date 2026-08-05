@@ -13,10 +13,10 @@ namespace wolf {
     public:
         int apiLevel() const override;
 
-        srt::Expected<srt::NO<LanguageSchema>>
+        srt::Expected<srt::UNO<LanguageSchema>>
             createSchema(const LanguageSpec *spec) const override;
 
-        srt::Expected<srt::NO<LanguageConfiguration>>
+        srt::Expected<srt::UNO<LanguageConfiguration>>
             createConfiguration(const LanguageSpec *spec) const override;
     };
 
