@@ -19,7 +19,7 @@ namespace wolf {
         }
 
     public:
-        virtual srt::NO<LanguageProvider> create() = 0;
+        virtual srt::UNO<LanguageProvider> create() = 0;
 
     public:
         STDCORELIB_DISABLE_COPY(LanguageProviderPlugin)

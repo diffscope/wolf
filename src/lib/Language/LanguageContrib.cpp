@@ -49,7 +49,7 @@ namespace wolf {
         JsonObject manifestConfiguration;
         srt::UNO<LanguageConfiguration> configuration;
 
-        NO<LanguageProvider> provider = nullptr;
+        LanguageProvider *provider = nullptr;
     };
 
     static Expected<JsonObject> readJsonObjectFile(const fs::path &path) {
@@ -266,7 +266,7 @@ namespace wolf {
             : ContribCategory::Impl(decl, "language", su) {
         }
 
-        std::map<std::string, NO<LanguageProvider>> providers;
+        std::map<std::string, srt::UNO<LanguageProvider>> providers;
     };
 
     LanguageSpec::~LanguageSpec() = default;
@@ -364,11 +364,11 @@ namespace wolf {
                 auto spec_impl = static_cast<LanguageSpec::Impl *>(langSpec->_impl.get());
 
                 const auto &key = langSpec->className();
-                NO<LanguageProvider> provider;
+                LanguageProvider *provider = nullptr;
 
                 // Search provider cache
                 if (auto it = impl.providers.find(key); it != impl.providers.end()) {
-                    provider = it->second;
+                    provider = it->second.get();
                 } else {
                     auto plugin = SU()->plugin<LanguageProviderPlugin>(key.c_str());
                     if (!plugin) {
@@ -378,8 +378,9 @@ namespace wolf {
                                           key, langSpec->id()),
                         };
                     }
-                    provider = plugin->create();
-                    impl.providers[key] = provider;
+                    auto &slot = impl.providers[key];
+                    slot = plugin->create();
+                    provider = slot.get();
                 }
 
                 // Check api level

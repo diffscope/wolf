@@ -15,8 +15,8 @@ namespace wolf {
             return Cmn::API_CLASS;
         }
 
-        srt::NO<LanguageProvider> create() override {
-            return srt::NO<MandarinProvider>::create();
+        srt::UNO<LanguageProvider> create() override {
+            return srt::UNO<MandarinProvider>::create();
         }
     };
 
