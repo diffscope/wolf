@@ -22,7 +22,7 @@ namespace wolf {
         virtual srt::UNO<LanguageProvider> create() = 0;
 
     public:
-        STDCORELIB_DISABLE_COPY(LanguageProviderPlugin)
+        STDC_DISABLE_COPY(LanguageProviderPlugin)
     };
 
 }

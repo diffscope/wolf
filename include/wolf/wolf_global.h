@@ -8,9 +8,9 @@
 #    define WOLF_EXPORT
 #  else
 #    ifdef WOLF_LIBRARY
-#      define WOLF_EXPORT STDCORELIB_DECL_EXPORT
+#      define WOLF_EXPORT STDC_DECL_EXPORT
 #    else
-#      define WOLF_EXPORT STDCORELIB_DECL_IMPORT
+#      define WOLF_EXPORT STDC_DECL_IMPORT
 #    endif
 #  endif
 #endif
