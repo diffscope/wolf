@@ -1,6 +1,6 @@
 {
-    "iid": "org.openvpi.wolf.plugin.LanguageInterpreter",
-    "name": "language",
+    "iid": "org.openvpi.wolf.plugin.LanguageProvider",
+    "name": "wolflanguage",
     "metadata": {
         "interpreters": [
             {

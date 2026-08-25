@@ -1,11 +1,11 @@
 #include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
-#include <wolf/Language/LanguageInterpreterPlugin.h>
+#include <wolf/Language/LanguageProviderPlugin.h>
 
 #include "WolfLanguageProvider.h"
 
 namespace wolf {
 
-    class WolfLanguageProviderPlugin : public LanguageInterpreterPlugin {
+    class WolfLanguageProviderPlugin : public LanguageProviderPlugin {
     public:
         WolfLanguageProviderPlugin() = default;
 

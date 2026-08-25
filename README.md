@@ -1,8 +1,8 @@
 # WOLF: Orchestratable Linguistic Framework
 
-A linguistic layer for [synthrt](https://github.com/diffscope/synthrt), which adds a `language` contribute to the packages synthrt loads.
+A linguistic layer for [synthrt](https://github.com/diffscope/synthrt), which adds the `org.openvpi.language` contribution category to the packages synthrt loads.
 
-synthrt knows about singers and inferences. It does not know about languages, and it does not need to: a contribute category is registered rather than built in, so a library linked into the program can add a kind of its own. wolf is that library. A package declares a `language` the same way it declares anything else, and refers to one through the same syntax.
+synthrt knows about singers and inferences. It does not know about languages, and it does not need to: a contribution category is registered rather than built in, so a library linked into the program can add a kind of its own. wolf is that library. A package declares `org.openvpi.language` contributions the same way it declares anything else and refers to one through the same syntax.
 
 Nothing here is a program. It is a library for an editor or a tool to embed, alongside synthrt.
 
@@ -12,8 +12,10 @@ A package listing a language in its `desc.json`:
 
 ```json
 {
-  "contributes": {
-    "language": [ "./languages/mandarin.json" ]
+  "contributions": {
+    "org.openvpi.language": [
+      { "id": "mandarin", "path": "./languages/mandarin.json" }
+    ]
   }
 }
 ```
@@ -22,59 +24,59 @@ Each entry is a path to a language manifest:
 
 ```json
 {
-  "$version": "1.0",
-  "id": "cmn",
   "name": "普通话",
-  "class": "ai.svs.MandarinLanguage",
+  "interface": "org.openvpi.wolf.language.WolfLanguage",
   "level": 1,
-  "schema": {
+  "variant": "wolf",
+  "exports": {
     "phonemes": [ "a", "o", "e", "i", "u", "v" ]
   },
-  "configuration": {
-    "dict": "./dict.txt",
-    "useTone": true
-  }
+  "configuration": {},
+  "imports": [
+    { "role": "g2p", "ref": ":inference/g2p" },
+    { "role": "s2p", "ref": ":inference/s2p" }
+  ]
 }
 ```
 
-`class` names the provider that implements the language and `level` the API version the manifest was written against. wolf resolves the provider through synthrt's plugin factory, checks it is new enough, and hands it `schema` and `configuration` to interpret. wolf itself never reads inside those two objects, which is what lets one provider describe a dictionary-driven language and another something else entirely.
+The `(interface, level, variant)` triple selects a provider through synthrt's interpreter discovery. The provider interprets `exports`, `configuration`, import options, execution factories, validators, and extensions for that contract.
 
-The split follows the one synthrt already uses. `schema` is what the language declares about itself, which a consumer reads to decide whether it can work with it at all. `configuration` is the resources behind it, and relative paths in it resolve against the manifest's own directory.
+The split follows the one synthrt already uses. `exports` is what the language declares about itself. `configuration` contains provider-specific resources. Relative paths resolve against the declaration file's directory.
 
 A language is referred to like any other contribute:
 
 ```
-vendor/sample=1.0:language/cmn    # fully qualified
-vendor/sample:language/cmn        # version resolved from the dependencies
-:language/cmn                     # within the package doing the referring
+vendor/sample=1.0:org.openvpi.language/mandarin    # fully qualified
+vendor/sample:org.openvpi.language/mandarin        # version resolved from dependencies
+:org.openvpi.language/mandarin                     # within the referring package
 ```
 
 ## Providing a language
 
-Implement `wolf::LanguageProvider` and expose it through a `wolf::LanguageProviderPlugin`:
+Implement `wolf::LanguageProvider` and expose it through a `wolf::LanguageProviderPlugin`. The provider owns all contract-specific behavior, including import options, execution factories, validators, and spec extensions:
 
 ```cpp
-class MandarinProviderPlugin : public wolf::LanguageProviderPlugin {
+class MyLanguageProviderPlugin : public wolf::LanguageProviderPlugin {
 public:
-    const char *key() const override { return "ai.svs.MandarinLanguage"; }
-    srt::NO<wolf::LanguageProvider> create() override {
-        return srt::NO<MandarinProvider>::create();
+    srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
+        create(std::string_view interfaceName, int level, std::string_view variant) override {
+        // Validate the requested contract and return its provider.
     }
 };
 
-SYNTHRT_EXPORT_PLUGIN(MandarinProviderPlugin)
+STDC_EXPORT_PLUGIN(MyLanguageProviderPlugin)
 ```
 
-The plugin is a shared library exporting `synthrt_plugin_instance`, found by its interface id and the key a manifest asks for. `cmn`, in `src/plugins/languageproviders`, is that plugin for Mandarin, and its types are declared in `wolf/Api/Languages/Mandarin/1/MandarinApiL1.h` so a consumer can cast what it produced back to something it can read:
+The bundled implementation lives in `src/plugins/languageproviders/wolf`. Its `WolfLanguageProvider` supports `org.openvpi.wolf.language.WolfLanguage`, Level 1, variant `wolf`. The wolf library registers the category and defines the provider abstraction, but it does not create Wolf Level 1 runtime objects itself.
 
 ```cpp
-auto spec = pkg.contribute("language", "cmn")->as<wolf::LanguageSpec>();
-auto config = spec->configuration().as<wolf::Api::Mandarin::L1::MandarinConfiguration>();
+auto *spec = package->contribution("org.openvpi.language", "mandarin")
+                 ->as<wolf::LanguageSpec>();
 ```
 
 ## Why wolf must be linked, not loaded
 
-A `SynthUnit` reads the list of registered categories once, when it is constructed. wolf registers `language` before `main`, so any unit built afterwards has it. A plugin could not do the same: plugins load lazily *through* a unit, so by the time one runs its static initializers, that unit has already built its categories. Contributing a category is something a linked library does.
+A `SynthUnit` reads the list of registered categories once, when it is constructed. wolf registers `org.openvpi.language` before `main`, so any unit built afterwards has it. A plugin could not do the same: plugins load lazily *through* a unit, so by the time one runs its static initializers, that unit has already built its categories. Contributing a category is something a linked library does.
 
 ## Requirements
 

@@ -21,6 +21,9 @@ namespace wolf {
     private:
         explicit LanguageSpec(const srt::ContribCreateContext &context);
 
+        srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
+            createExecFactory(srt::ContribImportBinding &binding) const;
+
         friend class LanguageCategory;
     };
 

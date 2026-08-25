@@ -3,12 +3,12 @@
 #include <set>
 #include <string_view>
 
-#include <wolf/Language/LanguageInterpreterPlugin.h>
+#include <synthrt/Core/ContribImportBinding.h>
+
+#include <wolf/Language/LanguageProvider.h>
+#include <wolf/Language/LanguageProviderPlugin.h>
 
 namespace wolf {
-
-    srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-        createLanguageExecFactory(srt::ContribImportBinding &binding);
 
     namespace {
 
@@ -43,8 +43,18 @@ namespace wolf {
 
     LanguageSpec::~LanguageSpec() = default;
 
+    srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
+        LanguageSpec::createExecFactory(srt::ContribImportBinding &binding) const {
+        auto *value = interpreter();
+        if (!value) {
+            return srt::Error(srt::Error::FeatureNotSupported,
+                              "cannot create a language execution factory without a provider");
+        }
+        return value->as<LanguageProvider>()->createExecFactory(binding);
+    }
+
     LanguageCategory::LanguageCategory()
-        : ContribCategory(LANGUAGE_CATEGORY, ModuleDeclaration, LanguageInterpreterPlugin::IID) {
+        : ContribCategory(LANGUAGE_CATEGORY, ModuleDeclaration, LanguageProviderPlugin::IID) {
     }
 
     LanguageCategory::~LanguageCategory() = default;
@@ -76,7 +86,7 @@ namespace wolf {
 
     srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
         LanguageCategory::createExecFactory(srt::ContribImportBinding &binding) const {
-        return createLanguageExecFactory(binding);
+        return binding.target().as<LanguageSpec>()->createExecFactory(binding);
     }
 
 }

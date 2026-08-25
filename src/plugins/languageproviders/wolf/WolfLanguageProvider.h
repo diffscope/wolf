@@ -4,11 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include <wolf/Language/LanguageInterpreter.h>
+#include <wolf/Language/LanguageProvider.h>
 
 namespace wolf {
 
-    class WolfLanguageProvider : public LanguageInterpreter {
+    class WolfLanguageProvider : public LanguageProvider {
     public:
         WolfLanguageProvider();
         ~WolfLanguageProvider();
@@ -18,6 +18,13 @@ namespace wolf {
 
         srt::Expected<std::vector<std::unique_ptr<srt::ContribSpecExtension>>>
             createExtensions(srt::ContribSpec &spec) const override;
+
+        srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
+            createImportOptions(const srt::ContribSpec &target,
+                                const srt::JsonValue &manifestOptions) const override;
+
+        srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
+            createExecFactory(srt::ContribImportBinding &binding) const override;
 
         srt::Expected<std::unique_ptr<srt::ContribExports>>
             createExports(const srt::ContribSpec &spec) const override;

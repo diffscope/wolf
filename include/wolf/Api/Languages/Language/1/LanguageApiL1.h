@@ -6,9 +6,9 @@
 #include <vector>
 
 #include <synthrt/Core/ContribSpec.h>
-#include <synthrt/Core/ContribExecInstance.h>
 #include <synthrt/SVS/SingerPipelineExecInstance.h>
 
+#include <wolf/Language/LanguagePipelineExecInstance.h>
 #include <wolf/wolf_global.h>
 
 namespace wolf::Api::Language::L1 {
@@ -48,14 +48,13 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Owns runtime activity associated with one language contribution.
-    class WOLF_EXPORT LanguageExecInstance : public srt::ContribExecInstance {
+    class WOLF_EXPORT LanguageExecInstance : public wolf::LanguagePipelineExecInstance {
     public:
-        explicit LanguageExecInstance(srt::ContribSpec &spec);
-        ~LanguageExecInstance();
+        explicit LanguageExecInstance(wolf::LanguageSpec &spec)
+            : LanguagePipelineExecInstance(spec) {
+        }
 
-    protected:
-        srt::Expected<void> quit() override;
-        srt::Expected<void> wait() override;
+        ~LanguageExecInstance() = default;
     };
 
     /// Supplies runtime settings when the wolf language pipeline is created.
@@ -69,15 +68,14 @@ namespace wolf::Api::Language::L1 {
     /// Aggregates the language contributions imported by one singer.
     class WOLF_EXPORT WolfPipelineExecInstance : public srt::SingerPipelineExecInstance {
     public:
-        ~WolfPipelineExecInstance();
+        ~WolfPipelineExecInstance() = default;
 
         /// Returns the singer local roles of all aggregated language imports.
         virtual const std::vector<std::string> &languageRoles() const = 0;
 
         /// Creates the language execution instance selected by a role.
         virtual srt::Expected<LanguageExecInstance *>
-            createLanguage(std::string_view role,
-                           const LanguageRuntimeOptions &runtimeOptions) = 0;
+            createLanguage(std::string_view role, const LanguageRuntimeOptions &runtimeOptions) = 0;
 
     protected:
         using SingerPipelineExecInstance::SingerPipelineExecInstance;
@@ -86,7 +84,7 @@ namespace wolf::Api::Language::L1 {
     /// Creates a wolf language pipeline from the imports aggregated during Package Load.
     class WOLF_EXPORT WolfPipelineExtension : public srt::SingerPipelineExtension {
     public:
-        ~WolfPipelineExtension();
+        ~WolfPipelineExtension() = default;
 
         /// Returns the singer local roles of all aggregated language imports.
         virtual const std::vector<std::string> &languageRoles() const = 0;
