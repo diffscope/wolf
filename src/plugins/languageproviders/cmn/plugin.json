@@ -1,10 +1,10 @@
 {
-    "iid": "org.openvpi.synthrt.interp.LanguageInterpreter",
+    "iid": "org.openvpi.wolf.plugin.LanguageInterpreter",
     "name": "language",
     "metadata": {
         "interpreters": [
             {
-                "interface": "org.openvpi.language.Language",
+                "interface": "org.openvpi.wolf.language.WolfLanguage",
                 "level": 1,
                 "variant": "wolf"
             }

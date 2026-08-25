@@ -8,7 +8,7 @@ namespace wolf {
     /// The plugin extension point used by the wolf language category.
     class LanguageInterpreterPlugin : public srt::ContribInterpreterPlugin {
     public:
-        static constexpr const char *IID = "org.openvpi.synthrt.interp.LanguageInterpreter";
+        static constexpr const char *IID = "org.openvpi.wolf.plugin.LanguageInterpreter";
 
         ~LanguageInterpreterPlugin() = default;
 

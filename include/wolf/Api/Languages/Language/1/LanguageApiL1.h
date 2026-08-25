@@ -13,7 +13,7 @@
 
 namespace wolf::Api::Language::L1 {
 
-    inline constexpr char API_INTERFACE[] = "org.openvpi.language.Language";
+    inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.language.WolfLanguage";
     inline constexpr char API_VARIANT[] = "wolf";
     inline constexpr int API_LEVEL = 1;
 
@@ -76,7 +76,8 @@ namespace wolf::Api::Language::L1 {
 
         /// Creates the language execution instance selected by a role.
         virtual srt::Expected<LanguageExecInstance *>
-            createLanguage(std::string_view role, const LanguageRuntimeOptions &runtimeOptions) = 0;
+            createLanguage(std::string_view role,
+                           const LanguageRuntimeOptions &runtimeOptions) = 0;
 
     protected:
         using SingerPipelineExecInstance::SingerPipelineExecInstance;
@@ -101,7 +102,7 @@ namespace srt {
     template <>
     struct ContribSpecExtensionTraits<SingerSpec,
                                       wolf::Api::Language::L1::WolfPipelineExecInstance> {
-        inline static constexpr char ID[] = "wolf";
+        inline static constexpr char ID[] = "org.openvpi.wolf.extension.LanguagePipeline";
     };
 
 }
