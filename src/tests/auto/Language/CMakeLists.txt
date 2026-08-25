@@ -1,12 +1,16 @@
 add_auto_test(test_LanguageContrib.cpp wolf)
 
-add_auto_test(test_MandarinProvider.cpp wolf)
+add_auto_test(test_LanguageInterpreter.cpp wolf)
 
-if(TARGET test_MandarinProvider)
-    # The test loads the plugin the way a program would, by path, so it has to be told where the
-    # build put it.
-    add_dependencies(test_MandarinProvider cmn)
-    target_compile_definitions(test_MandarinProvider PRIVATE
-        WOLF_TEST_PLUGIN_DIR="$<TARGET_FILE_DIR:cmn>"
+set_tests_properties(test_LanguageContrib test_LanguageInterpreter PROPERTIES
+    ENVIRONMENT_MODIFICATION
+        "PATH=path_list_prepend:$<TARGET_FILE_DIR:synthrt::synthrt>"
+)
+
+if(TARGET test_LanguageInterpreter)
+    add_dependencies(test_LanguageInterpreter language)
+    target_compile_definitions(test_LanguageInterpreter PRIVATE
+        WOLF_TEST_PLUGIN_FILE="$<TARGET_FILE:language>"
+        WOLF_TEST_PLUGIN_DIR="$<TARGET_FILE_DIR:language>"
     )
 endif()

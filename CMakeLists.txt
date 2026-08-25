@@ -28,6 +28,10 @@ if(MSVC)
 elseif(MINGW)
     set(CMAKE_STATIC_LIBRARY_PREFIX "")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
+elseif(WIN32)
+    if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
+        set(CMAKE_DEBUG_POSTFIX "d")
+    endif()
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
@@ -57,8 +61,10 @@ endif()
 
 qm_init_directories()
 
-# synthrt is not a vcpkg dependency here. Point CMAKE_PREFIX_PATH at an install of it, and this
-# also brings in the cmake modules it ships, add_auto_test among them.
+find_package(stdcorelib-plugin CONFIG REQUIRED)
+
+# synthrt is not a vcpkg dependency here. Point CMAKE_PREFIX_PATH at an install of it. This also
+# brings in the CMake modules it ships, including add_auto_test.
 find_package(synthrt CONFIG REQUIRED)
 
 # ----------------------------------

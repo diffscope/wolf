@@ -1,25 +1,26 @@
-#include <wolf/Api/Languages/Mandarin/1/MandarinApiL1.h>
-#include <wolf/Language/LanguageProviderPlugin.h>
+#include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
+#include <wolf/Language/LanguageInterpreterPlugin.h>
 
-#include "MandarinProvider.h"
+#include "WolfLanguageInterpreter.h"
 
 namespace wolf {
 
-    namespace Cmn = Api::Mandarin::L1;
-
-    class MandarinProviderPlugin : public LanguageProviderPlugin {
+    class WolfLanguageInterpreterPlugin : public LanguageInterpreterPlugin {
     public:
-        MandarinProviderPlugin() = default;
+        WolfLanguageInterpreterPlugin() = default;
 
-        const char *key() const override {
-            return Cmn::API_CLASS;
-        }
-
-        srt::UNO<LanguageProvider> create() override {
-            return srt::UNO<MandarinProvider>::create();
+        srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
+            create(std::string_view interfaceName, int level, std::string_view variant) override {
+            namespace Lang = Api::Language::L1;
+            if (interfaceName != Lang::API_INTERFACE || level != Lang::API_LEVEL ||
+                variant != Lang::API_VARIANT) {
+                return srt::Error(srt::Error::InvalidArgument,
+                                  "unsupported language interpreter contract");
+            }
+            return std::unique_ptr<srt::ContribInterpreter>(new WolfLanguageInterpreter());
         }
     };
 
 }
 
-SYNTHRT_EXPORT_PLUGIN(wolf::MandarinProviderPlugin)
+STDC_EXPORT_PLUGIN(wolf::WolfLanguageInterpreterPlugin)
