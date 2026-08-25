@@ -30,7 +30,13 @@ BOOST_AUTO_TEST_CASE(test_LanguageInterpreter_CreatesSupportedContract) {
 
     auto result = plugin->create(Lang::API_INTERFACE, Lang::API_LEVEL, Lang::API_VARIANT);
     BOOST_REQUIRE(result);
-    BOOST_CHECK(result->get()->as<wolf::LanguageInterpreter>() != nullptr);
+    auto interpreter = result.take();
+    BOOST_CHECK(interpreter->as<wolf::LanguageInterpreter>() != nullptr);
+
+    auto validators = interpreter->createImportValidators();
+    BOOST_REQUIRE(validators);
+    BOOST_REQUIRE_EQUAL(validators->size(), 1u);
+    BOOST_CHECK((*validators)[0] != nullptr);
 
     auto unsupported = plugin->create(Lang::API_INTERFACE, Lang::API_LEVEL + 1, Lang::API_VARIANT);
     BOOST_CHECK(!unsupported);

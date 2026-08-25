@@ -1,13 +1,13 @@
 #include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
 #include <wolf/Language/LanguageInterpreterPlugin.h>
 
-#include "WolfLanguageInterpreter.h"
+#include "WolfLanguageProvider.h"
 
 namespace wolf {
 
-    class WolfLanguageInterpreterPlugin : public LanguageInterpreterPlugin {
+    class WolfLanguageProviderPlugin : public LanguageInterpreterPlugin {
     public:
-        WolfLanguageInterpreterPlugin() = default;
+        WolfLanguageProviderPlugin() = default;
 
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
@@ -17,10 +17,10 @@ namespace wolf {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported language interpreter contract");
             }
-            return std::unique_ptr<srt::ContribInterpreter>(new WolfLanguageInterpreter());
+            return std::unique_ptr<srt::ContribInterpreter>(new WolfLanguageProvider());
         }
     };
 
 }
 
-STDC_EXPORT_PLUGIN(wolf::WolfLanguageInterpreterPlugin)
+STDC_EXPORT_PLUGIN(wolf::WolfLanguageProviderPlugin)

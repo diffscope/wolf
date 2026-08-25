@@ -1,17 +1,15 @@
-#include "WolfLanguageInterpreter.h"
+#include "WolfLanguageProvider.h"
+
+#include "WolfPipeline_p.h"
 
 #include <filesystem>
 #include <fstream>
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
-#include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
 #include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
 #include <wolf/Language/LanguageContrib.h>
 
@@ -74,27 +72,26 @@ namespace wolf {
             return {};
         }
 
-        srt::Expected<void> validateKnownRole(const srt::ContribImport &item,
-                                              std::string_view expectedInterface) {
-            if (!item.binding()) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "language import does not have a runtime binding");
-            }
-            if (item.binding()->target().interface() != expectedInterface) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "language import role targets an incompatible interface");
-            }
-            return {};
-        }
-
     }
 
-    WolfLanguageInterpreter::WolfLanguageInterpreter() = default;
+    WolfLanguageProvider::WolfLanguageProvider() = default;
 
-    WolfLanguageInterpreter::~WolfLanguageInterpreter() = default;
+    WolfLanguageProvider::~WolfLanguageProvider() = default;
+
+    srt::Expected<std::vector<std::unique_ptr<srt::ContribImportValidator>>>
+        WolfLanguageProvider::createImportValidators() const {
+        std::vector<std::unique_ptr<srt::ContribImportValidator>> result;
+        result.push_back(createWolfImportValidator());
+        return result;
+    }
+
+    srt::Expected<std::vector<std::unique_ptr<srt::ContribSpecExtension>>>
+        WolfLanguageProvider::createExtensions(srt::ContribSpec &spec) const {
+        return createWolfPipelineExtensions(spec);
+    }
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
-        WolfLanguageInterpreter::createExports(const srt::ContribSpec &spec) const {
+        WolfLanguageProvider::createExports(const srt::ContribSpec &spec) const {
         if (!spec.manifestExports().isObject()) {
             return srt::Error(srt::Error::InvalidFormat, "language exports must be an object");
         }
@@ -112,7 +109,7 @@ namespace wolf {
     }
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
-        WolfLanguageInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
+        WolfLanguageProvider::createConfiguration(const srt::ContribSpec &spec) const {
         if (!spec.manifestConfiguration().isObject()) {
             return srt::Error(srt::Error::InvalidFormat,
                               "language configuration must be an object");
@@ -122,34 +119,6 @@ namespace wolf {
                               "the wolf language configuration must be empty at Level 1");
         }
         return std::unique_ptr<srt::ContribConfiguration>(new Lang::LanguageConfiguration());
-    }
-
-    srt::Expected<void>
-        WolfLanguageInterpreter::validateImports(const srt::ContribSpec &spec) const {
-        bool hasG2P = false;
-        bool hasS2P = false;
-        for (const auto &item : spec.imports()) {
-            if (item.role() == "g2p") {
-                if (auto result = validateKnownRole(item, Api::G2P::L1::API_INTERFACE); !result) {
-                    return result.takeError();
-                }
-                hasG2P = true;
-            } else if (item.role() == "s2p") {
-                if (auto result = validateKnownRole(item, Api::S2P::L1::API_INTERFACE); !result) {
-                    return result.takeError();
-                }
-                hasS2P = true;
-            } else if (item.role() == "onset") {
-                if (auto result = validateKnownRole(item, Api::Onset::L1::API_INTERFACE); !result) {
-                    return result.takeError();
-                }
-            }
-        }
-        if (!hasG2P || !hasS2P) {
-            return srt::Error(srt::Error::InvalidFormat,
-                              "language imports require g2p and s2p roles");
-        }
-        return {};
     }
 
 }
