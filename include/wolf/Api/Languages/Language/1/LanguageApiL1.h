@@ -48,7 +48,7 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Owns runtime activity associated with one language contribution.
-    class WOLF_EXPORT LanguageExecutive : public wolf::LanguagePipelineExecutive {
+    class LanguageExecutive : public wolf::LanguagePipelineExecutive {
     public:
         explicit LanguageExecutive(wolf::LanguageSpec &spec) : LanguagePipelineExecutive(spec) {
         }
@@ -65,7 +65,7 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Aggregates the language contributions imported by one singer.
-    class WOLF_EXPORT WolfPipelineExecutive : public srt::SingerPipelineExecutive {
+    class WolfPipelineExecutive : public srt::SingerPipelineExecutive {
     public:
         ~WolfPipelineExecutive() = default;
 
@@ -81,7 +81,7 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Creates a wolf language pipeline from the imports aggregated during Package Load.
-    class WOLF_EXPORT WolfPipelineExtension : public srt::SingerPipelineExtension {
+    class WolfPipelineExtension : public srt::SingerPipelineExtension {
     public:
         ~WolfPipelineExtension() = default;
 

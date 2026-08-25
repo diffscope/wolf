@@ -5,3 +5,5 @@ wolf_add_library(${PROJECT_NAME} SHARED
     LINKS synthrt::synthrt
     INCLUDE_PRIVATE ../../include/** **
 )
+
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME synthrt-wolf)
