@@ -2,10 +2,12 @@
 #define WOLF_API_LANGUAGEAPIL1_H
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <synthrt/Core/ContribSpec.h>
 #include <synthrt/Core/ContribExecInstance.h>
+#include <synthrt/SVS/SingerPipelineExecInstance.h>
 
 #include <wolf/wolf_global.h>
 
@@ -54,6 +56,52 @@ namespace wolf::Api::Language::L1 {
     protected:
         srt::Expected<void> quit() override;
         srt::Expected<void> wait() override;
+    };
+
+    /// Supplies runtime settings when the wolf language pipeline is created.
+    class WolfPipelineRuntimeOptions : public srt::SingerPipelineRuntimeOptions {
+    public:
+        WolfPipelineRuntimeOptions()
+            : SingerPipelineRuntimeOptions(API_INTERFACE, API_VARIANT, API_LEVEL) {
+        }
+    };
+
+    /// Aggregates the language contributions imported by one singer.
+    class WOLF_EXPORT WolfPipelineExecInstance : public srt::SingerPipelineExecInstance {
+    public:
+        ~WolfPipelineExecInstance();
+
+        /// Returns the singer local roles of all aggregated language imports.
+        virtual const std::vector<std::string> &languageRoles() const = 0;
+
+        /// Creates the language execution instance selected by a role.
+        virtual srt::Expected<LanguageExecInstance *>
+            createLanguage(std::string_view role, const LanguageRuntimeOptions &runtimeOptions) = 0;
+
+    protected:
+        using SingerPipelineExecInstance::SingerPipelineExecInstance;
+    };
+
+    /// Creates a wolf language pipeline from the imports aggregated during Package Load.
+    class WOLF_EXPORT WolfPipelineExtension : public srt::SingerPipelineExtension {
+    public:
+        ~WolfPipelineExtension();
+
+        /// Returns the singer local roles of all aggregated language imports.
+        virtual const std::vector<std::string> &languageRoles() const = 0;
+
+    protected:
+        using SingerPipelineExtension::SingerPipelineExtension;
+    };
+
+}
+
+namespace srt {
+
+    template <>
+    struct ContribSpecExtensionTraits<SingerSpec,
+                                      wolf::Api::Language::L1::WolfPipelineExecInstance> {
+        inline static constexpr char ID[] = "wolf";
     };
 
 }

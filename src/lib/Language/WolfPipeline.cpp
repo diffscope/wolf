@@ -1,4 +1,4 @@
-#include <wolf/Api/Pipelines/Wolf/1/WolfPipelineApiL1.h>
+#include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
 
 #include <algorithm>
 #include <memory>
@@ -24,15 +24,15 @@ namespace wolf::Api {
         return {};
     }
 
-    WolfPipeline::L1::WolfPipelineExecInstance::~WolfPipelineExecInstance() = default;
+    Language::L1::WolfPipelineExecInstance::~WolfPipelineExecInstance() = default;
 
-    WolfPipeline::L1::WolfPipelineExtension::~WolfPipelineExtension() = default;
+    Language::L1::WolfPipelineExtension::~WolfPipelineExtension() = default;
 
 }
 
 namespace wolf {
 
-    namespace Pipeline = Api::WolfPipeline::L1;
+    namespace Pipeline = Api::Language::L1;
 
     namespace {
 
@@ -91,7 +91,10 @@ namespace wolf {
         class WolfPipelineExtension : public Pipeline::WolfPipelineExtension {
         public:
             WolfPipelineExtension(srt::SingerSpec &spec, std::vector<std::string> languageRoles)
-                : Pipeline::WolfPipelineExtension(spec, Pipeline::EXTENSION_ID),
+                : Pipeline::WolfPipelineExtension(
+                      spec,
+                      srt::ContribSpecExtensionTraits<srt::SingerSpec,
+                                                      Pipeline::WolfPipelineExecInstance>::ID),
                   m_languageRoles(std::move(languageRoles)) {
             }
 
@@ -160,4 +163,7 @@ namespace wolf {
 }
 
 static srt::ContribSpecExtensionFactoryRegistry::Add<wolf::WolfPipelineExtensionFactory>
-    wolfPipelineExtensionRegistration("org.openvpi.wolf.pipeline.Language", "");
+    wolfPipelineExtensionRegistration(
+        srt::ContribSpecExtensionTraits<srt::SingerSpec,
+                                        wolf::Api::Language::L1::WolfPipelineExecInstance>::ID,
+        "");
