@@ -1,6 +1,6 @@
 #include "WolfLanguageProvider.h"
 
-#include "WolfPipelineExecInstance.h"
+#include "WolfPipelineExecutive.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -29,12 +29,13 @@ namespace wolf {
 
     namespace {
 
-        class LanguageExecFactory : public srt::ContribExecFactory {
+        class LanguageExecutiveFactory : public srt::ContribExecutiveFactory {
         public:
-            explicit LanguageExecFactory(srt::ContribImportBinding &binding) : m_binding(&binding) {
+            explicit LanguageExecutiveFactory(srt::ContribImportBinding &binding)
+                : m_binding(&binding) {
             }
 
-            srt::Expected<std::unique_ptr<srt::ContribExecInstance>>
+            srt::Expected<std::unique_ptr<srt::ContribExecutive>>
                 create(const srt::ContribRuntimeOptions &runtimeOptions) override {
                 if (runtimeOptions.interface() != Lang::API_INTERFACE ||
                     runtimeOptions.variant() != Lang::API_VARIANT ||
@@ -43,8 +44,8 @@ namespace wolf {
                         srt::Error::InvalidArgument,
                         "language runtime options have an incompatible contract identity");
                 }
-                return std::unique_ptr<srt::ContribExecInstance>(
-                    new Lang::LanguageExecInstance(*m_binding->target().as<wolf::LanguageSpec>()));
+                return std::unique_ptr<srt::ContribExecutive>(
+                    new Lang::LanguageExecutive(*m_binding->target().as<wolf::LanguageSpec>()));
             }
 
         private:
@@ -74,7 +75,7 @@ namespace wolf {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "language import role targets an incompatible interface");
             }
-            if (!item.execFactory()) {
+            if (!item.executiveFactory()) {
                 return srt::Error(srt::Error::FeatureNotSupported,
                                   "language import has no execution factory");
             }
@@ -128,7 +129,7 @@ namespace wolf {
                                 srt::Error::InvalidFormat,
                                 "singer language import has an incompatible contract identity");
                         }
-                        if (!item.execFactory()) {
+                        if (!item.executiveFactory()) {
                             return srt::Error(srt::Error::FeatureNotSupported,
                                               "language import has no execution factory");
                         }
@@ -143,7 +144,7 @@ namespace wolf {
             WolfPipelineExtension(srt::SingerSpec &spec, std::vector<std::string> languageRoles)
                 : Lang::WolfPipelineExtension(
                       spec, srt::ContribSpecExtensionTraits<srt::SingerSpec,
-                                                            Lang::WolfPipelineExecInstance>::ID),
+                                                            Lang::WolfPipelineExecutive>::ID),
                   m_languageRoles(std::move(languageRoles)) {
             }
 
@@ -151,7 +152,7 @@ namespace wolf {
                 return m_languageRoles;
             }
 
-            srt::Expected<std::unique_ptr<srt::SingerPipelineExecInstance>>
+            srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
                 createPipeline(const srt::SingerPipelineRuntimeOptions &runtimeOptions) override {
                 if (runtimeOptions.interface() != Lang::API_INTERFACE ||
                     runtimeOptions.variant() != Lang::API_VARIANT ||
@@ -160,8 +161,8 @@ namespace wolf {
                         srt::Error::InvalidArgument,
                         "wolf pipeline options have an incompatible contract identity");
                 }
-                return std::unique_ptr<srt::SingerPipelineExecInstance>(
-                    new WolfPipelineExecInstance(spec(), m_languageRoles));
+                return std::unique_ptr<srt::SingerPipelineExecutive>(
+                    new WolfPipelineExecutive(spec(), m_languageRoles));
             }
 
         private:
@@ -266,9 +267,9 @@ namespace wolf {
         return std::unique_ptr<srt::ContribImportOptions>(new Lang::LanguageImportOptions());
     }
 
-    srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-        WolfLanguageProvider::createExecFactory(srt::ContribImportBinding &binding) const {
-        return std::unique_ptr<srt::ContribExecFactory>(new LanguageExecFactory(binding));
+    srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+        WolfLanguageProvider::createExecutiveFactory(srt::ContribImportBinding &binding) const {
+        return std::unique_ptr<srt::ContribExecutiveFactory>(new LanguageExecutiveFactory(binding));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>

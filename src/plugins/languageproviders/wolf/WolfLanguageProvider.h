@@ -23,8 +23,8 @@ namespace wolf {
             createImportOptions(const srt::ContribSpec &target,
                                 const srt::JsonValue &manifestOptions) const override;
 
-        srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-            createExecFactory(srt::ContribImportBinding &binding) const override;
+        srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+            createExecutiveFactory(srt::ContribImportBinding &binding) const override;
 
         srt::Expected<std::unique_ptr<srt::ContribExports>>
             createExports(const srt::ContribSpec &spec) const override;

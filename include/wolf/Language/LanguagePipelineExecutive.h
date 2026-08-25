@@ -1,7 +1,7 @@
-#ifndef WOLF_LANGUAGEPIPELINEEXECINSTANCE_H
-#define WOLF_LANGUAGEPIPELINEEXECINSTANCE_H
+#ifndef WOLF_LANGUAGEPIPELINEEXECUTIVE_H
+#define WOLF_LANGUAGEPIPELINEEXECUTIVE_H
 
-#include <synthrt/Core/ContribExecInstance.h>
+#include <synthrt/Core/ContribExecutive.h>
 
 #include <wolf/Language/LanguageContrib.h>
 #include <wolf/wolf_global.h>
@@ -9,13 +9,13 @@
 namespace wolf {
 
     /// The provider-defined processing pipeline of one loaded language contribution.
-    class WOLF_EXPORT LanguagePipelineExecInstance : public srt::ContribExecInstance {
+    class WOLF_EXPORT LanguagePipelineExecutive : public srt::ContribExecutive {
     public:
-        explicit LanguagePipelineExecInstance(LanguageSpec &spec);
-        ~LanguagePipelineExecInstance();
+        explicit LanguagePipelineExecutive(LanguageSpec &spec);
+        ~LanguagePipelineExecutive();
 
         inline LanguageSpec &spec() const {
-            return *ContribExecInstance::spec().as<LanguageSpec>();
+            return *ContribExecutive::spec().as<LanguageSpec>();
         }
 
     protected:
@@ -28,4 +28,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_LANGUAGEPIPELINEEXECINSTANCE_H
+#endif // WOLF_LANGUAGEPIPELINEEXECUTIVE_H

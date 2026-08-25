@@ -21,8 +21,8 @@ namespace wolf {
     private:
         explicit LanguageSpec(const srt::ContribCreateContext &context);
 
-        srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-            createExecFactory(srt::ContribImportBinding &binding) const;
+        srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+            createExecutiveFactory(srt::ContribImportBinding &binding) const;
 
         friend class LanguageCategory;
     };
@@ -40,8 +40,8 @@ namespace wolf {
         srt::Expected<std::unique_ptr<srt::ContribSpec>>
             createSpec(const srt::ContribCreateContext &context) const override;
 
-        srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-            createExecFactory(srt::ContribImportBinding &binding) const override;
+        srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+            createExecutiveFactory(srt::ContribImportBinding &binding) const override;
     };
 
 }

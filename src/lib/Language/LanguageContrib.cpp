@@ -43,14 +43,14 @@ namespace wolf {
 
     LanguageSpec::~LanguageSpec() = default;
 
-    srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-        LanguageSpec::createExecFactory(srt::ContribImportBinding &binding) const {
+    srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+        LanguageSpec::createExecutiveFactory(srt::ContribImportBinding &binding) const {
         auto *value = interpreter();
         if (!value) {
             return srt::Error(srt::Error::FeatureNotSupported,
                               "cannot create a language execution factory without a provider");
         }
-        return value->as<LanguageProvider>()->createExecFactory(binding);
+        return value->as<LanguageProvider>()->createExecutiveFactory(binding);
     }
 
     LanguageCategory::LanguageCategory()
@@ -84,9 +84,9 @@ namespace wolf {
         return std::unique_ptr<srt::ContribSpec>(new LanguageSpec(context));
     }
 
-    srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-        LanguageCategory::createExecFactory(srt::ContribImportBinding &binding) const {
-        return binding.target().as<LanguageSpec>()->createExecFactory(binding);
+    srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+        LanguageCategory::createExecutiveFactory(srt::ContribImportBinding &binding) const {
+        return binding.target().as<LanguageSpec>()->createExecutiveFactory(binding);
     }
 
 }

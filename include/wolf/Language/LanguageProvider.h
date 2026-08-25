@@ -20,8 +20,8 @@ namespace wolf {
                                 std::unique_ptr<srt::ContribImportOptions> options) const override;
 
         /// Creates the execution factory used by an import of \a target.
-        virtual srt::Expected<std::unique_ptr<srt::ContribExecFactory>>
-            createExecFactory(srt::ContribImportBinding &binding) const = 0;
+        virtual srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
+            createExecutiveFactory(srt::ContribImportBinding &binding) const = 0;
 
     protected:
         LanguageProvider() = default;

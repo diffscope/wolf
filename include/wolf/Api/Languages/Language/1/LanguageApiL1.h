@@ -6,9 +6,9 @@
 #include <vector>
 
 #include <synthrt/Core/ContribSpec.h>
-#include <synthrt/SVS/SingerPipelineExecInstance.h>
+#include <synthrt/SVS/SingerPipelineExecutive.h>
 
-#include <wolf/Language/LanguagePipelineExecInstance.h>
+#include <wolf/Language/LanguagePipelineExecutive.h>
 #include <wolf/wolf_global.h>
 
 namespace wolf::Api::Language::L1 {
@@ -40,7 +40,7 @@ namespace wolf::Api::Language::L1 {
         }
     };
 
-    /// Supplies runtime settings when a language execution instance is created.
+    /// Supplies runtime settings when a language executive is created.
     class LanguageRuntimeOptions : public srt::ContribRuntimeOptions {
     public:
         LanguageRuntimeOptions() : ContribRuntimeOptions(API_INTERFACE, API_VARIANT, API_LEVEL) {
@@ -48,13 +48,12 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Owns runtime activity associated with one language contribution.
-    class WOLF_EXPORT LanguageExecInstance : public wolf::LanguagePipelineExecInstance {
+    class WOLF_EXPORT LanguageExecutive : public wolf::LanguagePipelineExecutive {
     public:
-        explicit LanguageExecInstance(wolf::LanguageSpec &spec)
-            : LanguagePipelineExecInstance(spec) {
+        explicit LanguageExecutive(wolf::LanguageSpec &spec) : LanguagePipelineExecutive(spec) {
         }
 
-        ~LanguageExecInstance() = default;
+        ~LanguageExecutive() = default;
     };
 
     /// Supplies runtime settings when the wolf language pipeline is created.
@@ -66,19 +65,19 @@ namespace wolf::Api::Language::L1 {
     };
 
     /// Aggregates the language contributions imported by one singer.
-    class WOLF_EXPORT WolfPipelineExecInstance : public srt::SingerPipelineExecInstance {
+    class WOLF_EXPORT WolfPipelineExecutive : public srt::SingerPipelineExecutive {
     public:
-        ~WolfPipelineExecInstance() = default;
+        ~WolfPipelineExecutive() = default;
 
         /// Returns the singer local roles of all aggregated language imports.
         virtual const std::vector<std::string> &languageRoles() const = 0;
 
-        /// Creates the language execution instance selected by a role.
-        virtual srt::Expected<LanguageExecInstance *>
+        /// Creates the language executive selected by a role.
+        virtual srt::Expected<LanguageExecutive *>
             createLanguage(std::string_view role, const LanguageRuntimeOptions &runtimeOptions) = 0;
 
     protected:
-        using SingerPipelineExecInstance::SingerPipelineExecInstance;
+        using SingerPipelineExecutive::SingerPipelineExecutive;
     };
 
     /// Creates a wolf language pipeline from the imports aggregated during Package Load.
@@ -98,8 +97,7 @@ namespace wolf::Api::Language::L1 {
 namespace srt {
 
     template <>
-    struct ContribSpecExtensionTraits<SingerSpec,
-                                      wolf::Api::Language::L1::WolfPipelineExecInstance> {
+    struct ContribSpecExtensionTraits<SingerSpec, wolf::Api::Language::L1::WolfPipelineExecutive> {
         inline static constexpr char ID[] = "org.openvpi.wolf.extension.LanguagePipeline";
     };
 
