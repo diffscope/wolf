@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(test_LanguageContrib_Registered) {
 
 BOOST_AUTO_TEST_CASE(test_LanguageContrib_BuiltByEveryUnit) {
     srt::SynthUnit unit;
-    auto *category = unit.category(wolf::LANGUAGE_CATEGORY);
+    auto category = unit.category(wolf::LANGUAGE_CATEGORY);
     BOOST_REQUIRE(category != nullptr);
     BOOST_CHECK_EQUAL(category->name(), wolf::LANGUAGE_CATEGORY);
     BOOST_CHECK(&category->synthUnit() == &unit);

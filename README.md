@@ -70,7 +70,7 @@ STDC_EXPORT_PLUGIN(MyLanguageProviderPlugin)
 The bundled implementation lives in `src/plugins/languageproviders/wolf`. Its `WolfLanguageProvider` supports `org.openvpi.wolf.language.WolfLanguage`, Level 1, variant `wolf`. The wolf library registers the category and defines the provider abstraction, but it does not create Wolf Level 1 runtime objects itself.
 
 ```cpp
-auto *spec = package->contribution("org.openvpi.language", "mandarin")
+auto spec = package->contribution("org.openvpi.language", "mandarin")
                  ->as<wolf::LanguageSpec>();
 ```
 

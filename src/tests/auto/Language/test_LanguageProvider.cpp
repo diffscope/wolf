@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(test_LanguageProvider_CreatesSupportedContract) {
     BOOST_REQUIRE_MESSAGE(loader.load(), loader.errorMessage());
     BOOST_CHECK_EQUAL(loader.iid(), wolf::LanguageProviderPlugin::IID);
 
-    auto *plugin = static_cast<wolf::LanguageProviderPlugin *>(loader.plugin());
+    auto plugin = static_cast<wolf::LanguageProviderPlugin *>(loader.plugin());
     BOOST_REQUIRE(plugin != nullptr);
 
     auto result = plugin->create(Lang::API_INTERFACE, Lang::API_LEVEL, Lang::API_VARIANT);

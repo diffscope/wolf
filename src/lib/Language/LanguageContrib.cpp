@@ -45,7 +45,7 @@ namespace wolf {
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
         LanguageSpec::createExecutiveFactory(srt::ContribImportBinding &binding) const {
-        auto *value = interpreter();
+        auto value = interpreter();
         if (!value) {
             return srt::Error(srt::Error::FeatureNotSupported,
                               "cannot create a language execution factory without a provider");
@@ -63,7 +63,7 @@ namespace wolf {
         std::vector<LanguageSpec *> result;
         const auto values = contributions();
         result.reserve(values.size());
-        for (auto *value : values) {
+        for (auto value : values) {
             result.push_back(value->as<LanguageSpec>());
         }
         return result;
