@@ -72,8 +72,6 @@ find_package(synthrt CONFIG REQUIRED)
 # ----------------------------------
 if(WOLF_BUILD_TESTS)
     enable_testing()
-
-    include("${SYNTHRT_MODULES_DIR}/AddAutoTest.cmake")
 endif()
 
 # ----------------------------------
