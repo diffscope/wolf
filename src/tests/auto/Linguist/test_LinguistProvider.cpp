@@ -22,6 +22,12 @@ BOOST_AUTO_TEST_CASE(test_LinguistProvider_CreatesSupportedContract) {
     stdc::plugin::PluginLoader loader(WOLF_TEST_PLUGIN_FILE,
                                       fs::path(WOLF_TEST_PLUGIN_DIR) / "plugin.json");
     BOOST_REQUIRE_EQUAL(loader.state(), stdc::plugin::PluginLoader::Read);
+    const auto &metadata = loader.metadata();
+    BOOST_REQUIRE(metadata.isObject());
+    BOOST_CHECK_EQUAL(metadata["name"].toString(), "wolflinguist");
+    BOOST_REQUIRE(metadata["interpreters"].isArray());
+    BOOST_CHECK_EQUAL(metadata["interpreters"].toArray().size(), 1u);
+
     BOOST_REQUIRE_MESSAGE(loader.load(), loader.errorMessage());
     BOOST_CHECK_EQUAL(loader.iid(), wolf::LinguistProviderPlugin::IID);
 
