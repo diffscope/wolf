@@ -61,10 +61,6 @@ endif()
 
 qm_init_directories()
 
-find_package(stdcorelib-plugin CONFIG REQUIRED)
-
-# synthrt is not a vcpkg dependency here. Point CMAKE_PREFIX_PATH at an install of it. This also
-# brings in the CMake modules it ships, including add_auto_test.
 find_package(synthrt CONFIG REQUIRED)
 
 # ----------------------------------
