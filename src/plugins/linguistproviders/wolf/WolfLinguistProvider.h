@@ -1,17 +1,17 @@
-#ifndef WOLF_WOLFLANGUAGEPROVIDER_H
-#define WOLF_WOLFLANGUAGEPROVIDER_H
+#ifndef WOLF_WOLFLINGUISTPROVIDER_H
+#define WOLF_WOLFLINGUISTPROVIDER_H
 
 #include <memory>
 #include <vector>
 
-#include <wolf/Language/LanguageProvider.h>
+#include <wolf/Linguist/LinguistProvider.h>
 
 namespace wolf {
 
-    class WolfLanguageProvider : public LanguageProvider {
+    class WolfLinguistProvider : public LinguistProvider {
     public:
-        WolfLanguageProvider();
-        ~WolfLanguageProvider();
+        WolfLinguistProvider();
+        ~WolfLinguistProvider();
 
         srt::Expected<std::vector<std::unique_ptr<srt::ContribImportValidator>>>
             createImportValidators() const override;
@@ -35,4 +35,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_WOLFLANGUAGEPROVIDER_H
+#endif // WOLF_WOLFLINGUISTPROVIDER_H

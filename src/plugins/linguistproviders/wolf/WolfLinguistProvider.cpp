@@ -1,4 +1,4 @@
-#include "WolfLanguageProvider.h"
+#include "WolfLinguistProvider.h"
 
 #include "WolfPipelineExecutive.h"
 
@@ -18,34 +18,35 @@
 #include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
 #include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
-#include <wolf/Api/Languages/Language/1/LanguageApiL1.h>
-#include <wolf/Language/LanguageContrib.h>
+#include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
+#include <wolf/Linguist/LinguistContrib.h>
 
 namespace fs = std::filesystem;
 
 namespace wolf {
 
-    namespace Lang = Api::Language::L1;
+    namespace LinguistApi = Api::Linguist::L1;
 
     namespace {
 
-        class LanguageExecutiveFactory : public srt::ContribExecutiveFactory {
+        class LinguistExecutiveFactory : public srt::ContribExecutiveFactory {
         public:
-            explicit LanguageExecutiveFactory(srt::ContribImportBinding &binding)
+            explicit LinguistExecutiveFactory(srt::ContribImportBinding &binding)
                 : m_binding(&binding) {
             }
 
             srt::Expected<std::unique_ptr<srt::ContribExecutive>>
                 create(const srt::ContribRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interface() != Lang::API_INTERFACE ||
-                    runtimeOptions.variant() != Lang::API_VARIANT ||
-                    runtimeOptions.level() != Lang::API_LEVEL) {
+                if (runtimeOptions.interface() != LinguistApi::API_INTERFACE ||
+                    runtimeOptions.variant() != LinguistApi::API_VARIANT ||
+                    runtimeOptions.level() != LinguistApi::API_LEVEL) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
-                        "language runtime options have an incompatible contract identity");
+                        "linguist runtime options have an incompatible contract identity");
                 }
                 return std::unique_ptr<srt::ContribExecutive>(
-                    new Lang::LanguageExecutive(*m_binding->target().as<wolf::LanguageSpec>()));
+                    new LinguistApi::LinguistExecutive(
+                        *m_binding->target().as<wolf::LinguistSpec>()));
             }
 
         private:
@@ -56,28 +57,34 @@ namespace wolf {
             return spec.locator().category() == "singer";
         }
 
-        bool isLanguageSpec(const srt::ContribSpec &spec) {
-            return spec.locator().category() == LANGUAGE_CATEGORY;
+        bool isLinguistSpec(const srt::ContribSpec &spec) {
+            return spec.locator().category() == LINGUIST_CATEGORY;
         }
 
-        bool isLanguageImport(const srt::ContribImport &item) {
+        bool isLinguistTarget(const srt::ContribImport &item) {
             return item.binding() &&
-                   item.binding()->target().locator().category() == LANGUAGE_CATEGORY;
+                   item.binding()->target().locator().category() == LINGUIST_CATEGORY;
         }
 
-        srt::Expected<void> validateLanguageRole(const srt::ContribImport &item,
+        bool hasLinguistRole(const srt::ContribImport &item) {
+            constexpr std::string_view prefix = "linguist/";
+            return item.role().size() > prefix.size() &&
+                   item.role().compare(0, prefix.size(), prefix) == 0;
+        }
+
+        srt::Expected<void> validateLinguistRole(const srt::ContribImport &item,
                                                  std::string_view expectedInterface) {
             if (!item.binding()) {
                 return srt::Error(srt::Error::InvalidFormat,
-                                  "language import has no prepared binding");
+                                  "linguist import has no prepared binding");
             }
             if (item.binding()->target().interface() != expectedInterface) {
                 return srt::Error(srt::Error::InvalidFormat,
-                                  "language import role targets an incompatible interface");
+                                  "linguist import role targets an incompatible interface");
             }
             if (!item.executiveFactory()) {
                 return srt::Error(srt::Error::FeatureNotSupported,
-                                  "language import has no execution factory");
+                                  "linguist import has no execution factory");
             }
             return {};
         }
@@ -85,27 +92,27 @@ namespace wolf {
         class WolfImportValidator : public srt::ContribImportValidator {
         public:
             srt::Expected<void> validateImports(const srt::ContribSpec &spec) const override {
-                if (isLanguageSpec(spec)) {
+                if (isLinguistSpec(spec)) {
                     bool hasG2P = false;
                     bool hasS2P = false;
                     for (const auto &item : spec.imports()) {
-                        if (item.role() == "g2p") {
+                        if (item.role() == "linguist/g2p") {
                             if (auto result =
-                                    validateLanguageRole(item, Api::G2P::L1::API_INTERFACE);
+                                    validateLinguistRole(item, Api::G2P::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
                             hasG2P = true;
-                        } else if (item.role() == "s2p") {
+                        } else if (item.role() == "linguist/s2p") {
                             if (auto result =
-                                    validateLanguageRole(item, Api::S2P::L1::API_INTERFACE);
+                                    validateLinguistRole(item, Api::S2P::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
                             hasS2P = true;
-                        } else if (item.role() == "onset") {
+                        } else if (item.role() == "linguist/onset") {
                             if (auto result =
-                                    validateLanguageRole(item, Api::Onset::L1::API_INTERFACE);
+                                    validateLinguistRole(item, Api::Onset::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
@@ -113,25 +120,31 @@ namespace wolf {
                     }
                     if (!hasG2P || !hasS2P) {
                         return srt::Error(srt::Error::InvalidFormat,
-                                          "language imports require g2p and s2p roles");
+                                          "linguist imports require linguist/g2p and "
+                                          "linguist/s2p roles");
                     }
                 }
                 if (isSingerSpec(spec)) {
                     for (const auto &item : spec.imports()) {
-                        if (!isLanguageImport(item)) {
+                        if (!isLinguistTarget(item)) {
                             continue;
                         }
-                        const auto &target = item.binding()->target();
-                        if (target.interface() != Lang::API_INTERFACE ||
-                            target.variant() != Lang::API_VARIANT ||
-                            target.level() != Lang::API_LEVEL) {
+                        if (!hasLinguistRole(item)) {
                             return srt::Error(
                                 srt::Error::InvalidFormat,
-                                "singer language import has an incompatible contract identity");
+                                "singer linguist imports require a linguist/* role");
+                        }
+                        const auto &target = item.binding()->target();
+                        if (target.interface() != LinguistApi::API_INTERFACE ||
+                            target.variant() != LinguistApi::API_VARIANT ||
+                            target.level() != LinguistApi::API_LEVEL) {
+                            return srt::Error(
+                                srt::Error::InvalidFormat,
+                                "singer linguist import has an incompatible contract identity");
                         }
                         if (!item.executiveFactory()) {
                             return srt::Error(srt::Error::FeatureNotSupported,
-                                              "language import has no execution factory");
+                                              "linguist import has no execution factory");
                         }
                     }
                 }
@@ -139,40 +152,40 @@ namespace wolf {
             }
         };
 
-        class WolfPipelineExtension : public Lang::WolfPipelineExtension {
+        class WolfPipelineExtension : public LinguistApi::WolfPipelineExtension {
         public:
-            WolfPipelineExtension(srt::SingerSpec &spec, std::vector<std::string> languageRoles)
-                : Lang::WolfPipelineExtension(
+            WolfPipelineExtension(srt::SingerSpec &spec, std::vector<std::string> linguistRoles)
+                : LinguistApi::WolfPipelineExtension(
                       spec, srt::ContribSpecExtensionTraits<srt::SingerSpec,
-                                                            Lang::WolfPipelineExecutive>::ID),
-                  m_languageRoles(std::move(languageRoles)) {
+                                                            LinguistApi::WolfPipelineExecutive>::ID),
+                  m_linguistRoles(std::move(linguistRoles)) {
             }
 
-            const std::vector<std::string> &languageRoles() const override {
-                return m_languageRoles;
+            const std::vector<std::string> &linguistRoles() const override {
+                return m_linguistRoles;
             }
 
             srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
                 createPipeline(const srt::SingerPipelineRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interface() != Lang::API_INTERFACE ||
-                    runtimeOptions.variant() != Lang::API_VARIANT ||
-                    runtimeOptions.level() != Lang::API_LEVEL) {
+                if (runtimeOptions.interface() != LinguistApi::API_INTERFACE ||
+                    runtimeOptions.variant() != LinguistApi::API_VARIANT ||
+                    runtimeOptions.level() != LinguistApi::API_LEVEL) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
                         "wolf pipeline options have an incompatible contract identity");
                 }
                 return std::unique_ptr<srt::SingerPipelineExecutive>(
-                    new WolfPipelineExecutive(spec(), m_languageRoles));
+                    new WolfPipelineExecutive(spec(), m_linguistRoles));
             }
 
         private:
-            std::vector<std::string> m_languageRoles;
+            std::vector<std::string> m_linguistRoles;
         };
 
         srt::Expected<srt::JsonValue> readJsonFile(const fs::path &path) {
             std::ifstream file(path);
             if (!file.is_open()) {
-                return srt::Error(srt::Error::FileNotOpen, "failed to open language exports file");
+                return srt::Error(srt::Error::FileNotOpen, "failed to open linguist exports file");
             }
             std::ostringstream stream;
             stream << file.rdbuf();
@@ -180,7 +193,7 @@ namespace wolf {
             auto value = srt::JsonValue::fromJson(stream.str(), true, &error);
             if (error) {
                 return srt::Error(srt::Error::InvalidFormat,
-                                  "language exports file contains invalid JSON");
+                                  "linguist exports file contains invalid JSON");
             }
             return value;
         }
@@ -203,17 +216,17 @@ namespace wolf {
             }
             if (!source->isArray()) {
                 return srt::Error(srt::Error::InvalidFormat,
-                                  "language exports phonemes must be an array or JSON path");
+                                  "linguist exports phonemes must be an array or JSON path");
             }
             std::set<std::string> unique;
             for (const auto &item : source->toArray()) {
                 if (!item.isString() || item.toString().empty()) {
                     return srt::Error(srt::Error::InvalidFormat,
-                                      "language phoneme entries must be nonempty strings");
+                                      "linguist phoneme entries must be nonempty strings");
                 }
                 if (!unique.insert(item.toString()).second) {
                     return srt::Error(srt::Error::InvalidFormat,
-                                      "language phoneme entries must be unique");
+                                      "linguist phoneme entries must be unique");
                 }
                 phonemes.push_back(item.toString());
             }
@@ -222,68 +235,70 @@ namespace wolf {
 
     }
 
-    WolfLanguageProvider::WolfLanguageProvider() = default;
+    WolfLinguistProvider::WolfLinguistProvider() = default;
 
-    WolfLanguageProvider::~WolfLanguageProvider() = default;
+    WolfLinguistProvider::~WolfLinguistProvider() = default;
 
     srt::Expected<std::vector<std::unique_ptr<srt::ContribImportValidator>>>
-        WolfLanguageProvider::createImportValidators() const {
+        WolfLinguistProvider::createImportValidators() const {
         std::vector<std::unique_ptr<srt::ContribImportValidator>> result;
         result.emplace_back(new WolfImportValidator());
         return result;
     }
 
     srt::Expected<std::vector<std::unique_ptr<srt::ContribSpecExtension>>>
-        WolfLanguageProvider::createExtensions(srt::ContribSpec &spec) const {
+        WolfLinguistProvider::createExtensions(srt::ContribSpec &spec) const {
         std::vector<std::unique_ptr<srt::ContribSpecExtension>> result;
         if (!isSingerSpec(spec)) {
             return result;
         }
-        std::vector<std::string> languageRoles;
+        std::vector<std::string> linguistRoles;
         for (const auto &item : spec.imports()) {
-            if (isLanguageImport(item)) {
-                languageRoles.push_back(item.role());
+            if (isLinguistTarget(item) && hasLinguistRole(item)) {
+                linguistRoles.push_back(item.role());
             }
         }
-        if (!languageRoles.empty()) {
+        if (!linguistRoles.empty()) {
             result.emplace_back(
-                new WolfPipelineExtension(*spec.as<srt::SingerSpec>(), std::move(languageRoles)));
+                new WolfPipelineExtension(*spec.as<srt::SingerSpec>(), std::move(linguistRoles)));
         }
         return result;
     }
 
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
-        WolfLanguageProvider::createImportOptions(const srt::ContribSpec &target,
+        WolfLinguistProvider::createImportOptions(const srt::ContribSpec &target,
                                                   const srt::JsonValue &manifestOptions) const {
         if (!manifestOptions.isObject()) {
             return srt::Error(srt::Error::InvalidFormat,
-                              "language import options must be an object");
+                              "linguist import options must be an object");
         }
-        if (target.interface() != Lang::API_INTERFACE || target.variant() != Lang::API_VARIANT ||
-            target.level() != Lang::API_LEVEL) {
+        if (target.interface() != LinguistApi::API_INTERFACE ||
+            target.variant() != LinguistApi::API_VARIANT ||
+            target.level() != LinguistApi::API_LEVEL) {
             return srt::Error(srt::Error::InvalidArgument,
-                              "language import target has an unsupported contract");
+                              "linguist import target has an unsupported contract");
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new Lang::LanguageImportOptions());
+        return std::unique_ptr<srt::ContribImportOptions>(
+            new LinguistApi::LinguistImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
-        WolfLanguageProvider::createExecutiveFactory(srt::ContribImportBinding &binding) const {
-        return std::unique_ptr<srt::ContribExecutiveFactory>(new LanguageExecutiveFactory(binding));
+        WolfLinguistProvider::createExecutiveFactory(srt::ContribImportBinding &binding) const {
+        return std::unique_ptr<srt::ContribExecutiveFactory>(new LinguistExecutiveFactory(binding));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
-        WolfLanguageProvider::createExports(const srt::ContribSpec &spec) const {
+        WolfLinguistProvider::createExports(const srt::ContribSpec &spec) const {
         if (!spec.manifestExports().isObject()) {
-            return srt::Error(srt::Error::InvalidFormat, "language exports must be an object");
+            return srt::Error(srt::Error::InvalidFormat, "linguist exports must be an object");
         }
         const auto &object = spec.manifestExports().toObject();
         const auto it = object.find("phonemes");
         if (it == object.end()) {
-            return srt::Error(srt::Error::InvalidFormat, "language exports require phonemes");
+            return srt::Error(srt::Error::InvalidFormat, "linguist exports require phonemes");
         }
-        auto result = std::make_unique<Lang::LanguageExports>();
-        const auto basePath = spec.as<LanguageSpec>()->declarationPath().parent_path();
+        auto result = std::make_unique<LinguistApi::LinguistExports>();
+        const auto basePath = spec.as<LinguistSpec>()->declarationPath().parent_path();
         if (auto parsed = readPhonemes(result->phonemes, it->second, basePath); !parsed) {
             return parsed.takeError();
         }
@@ -291,16 +306,17 @@ namespace wolf {
     }
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
-        WolfLanguageProvider::createConfiguration(const srt::ContribSpec &spec) const {
+        WolfLinguistProvider::createConfiguration(const srt::ContribSpec &spec) const {
         if (!spec.manifestConfiguration().isObject()) {
             return srt::Error(srt::Error::InvalidFormat,
-                              "language configuration must be an object");
+                              "linguist configuration must be an object");
         }
         if (!spec.manifestConfiguration().toObject().empty()) {
             return srt::Error(srt::Error::InvalidFormat,
-                              "the wolf language configuration must be empty at Level 1");
+                              "the wolf linguist configuration must be empty at Level 1");
         }
-        return std::unique_ptr<srt::ContribConfiguration>(new Lang::LanguageConfiguration());
+        return std::unique_ptr<srt::ContribConfiguration>(
+            new LinguistApi::LinguistConfiguration());
     }
 
 }

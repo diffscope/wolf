@@ -1,10 +1,10 @@
 {
-    "iid": "org.openvpi.wolf.plugin.LanguageProvider",
-    "name": "wolflanguage",
+    "iid": "org.openvpi.wolf.plugin.LinguistProvider",
+    "name": "wolflinguist",
     "metadata": {
         "interpreters": [
             {
-                "interface": "org.openvpi.wolf.language.WolfLanguage",
+                "interface": "org.openvpi.wolf.linguist.WolfLinguist",
                 "level": 1,
                 "variant": "wolf"
             }

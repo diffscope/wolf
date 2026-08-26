@@ -1,1 +1,1 @@
-add_subdirectory(languageproviders)
+add_subdirectory(linguistproviders)

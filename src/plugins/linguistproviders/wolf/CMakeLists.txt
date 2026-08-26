@@ -1,4 +1,4 @@
-project(wolflanguageprovider
+project(wolflinguistprovider
     VERSION ${WOLF_VERSION}
     LANGUAGES CXX
 )

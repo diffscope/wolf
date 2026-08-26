@@ -1,4 +1,4 @@
-#include <wolf/Language/LanguageProvider.h>
+#include <wolf/Linguist/LinguistProvider.h>
 
 #include <utility>
 
@@ -8,9 +8,9 @@ namespace wolf {
 
     namespace {
 
-        class LanguageImportBinding : public srt::ContribImportBinding {
+        class LinguistImportBinding : public srt::ContribImportBinding {
         public:
-            LanguageImportBinding(srt::ContribSpec &importer, const srt::ContribImport &declaration,
+            LinguistImportBinding(srt::ContribSpec &importer, const srt::ContribImport &declaration,
                                   srt::ContribSpec &target,
                                   std::unique_ptr<srt::ContribImportOptions> options)
                 : ContribImportBinding(importer, declaration, target, std::move(options)) {
@@ -30,11 +30,11 @@ namespace wolf {
 
     }
 
-    srt::Expected<std::unique_ptr<srt::ContribImportBinding>> LanguageProvider::createImportBinding(
+    srt::Expected<std::unique_ptr<srt::ContribImportBinding>> LinguistProvider::createImportBinding(
         srt::ContribSpec &importer, const srt::ContribImport &declaration, srt::ContribSpec &target,
         std::unique_ptr<srt::ContribImportOptions> options) const {
         return std::unique_ptr<srt::ContribImportBinding>(
-            new LanguageImportBinding(importer, declaration, target, std::move(options)));
+            new LinguistImportBinding(importer, declaration, target, std::move(options)));
     }
 
 }

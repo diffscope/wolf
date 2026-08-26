@@ -1,12 +1,12 @@
-#include <wolf/Language/LanguageContrib.h>
+#include <wolf/Linguist/LinguistContrib.h>
 
 #include <set>
 #include <string_view>
 
 #include <synthrt/Core/ContribImportBinding.h>
 
-#include <wolf/Language/LanguageProvider.h>
-#include <wolf/Language/LanguageProviderPlugin.h>
+#include <wolf/Linguist/LinguistProvider.h>
+#include <wolf/Linguist/LinguistProviderPlugin.h>
 
 namespace wolf {
 
@@ -17,7 +17,7 @@ namespace wolf {
             for (const auto &item : entry) {
                 if (fields.find(item.first) == fields.end()) {
                     return srt::Error(srt::Error::InvalidFormat,
-                                      "language contribution entry has an unknown field");
+                                      "linguist contribution entry has an unknown field");
                 }
             }
             return {};
@@ -30,7 +30,7 @@ namespace wolf {
             for (const auto &item : declaration) {
                 if (fields.find(item.first) == fields.end()) {
                     return srt::Error(srt::Error::InvalidFormat,
-                                      "language declaration has an unknown field");
+                                      "linguist declaration has an unknown field");
                 }
             }
             return {};
@@ -38,58 +38,58 @@ namespace wolf {
 
     }
 
-    LanguageSpec::LanguageSpec(const srt::ContribCreateContext &context) : ContribSpec(context) {
+    LinguistSpec::LinguistSpec(const srt::ContribCreateContext &context) : ContribSpec(context) {
     }
 
-    LanguageSpec::~LanguageSpec() = default;
+    LinguistSpec::~LinguistSpec() = default;
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
-        LanguageSpec::createExecutiveFactory(srt::ContribImportBinding &binding) const {
+        LinguistSpec::createExecutiveFactory(srt::ContribImportBinding &binding) const {
         auto value = interpreter();
         if (!value) {
             return srt::Error(srt::Error::FeatureNotSupported,
-                              "cannot create a language execution factory without a provider");
+                              "cannot create a linguist execution factory without a provider");
         }
-        return value->as<LanguageProvider>()->createExecutiveFactory(binding);
+        return value->as<LinguistProvider>()->createExecutiveFactory(binding);
     }
 
-    LanguageCategory::LanguageCategory()
-        : ContribCategory(LANGUAGE_CATEGORY, ModuleDeclaration, LanguageProviderPlugin::IID) {
+    LinguistCategory::LinguistCategory()
+        : ContribCategory(LINGUIST_CATEGORY, ModuleDeclaration, LinguistProviderPlugin::IID) {
     }
 
-    LanguageCategory::~LanguageCategory() = default;
+    LinguistCategory::~LinguistCategory() = default;
 
-    std::vector<LanguageSpec *> LanguageCategory::languages() const {
-        std::vector<LanguageSpec *> result;
+    std::vector<LinguistSpec *> LinguistCategory::linguists() const {
+        std::vector<LinguistSpec *> result;
         const auto values = contributions();
         result.reserve(values.size());
         for (auto value : values) {
-            result.push_back(value->as<LanguageSpec>());
+            result.push_back(value->as<LinguistSpec>());
         }
         return result;
     }
 
     srt::Expected<std::unique_ptr<srt::ContribSpec>>
-        LanguageCategory::createSpec(const srt::ContribCreateContext &context) const {
+        LinguistCategory::createSpec(const srt::ContribCreateContext &context) const {
         if (auto result = validateEntry(context.manifestEntry()); !result) {
             return result.takeError();
         }
         if (!context.manifestDeclaration() || !context.declarationPath()) {
             return srt::Error(srt::Error::InvalidFormat,
-                              "language contribution requires a declaration");
+                              "linguist contribution requires a declaration");
         }
         if (auto result = validateDeclaration(*context.manifestDeclaration()); !result) {
             return result.takeError();
         }
-        return std::unique_ptr<srt::ContribSpec>(new LanguageSpec(context));
+        return std::unique_ptr<srt::ContribSpec>(new LinguistSpec(context));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
-        LanguageCategory::createExecutiveFactory(srt::ContribImportBinding &binding) const {
-        return binding.target().as<LanguageSpec>()->createExecutiveFactory(binding);
+        LinguistCategory::createExecutiveFactory(srt::ContribImportBinding &binding) const {
+        return binding.target().as<LinguistSpec>()->createExecutiveFactory(binding);
     }
 
 }
 
-static srt::ContribCategoryRegistry::Add<wolf::LanguageCategory>
-    languageCategoryRegistration(wolf::LANGUAGE_CATEGORY, "");
+static srt::ContribCategoryRegistry::Add<wolf::LinguistCategory>
+    linguistCategoryRegistration(wolf::LINGUIST_CATEGORY, "");

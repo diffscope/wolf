@@ -1,5 +1,5 @@
-#ifndef WOLF_LANGUAGEPROVIDER_H
-#define WOLF_LANGUAGEPROVIDER_H
+#ifndef WOLF_LINGUISTPROVIDER_H
+#define WOLF_LINGUISTPROVIDER_H
 
 #include <memory>
 
@@ -9,10 +9,10 @@
 
 namespace wolf {
 
-    /// Interprets and executes language contributions.
-    class WOLF_EXPORT LanguageProvider : public srt::ContribInterpreter {
+    /// Interprets and executes linguist contributions.
+    class WOLF_EXPORT LinguistProvider : public srt::ContribInterpreter {
     public:
-        ~LanguageProvider() = default;
+        ~LinguistProvider() = default;
 
         srt::Expected<std::unique_ptr<srt::ContribImportBinding>>
             createImportBinding(srt::ContribSpec &importer, const srt::ContribImport &declaration,
@@ -24,9 +24,9 @@ namespace wolf {
             createExecutiveFactory(srt::ContribImportBinding &binding) const = 0;
 
     protected:
-        LanguageProvider() = default;
+        LinguistProvider() = default;
     };
 
 }
 
-#endif // WOLF_LANGUAGEPROVIDER_H
+#endif // WOLF_LINGUISTPROVIDER_H
