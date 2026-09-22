@@ -1,0 +1,21 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/string-set.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "String set, inline or by path",
+  "description": "A set of non-empty, non-repeating strings. Written either inline as an array, or as a path to a JSON file holding an array of the same shape. A relative path resolves against the directory of the declaration file that carries it; an absolute path is used as it is.",
+  "oneOf": [
+    {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to a JSON file holding an array of non-empty unique strings."
+    },
+    {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  ]
+}

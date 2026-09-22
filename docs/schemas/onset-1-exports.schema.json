@@ -1,0 +1,13 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/onset-1-exports.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "org.openvpi.wolf.inference.Onset Level 1 exports",
+  "type": "object",
+  "properties": {
+    "knownPhonemes": {
+      "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/string-set.schema.json",
+      "description": "Every phoneme this module recognises. Under-reporting is not a defect: a module that matches anything may report the part it can name."
+    }
+  },
+  "additionalProperties": false
+}

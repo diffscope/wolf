@@ -1,0 +1,8 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/linguist-1-import-options.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "org.openvpi.wolf.linguist.WolfLinguist Level 1 import options",
+  "description": "Level 1 defines no import options vocabulary. An executive is bound to one language pair when it is created, so an importer has nothing to add here. The object must be empty; a later Level may give it members.",
+  "type": "object",
+  "additionalProperties": false
+}
