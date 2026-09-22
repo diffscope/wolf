@@ -1,0 +1,20 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": {
+        "_": "Passthrough",
+        "zh-CN": "直通"
+    },
+    "language": "zxx",
+    "scheme": "passthrough",
+    "exports": {
+        "phonemes": [],
+        "openSet": true
+    },
+    "configuration": {},
+    "imports": [
+        { "role": "linguist/g2p", "ref": ":inference/zxx-g2p" },
+        { "role": "linguist/s2p", "ref": ":inference/zxx-s2p" }
+    ]
+}
