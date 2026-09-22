@@ -28,6 +28,8 @@ Each entry is a path to a linguist manifest:
   "interface": "org.openvpi.wolf.linguist.WolfLinguist",
   "level": 1,
   "variant": "wolf",
+  "language": "cmn",
+  "scheme": "pinyin",
   "exports": {
     "phonemes": [ "a", "o", "e", "i", "u", "v" ]
   },
@@ -41,15 +43,18 @@ Each entry is a path to a linguist manifest:
 
 The `(interface, level, variant)` triple selects a provider through synthrt's interpreter discovery. The provider interprets `exports`, `configuration`, import options, execution factories, validators, and extensions for that contract.
 
-The split follows the one synthrt already uses. `exports` is what the linguist declares about itself. `configuration` contains provider-specific resources. Relative paths resolve against the declaration file's directory.
+The split follows the one synthrt already uses. `language` and `scheme` are fields the `linguist` category adds to every declaration and reads before any provider is chosen: together they are the linguist's identity, an ISO 639-3 code and the notation its pronunciations are written in. `exports` is what the linguist declares about itself. `configuration` contains provider-specific resources. Relative paths resolve against the declaration file's directory.
 
 A linguist is referred to like any other contribute:
 
 ```
-vendor/sample=1.0:linguist/mandarin    # fully qualified
-vendor/sample:linguist/mandarin        # version resolved from dependencies
-:linguist/mandarin                     # within the referring package
+vendor/sample:linguist/mandarin        # a module in a resolved direct dependency
+:linguist/mandarin                     # a module in the referring package
 ```
+
+A reference carries no version: which version of `vendor/sample` it binds to is decided by that
+package's `dependencies` entry, and the reference always follows it. The package id must appear in
+`dependencies`, and a module in the referring package must use the leading `:` form.
 
 ## Providing a linguist
 
@@ -78,15 +83,58 @@ auto spec = package->contribution("linguist", "mandarin")
 
 A `SynthUnit` reads the list of registered categories once, when it is constructed. wolf registers `linguist` before `main`, so any unit built afterwards has it. A plugin could not do the same: plugins load lazily *through* a unit, so by the time one runs its static initializers, that unit has already built its categories. Contributing a category is something a linked library does.
 
+Linking is not quite enough on its own. A linker that drops libraries nothing references, which ELF linkers do under `--as-needed` and the MSVC linker does for every import library, would drop wolf from a host that only wants the category and names no wolf symbol. Such a host calls `wolf::linkLinguistCategory()` once before it constructs a unit. The function does nothing; being named is its whole job.
+
+## Versioning and ABI
+
+**wolf makes no ABI promise before 1.0.** Most of what a host touches is a value type in a public
+header — `LanguageStatus`, `LanguageEntry`, `SingerEntry`, `SingerRef`, and every payload under
+`Api/` — so adding a field to any of them changes its size, and the contract interfaces such as
+`WolfPipelineExtension` change their vtable when a virtual is added. Mixing objects compiled
+against two versions of these headers is undefined behaviour, not a link error, so it will not
+announce itself.
+
+The practical rule: **rebuild the host whenever wolf's version changes.** wolf moves its own
+version in the same commit as any such change, so the number is a reliable signal that a rebuild is
+needed. `wolf::LinguistSession` is the one type held behind a pimpl and therefore the one that does
+not move.
+
 ## Requirements
 
-CMake 3.19 or later.
+CMake 3.19 or later, and a checkout of the vcpkg overlay submodule:
 
-+ [synthrt](https://github.com/diffscope/synthrt)
+```sh
+git submodule update --init
+```
+
+Every dependency, synthrt included, comes from vcpkg. Ports resolve through two overlays, searched
+in order: `scripts/vcpkg-ports` in this repository, then the shared `scripts/vcpkg` submodule.
+
++ [synthrt](https://github.com/diffscope/synthrt) — via the in-repo `synthrt-main` port, which
+  pins the main line. The shared overlay's `synthrt` port pins a different line and is not used
+  here.
 + [stdcorelib](https://github.com/SineStriker/stdcorelib)
 + [qmsetup](https://github.com/stdware/qmsetup)
++ [BLAKE3](https://github.com/BLAKE3-team/BLAKE3) — content hashing for the resource cache
++ [RE2](https://github.com/google/re2) — word classification patterns. The shipped language
+  packages use Unicode property classes such as `\p{Han}`, which `std::regex` cannot express
++ [cpp-pinyin](https://github.com/wolfgitpr/cpp-pinyin) — the Mandarin and Cantonese G2P engine
 
 Boost.Test is needed only to build the tests.
+
+Two variants carry an external backend and are built only where it is present, the same way
+synthrt drops its own ONNX driver when ONNX Runtime is absent:
+
++ `multig2p-onnx`, the shared model backend, needs dsinfer and its ONNX Runtime driver. Add the
+  `onnx` feature (`--x-feature=onnx`) to bring in `synthrt-main[onnx]`; the payload comes from the
+  shared overlay's `onnxruntime-builds` port (DirectML on Windows, CPU elsewhere, no CUDA).
++ `lua`, the scripted S2P and Onset variants, needs LuaJIT, which is a plain dependency.
+
+A build without either still loads every package the shipped plugins can serve. The test stub
+always declares a `stub-miscount` variant for the fixtures that break the provider contract on
+purpose, and declares `multig2p-onnx` only in a build without dsinfer, so that the loading tests
+can run there too; the shipped minimal build carries no stub, and a package needing the model
+backend fails to load in it.
 
 ## Setup Environment
 
@@ -102,20 +150,26 @@ vcpkg install --x-manifest-root=../scripts/vcpkg-manifest --x-install-root=./ins
 
 Add `--x-feature=tests` to bring in Boost.Test.
 
-### Build
+> The overlay submodule pin must match the one synthrt itself uses. Two revisions of
+> `stdcorelib-plugin` share the version string `0.1.0.0#1` while fetching different upstream
+> refs, and they disagree on whether the CMake helper is called `stdc_add_plugin_metadata` or
+> `stdc_add_plugin_manifest`, so a mismatched pin fails at configure time.
 
-synthrt is not a vcpkg dependency here. Build and install it separately, then point at that install:
+### Build
 
 ```sh
 cmake -B build -G Ninja \
-    -DCMAKE_PREFIX_PATH=<synthrt install dir> \
+    -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake \
+    -DVCPKG_INSTALLED_DIR=<install root passed above> \
+    -DVCPKG_MANIFEST_MODE=OFF \
     -DCMAKE_INSTALL_PREFIX=<dir> \
-    -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake \
     -DCMAKE_BUILD_TYPE=Release
 
 cmake --build build --target all
 cmake --build build --target install
 ```
+
+Add `-DWOLF_BUILD_TESTS=ON` to build and register the tests, then run them with `ctest`.
 
 ## How to Use
 
