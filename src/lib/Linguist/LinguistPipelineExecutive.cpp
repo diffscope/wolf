@@ -1,4 +1,4 @@
-#include <wolf/Linguist/LinguistPipelineExecutive.h>
+#include "LinguistPipelineExecutive.h"
 
 namespace wolf {
 
