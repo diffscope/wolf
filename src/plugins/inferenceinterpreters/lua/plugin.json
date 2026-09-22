@@ -1,0 +1,15 @@
+{
+    "name": "wolflua",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.S2P",
+            "level": 1,
+            "variant": "lua"
+        },
+        {
+            "interface": "org.openvpi.wolf.inference.Onset",
+            "level": 1,
+            "variant": "lua"
+        }
+    ]
+}

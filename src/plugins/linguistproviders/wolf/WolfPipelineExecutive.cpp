@@ -5,30 +5,38 @@
 
 namespace wolf {
 
-    WolfPipelineExecutive::WolfPipelineExecutive(srt::SingerSpec &spec,
-                                                 std::vector<std::string> linguistRoles)
-        : Api::Linguist::L1::WolfPipelineExecutive(spec),
-          m_linguistRoles(std::move(linguistRoles)) {
+    WolfPipelineExecutive::WolfPipelineExecutive(srt::SingerSpec &spec, SingerLanguages languages)
+        : Api::Linguist::L1::WolfPipelineExecutive(spec), m_languages(std::move(languages)) {
+        m_handles.reserve(m_languages.entries.size());
+        for (const auto &entry : m_languages.entries) {
+            m_handles.push_back(entry.language);
+        }
     }
 
     WolfPipelineExecutive::~WolfPipelineExecutive() = default;
 
-    const std::vector<std::string> &WolfPipelineExecutive::linguistRoles() const {
-        return m_linguistRoles;
+    const std::vector<std::string> &WolfPipelineExecutive::languages() const {
+        return m_handles;
     }
 
     srt::Expected<Api::Linguist::L1::LinguistExecutive *> WolfPipelineExecutive::createLinguist(
-        std::string_view role, const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) {
-        if (std::find(m_linguistRoles.begin(), m_linguistRoles.end(), role) ==
-            m_linguistRoles.end()) {
+        std::string_view language,
+        const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) {
+        const auto entry = std::find_if(m_languages.entries.begin(), m_languages.entries.end(),
+                                        [&](const SingerLanguage &candidate) {
+                                            return candidate.language == language;
+                                        });
+        if (entry == m_languages.entries.end()) {
             return srt::Error(srt::Error::InvalidArgument,
-                              "singer does not import the requested linguist role");
+                              "the singer does not declare the language " + std::string(language));
         }
-        auto result = createChild(role, runtimeOptions);
-        if (!result) {
-            return result.takeError();
+        // The child comes from the import the language map points at, so the executive tree is
+        // built entirely out of declared imports.
+        auto child = createChild(entry->role, runtimeOptions);
+        if (!child) {
+            return child.takeError();
         }
-        return (*result)->as<Api::Linguist::L1::LinguistExecutive>();
+        return static_cast<Api::Linguist::L1::LinguistExecutive *>(child.take());
     }
 
 }

@@ -1,0 +1,10 @@
+{
+    "name": "wolfonset",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.Onset",
+            "level": 1,
+            "variant": "rule"
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 {
-    "name": "wolflinguist",
+    "name": "wolflinguistprovider",
     "interpreters": [
         {
             "interface": "org.openvpi.wolf.linguist.WolfLinguist",

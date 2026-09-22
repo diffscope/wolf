@@ -1,0 +1,4 @@
+{
+    "name": "wolfstubinference",
+    "interpreters": [@WOLF_STUB_INTERPRETERS@]
+}

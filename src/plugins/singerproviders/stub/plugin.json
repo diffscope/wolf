@@ -1,0 +1,10 @@
+{
+    "name": "wolfstubsinger",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.test.Singer",
+            "level": 1,
+            "variant": "stub"
+        }
+    ]
+}

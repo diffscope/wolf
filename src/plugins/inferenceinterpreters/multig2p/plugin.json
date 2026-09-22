@@ -1,0 +1,10 @@
+{
+    "name": "wolfmultig2p",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.G2P",
+            "level": 1,
+            "variant": "multig2p-onnx"
+        }
+    ]
+}

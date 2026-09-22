@@ -1,0 +1,20 @@
+{
+    "name": "wolfs2p",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.S2P",
+            "level": 1,
+            "variant": "direct"
+        },
+        {
+            "interface": "org.openvpi.wolf.inference.S2P",
+            "level": 1,
+            "variant": "dict"
+        },
+        {
+            "interface": "org.openvpi.wolf.inference.S2P",
+            "level": 1,
+            "variant": "mapping"
+        }
+    ]
+}
