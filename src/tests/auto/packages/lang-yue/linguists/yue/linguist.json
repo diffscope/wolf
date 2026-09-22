@@ -1,0 +1,14 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": "Cantonese",
+    "language": "yue",
+    "scheme": "jyutping",
+    "exports": { "phonemes": [] },
+    "configuration": {},
+    "imports": [
+        { "role": "linguist/g2p", "ref": ":inference/g2p" },
+        { "role": "linguist/s2p", "ref": ":inference/s2p" }
+    ]
+}

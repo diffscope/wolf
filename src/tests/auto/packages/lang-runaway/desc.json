@@ -1,0 +1,24 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-lang-runaway",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "contributions": {
+        "linguist": [
+            {
+                "id": "nld",
+                "path": "./linguists/nld/linguist.json"
+            }
+        ],
+        "inference": [
+            {
+                "id": "g2p",
+                "path": "./inferences/g2p/inference.json"
+            },
+            {
+                "id": "s2p",
+                "path": "./inferences/s2p/inference.json"
+            }
+        ]
+    }
+}

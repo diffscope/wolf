@@ -1,0 +1,27 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": "Pronunciation only",
+    "language": "nld",
+    "scheme": "ds",
+    "exports": {
+        "phonemes": [
+            "a",
+            "b",
+            "c",
+            "d"
+        ],
+        "openSet": false
+    },
+    "configuration": {},
+    "imports": [
+        {
+            "role": "linguist/g2p",
+            "ref": ":inference/g2p",
+            "options": {
+                "depth": 2
+            }
+        }
+    ]
+}

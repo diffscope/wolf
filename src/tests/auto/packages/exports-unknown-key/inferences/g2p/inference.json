@@ -1,0 +1,17 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Fixed output G2P",
+    "exports": {
+        "languages": [ { "language": "nld", "scheme": "ds" } ],
+        "symbols": [ "a", "b" ],
+        "openSet": false
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            { "step": "fallback", "params": { "useOriginal": false, "defaultPronunciation": "a b" } }
+        ]
+    }
+}

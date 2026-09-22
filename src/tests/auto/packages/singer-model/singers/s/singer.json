@@ -1,0 +1,21 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "name": "Stub Model Singer",
+    "languages": {
+        "eng": "lang/eng",
+        "deu": "lang/deu"
+    },
+    "defaultLanguage": "eng",
+    "imports": [
+        {
+            "role": "lang/eng",
+            "ref": "wolf/test-lang-model:linguist/eng"
+        },
+        {
+            "role": "lang/deu",
+            "ref": "wolf/test-lang-model:linguist/deu"
+        }
+    ]
+}

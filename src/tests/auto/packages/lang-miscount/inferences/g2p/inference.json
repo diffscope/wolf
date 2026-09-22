@@ -1,0 +1,8 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "stub-miscount",
+    "name": "Drops one word from every batch",
+    "exports": { "languages": [ { "language": "nld", "scheme": "ds" } ] },
+    "configuration": { "dropWords": 1 }
+}

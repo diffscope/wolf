@@ -1,0 +1,23 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": "Runaway",
+    "language": "nld",
+    "scheme": "test",
+    "exports": {
+        "phonemes": [],
+        "openSet": true
+    },
+    "configuration": {},
+    "imports": [
+        {
+            "role": "linguist/g2p",
+            "ref": ":inference/g2p"
+        },
+        {
+            "role": "linguist/s2p",
+            "ref": ":inference/s2p"
+        }
+    ]
+}

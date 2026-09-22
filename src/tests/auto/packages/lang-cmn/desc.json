@@ -1,0 +1,16 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-lang-cmn",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "contributions": {
+        "linguist": [ { "id": "cmn", "path": "./linguists/cmn/linguist.json" } ],
+        "inference": [
+            { "id": "g2p", "path": "./inferences/g2p/inference.json" },
+            { "id": "s2p", "path": "./inferences/s2p/inference.json" }
+        ]
+    },
+    "dependencies": [
+        { "id": "wolf/test-pinyin-engine", "version": "1.0.0.0" }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Cantonese G2P",
+    "exports": {
+        "languages": [ { "language": "yue", "scheme": "jyutping" } ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            {
+                "step": "verify",
+                "params": {
+                    "entries": [
+                        { "type": "regex", "value": ["([\\p{Han}])+"], "mode": "convert" }
+                    ]
+                }
+            },
+            { "step": "model", "params": { "role": "backend" } },
+            { "step": "fallback", "params": { "useOriginal": true } }
+        ]
+    },
+    "imports": [
+        { "role": "backend", "ref": "wolf/test-pinyin-engine:inference/pinyin" }
+    ]
+}

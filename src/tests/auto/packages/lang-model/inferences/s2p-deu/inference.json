@@ -1,0 +1,15 @@
+{
+    "interface": "org.openvpi.wolf.inference.S2P",
+    "level": 1,
+    "variant": "direct",
+    "name": "deu S2P",
+    "exports": {
+        "languages": [
+            {
+                "language": "deu",
+                "scheme": "ds"
+            }
+        ]
+    },
+    "configuration": {}
+}
