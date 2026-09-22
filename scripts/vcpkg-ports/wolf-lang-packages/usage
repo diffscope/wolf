@@ -1,0 +1,15 @@
+wolf-lang-packages provides language resource packages as data.
+
+    find_package(wolf-lang-packages CONFIG)
+
+    # A Package search root: one subdirectory per package.
+    #   WOLF_LANG_PACKAGES_DIR
+    #   WOLF_LANG_PACKAGES_INSTALLED   the suites the selected features brought in
+
+Select suites through features, for example wolf-lang-packages[cmn,jpn]. A suite whose G2P reaches
+a shared backend pulls that backend's feature in itself: cmn and yue bring in pinyin, the nine
+chain languages bring in multi.
+
+The packages are data. The interpreters that read them ship with wolf, and two of those need a
+library of their own at run time: the pinyin backend needs cpp-pinyin, the model backend needs
+dsinfer and an ONNX Runtime the host points it at.

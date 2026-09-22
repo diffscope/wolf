@@ -47,3 +47,5 @@ CMakeSettings.json
 /vcpkg
 /data
 /*.natvis
+# Language package conversion output. Artifacts go to releases, never into history.
+/build/lang-packages/
