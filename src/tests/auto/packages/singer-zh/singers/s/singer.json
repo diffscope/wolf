@@ -1,0 +1,21 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "name": "Stub Chinese Singer",
+    "languages": {
+        "cmn": "lang/cmn",
+        "yue": "lang/yue"
+    },
+    "defaultLanguage": "cmn",
+    "imports": [
+        {
+            "role": "lang/cmn",
+            "ref": "wolf/test-lang-cmn:linguist/cmn"
+        },
+        {
+            "role": "lang/yue",
+            "ref": "wolf/test-lang-yue:linguist/yue"
+        }
+    ]
+}

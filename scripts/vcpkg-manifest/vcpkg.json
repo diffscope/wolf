@@ -12,7 +12,7 @@
     ],
     "features": {
         "onnx": {
-            "description": "Build the model backed G2P variant, which needs dsinfer and its ONNX Runtime driver",
+            "description": "Build the model-backed G2P variant, which requires dsinfer and its ONNX Runtime driver",
             "dependencies": [
                 {
                     "name": "synthrt-main",
@@ -21,6 +21,12 @@
                         "onnx"
                     ]
                 }
+            ]
+        },
+        "lang-packages": {
+            "description": "Install the published language resource packages through the wolf-lang-packages port instead of setting WOLF_LANG_PACKAGES_SOURCE to a local copy.",
+            "dependencies": [
+                "wolf-lang-packages"
             ]
         },
         "tests": {

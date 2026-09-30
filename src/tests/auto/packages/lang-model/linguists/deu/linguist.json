@@ -1,0 +1,22 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": "deu",
+    "language": "deu",
+    "scheme": "ds",
+    "exports": {
+        "phonemes": []
+    },
+    "configuration": {},
+    "imports": [
+        {
+            "role": "linguist/g2p",
+            "ref": ":inference/strict"
+        },
+        {
+            "role": "linguist/s2p",
+            "ref": ":inference/s2p-deu"
+        }
+    ]
+}

@@ -1,0 +1,4 @@
+# The release script archives the authored packages in their checked-out form, and the
+# wolf-lang-packages port pins the archive hash. A fixed line ending on every host keeps that hash
+# identical across hosts.
+packages/** text eol=lf

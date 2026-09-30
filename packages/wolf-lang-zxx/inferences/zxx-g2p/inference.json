@@ -1,0 +1,28 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Passthrough G2P",
+    "exports": {
+        "languages": [
+            { "language": "zxx", "scheme": "passthrough" }
+        ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            {
+                "step": "verify",
+                "params": {
+                    "entries": [
+                        { "type": "regex", "value": ["(\\p{N})", "(\\p{P})", "([.]+)"], "mode": "copy" }
+                    ]
+                }
+            },
+            {
+                "step": "fallback",
+                "params": { "useOriginal": true }
+            }
+        ]
+    }
+}

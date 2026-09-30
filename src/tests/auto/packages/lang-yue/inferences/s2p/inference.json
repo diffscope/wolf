@@ -1,0 +1,10 @@
+{
+    "interface": "org.openvpi.wolf.inference.S2P",
+    "level": 1,
+    "variant": "direct",
+    "name": "Cantonese S2P",
+    "exports": {
+        "languages": [ { "language": "yue", "scheme": "jyutping" } ]
+    },
+    "configuration": {}
+}

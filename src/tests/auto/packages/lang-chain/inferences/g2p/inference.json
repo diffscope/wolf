@@ -1,0 +1,28 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Chain G2P",
+    "exports": {
+        "languages": [ { "language": "eng", "scheme": "arpabet" } ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            {
+                "step": "verify",
+                "params": {
+                    "entries": [
+                        { "type": "regex", "value": ["([A-Za-z]+)"], "mode": "convert" },
+                        { "type": "array", "value": ["-"], "mode": "copy" }
+                    ]
+                }
+            },
+            { "step": "dict",   "params": { "file": "./dict.txt" } },
+            { "step": "format", "params": { "operations": ["lowercase"] } },
+            { "step": "dict",   "params": { "file": "./dict.txt" } },
+            { "step": "dict",   "params": { "file": "./dict.txt" }, "enabled": false },
+            { "step": "fallback", "params": { "useOriginal": false, "defaultPronunciation": "" } }
+        ]
+    }
+}

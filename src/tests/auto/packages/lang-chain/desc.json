@@ -1,0 +1,36 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-lang-chain",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "contributions": {
+        "linguist": [
+            {
+                "id": "eng",
+                "path": "./linguists/eng/linguist.json"
+            },
+            {
+                "id": "deu",
+                "path": "./linguists/deu/linguist.json"
+            }
+        ],
+        "inference": [
+            {
+                "id": "g2p",
+                "path": "./inferences/g2p/inference.json"
+            },
+            {
+                "id": "s2p",
+                "path": "./inferences/s2p/inference.json"
+            },
+            {
+                "id": "nofallback",
+                "path": "./inferences/nofallback/inference.json"
+            },
+            {
+                "id": "s2p-deu",
+                "path": "./inferences/s2p-deu/inference.json"
+            }
+        ]
+    }
+}

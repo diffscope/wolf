@@ -1,0 +1,20 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "algo-pinyin",
+    "name": "Rival cpp-pinyin engine",
+    "exports": {
+        "languages": [
+            { "language": "cmn", "scheme": "pinyin" },
+            { "language": "yue", "scheme": "jyutping" }
+        ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "dictRoot": "./dict",
+        "languageMap": [
+            { "language": "cmn", "scheme": "pinyin", "ref": "mandarin" },
+            { "language": "yue", "scheme": "jyutping", "ref": "cantonese" }
+        ]
+    }
+}

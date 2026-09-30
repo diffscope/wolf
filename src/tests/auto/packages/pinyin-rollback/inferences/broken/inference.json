@@ -1,0 +1,11 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Fails after the pinyin module has claimed the dictionary root",
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [ { "step": "fallback" } ],
+        "thisKeyDoesNotExist": 1
+    }
+}

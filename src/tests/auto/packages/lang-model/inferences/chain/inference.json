@@ -1,0 +1,27 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "English G2P over the shared model",
+    "exports": {
+        "languages": [ { "language": "eng", "scheme": "arpabet" } ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            {
+                "step": "verify",
+                "params": {
+                    "entries": [
+                        { "type": "regex", "value": ["([A-Za-z']+)"], "mode": "convert" }
+                    ]
+                }
+            },
+            { "step": "model", "params": { "role": "backend" } },
+            { "step": "fallback", "params": { "useOriginal": true } }
+        ]
+    },
+    "imports": [
+        { "role": "backend", "ref": "wolf/g2p-multi:inference/multig2p" }
+    ]
+}

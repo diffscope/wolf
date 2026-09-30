@@ -47,3 +47,9 @@ CMakeSettings.json
 /vcpkg
 /data
 /*.natvis
+# Language package conversion output. The archives are published as release assets and are not
+# committed.
+/build/lang-packages/
+
+# Bytecode written when the scripts under scripts/ import their shared module.
+__pycache__/

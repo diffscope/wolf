@@ -1,0 +1,25 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "name": "Passthrough G2P",
+    "exports": {
+        "languages": [
+            {
+                "language": "nld",
+                "scheme": "test"
+            }
+        ]
+    },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [
+            {
+                "step": "fallback",
+                "params": {
+                    "useOriginal": true
+                }
+            }
+        ]
+    }
+}

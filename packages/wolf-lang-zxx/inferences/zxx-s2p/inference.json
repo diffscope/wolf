@@ -1,0 +1,12 @@
+{
+    "interface": "org.openvpi.wolf.inference.S2P",
+    "level": 1,
+    "variant": "direct",
+    "name": "Passthrough S2P",
+    "exports": {
+        "languages": [
+            { "language": "zxx", "scheme": "passthrough" }
+        ]
+    },
+    "configuration": {}
+}

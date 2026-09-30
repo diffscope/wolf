@@ -1,0 +1,22 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist",
+    "level": 1,
+    "variant": "wolf",
+    "name": "eng",
+    "language": "eng",
+    "scheme": "arpabet",
+    "exports": {
+        "phonemes": []
+    },
+    "configuration": {},
+    "imports": [
+        {
+            "role": "linguist/g2p",
+            "ref": ":inference/chain"
+        },
+        {
+            "role": "linguist/s2p",
+            "ref": ":inference/s2p-eng"
+        }
+    ]
+}
