@@ -2,9 +2,10 @@ include("conf.cmake")
 
 wolf_init_buildsystem()
 
-# Plugins install under lib/plugins/wolf/<category>/<name>/, the shape dsinfer uses for its own
-# (lib/plugins/dsinfer/...), so that every library layered on synthrt puts its plugins under one
-# root and a host deploys and searches one tree. The helper's default would be lib/wolf/plugins.
+# Plugins install under lib/plugins/wolf/<category>/<name>/, the layout that dsinfer uses for its
+# own plugins (lib/plugins/dsinfer/...), so that every library built on synthrt installs its
+# plugins under one root and a host deploys and searches a single tree. The default of the helper
+# would be lib/wolf/plugins.
 set(WOLF_BUILD_PLUGINS_DIR ${WOLF_BUILD_LIBRARY_DIR}/plugins/${WOLF_INSTALL_NAME})
 set(WOLF_INSTALL_PLUGINS_DIR ${WOLF_INSTALL_LIBRARY_DIR}/plugins/${WOLF_INSTALL_NAME})
 
@@ -16,16 +17,18 @@ if(WOLF_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-# The helper would write a version file that accepts any newer version. wolf promises no ABI
-# before 1.0, so a host built against one version must not be handed another: the CMake package
-# is written here with ExactVersion. The headers are installed here too, because the helper would
-# install everything under include/, and wolf/Support is not part of what a host is offered: those
-# headers are the library's own tools (the task face, manifest readers, the resource cache, the
-# verifier), shared with the plugins in this tree and free to change with them. What a host sees
-# is Api, Linguist and Session. The symbols behind Support follow the headers: the stateless
-# helpers live in the static wolfsupport library and are exported from no binary, and the two
-# pieces that must be one per process are exported under WOLF_INTERNAL_EXPORT, which promises
-# nothing (see lib/CMakeLists.txt and Support/SupportGlobal.h).
+# The helper would write a version file that accepts any newer version. Versions before 1.0 carry
+# no ABI guarantee, so a host built against one version must not load another; the CMake package
+# is therefore written here with ExactVersion. The headers are also installed here, because the
+# helper would install everything under include/, and wolf/Support is not part of the host
+# interface: those headers are internal tools of the library (the task face, manifest readers, the
+# resource cache, the verifier), shared with the plugins in this tree and subject to change
+# together with them. The host interface consists of Api, Linguist and Session. The symbols behind
+# Support follow the headers: the stateless helpers are compiled into the static wolfsupport
+# library and are exported from no binary, and the two components that must be unique per process
+# are exported under WOLF_INTERNAL_EXPORT, which carries no API or ABI guarantee (see
+# lib/CMakeLists.txt and Support/SupportGlobal.h). The consumer check in .github/consumer verifies
+# that the package contains no Support header.
 wolf_install(NO_EXPORT NO_INCLUDE)
 
 if(WOLF_INSTALL AND WOLF_DEVEL)
