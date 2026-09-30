@@ -1,11 +1,28 @@
 {
     "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
     "dependencies": [
+        "blake3",
+        "cpp-pinyin",
+        "luajit",
         "qmsetup",
+        "re2",
         "stdcorelib",
-        "stdcorelib-plugin"
+        "stdcorelib-plugin",
+        "synthrt-main"
     ],
     "features": {
+        "onnx": {
+            "description": "Build the model backed G2P variant, which needs dsinfer and its ONNX Runtime driver",
+            "dependencies": [
+                {
+                    "name": "synthrt-main",
+                    "default-features": false,
+                    "features": [
+                        "onnx"
+                    ]
+                }
+            ]
+        },
         "tests": {
             "description": "Enable test cases support",
             "dependencies": [
@@ -15,6 +32,7 @@
     },
     "vcpkg-configuration": {
         "overlay-ports": [
+            "../vcpkg-ports",
             "../vcpkg/ports"
         ],
         "overlay-triplets": [

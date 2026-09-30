@@ -1,0 +1,24 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/language-scheme.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Language and scheme pair",
+  "description": "The only matching key of this contract family. A scheme is scoped by the accompanying language, so the same scheme name under two languages denotes two different notations.",
+  "type": "object",
+  "properties": {
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{3}$",
+      "description": "ISO 639-3 code, including the private use range qaa-qtz."
+    },
+    "scheme": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Phonetic notation. The distribution document specifies the naming rules."
+    }
+  },
+  "required": [
+    "language",
+    "scheme"
+  ],
+  "additionalProperties": false
+}

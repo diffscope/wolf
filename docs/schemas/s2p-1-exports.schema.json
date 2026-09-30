@@ -1,0 +1,26 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/s2p-1-exports.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "org.openvpi.wolf.inference.S2P Level 1 exports",
+  "type": "object",
+  "properties": {
+    "languages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/language-scheme.schema.json"
+      },
+      "description": "Language pairs whose pronunciations this module can consume."
+    },
+    "phonemes": {
+      "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/string-set.schema.json",
+      "description": "Every phoneme that this module may output."
+    },
+    "openSet": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether output may fall outside the declared list. False, the default, indicates that the list is the complete output set. A chain whose last step outputs the original word if no step matched must set this flag to true, because its output set is unbounded and the list contains only the known part; a static comparison against the list is then incomplete rather than authoritative."
+    }
+  },
+  "additionalProperties": false
+}

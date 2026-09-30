@@ -1,0 +1,26 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/g2p-1-exports.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "org.openvpi.wolf.inference.G2P Level 1 exports",
+  "type": "object",
+  "properties": {
+    "languages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/language-scheme.schema.json"
+      },
+      "description": "Language pairs for which this module can produce pronunciations. If the field is omitted, the static match is disabled, and the host is expected to issue a warning."
+    },
+    "symbols": {
+      "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/string-set.schema.json",
+      "description": "The atomic symbols that this module may output. A pronunciation is split on spaces before counting; a string without spaces is one symbol. The list is complete unless openSet is true."
+    },
+    "openSet": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether output may fall outside the declared list. False, the default, indicates that the list is the complete output set. A chain whose last step outputs the original word if no step matched must set this flag to true, because its output set is unbounded and the list contains only the known part; a static comparison against the list is then incomplete rather than authoritative."
+    }
+  },
+  "additionalProperties": false
+}

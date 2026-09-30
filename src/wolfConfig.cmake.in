@@ -5,3 +5,20 @@ include(CMakeFindDependencyMacro)
 find_dependency(synthrt CONFIG REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/wolfTargets.cmake")
+
+# Where the plugin bundles were installed, one subdirectory per category
+# (linguistproviders). A host hands each category directory to
+# SynthUnit::setPluginPaths; it is a path and not a link target because plugins are loaded by
+# name at run time. The path is the plugin destination of the install rules, so the value is also
+# correct for a tree whose library directory is not lib.
+set(WOLF_PLUGINS_DIR "${PACKAGE_PREFIX_DIR}/@WOLF_INSTALL_PLUGINS_DIR@")
+
+# A vcpkg tree keeps its Debug build under a separate debug/ prefix, and a Debug host must load the
+# plugins under that prefix, because on Windows a plugin and a host built against different runtime
+# libraries cannot load each other. WOLF_PLUGINS_DIR continues to name the release tree, which is
+# the only tree in a plain install and the tree that existing consumers read. WOLF_PLUGINS_DIR_DEBUG
+# is defined only if a debug tree exists. A consumer can therefore select the directory per
+# configuration, and a consumer that reads only WOLF_PLUGINS_DIR is unaffected.
+if(IS_DIRECTORY "${PACKAGE_PREFIX_DIR}/debug/@WOLF_INSTALL_PLUGINS_DIR@")
+    set(WOLF_PLUGINS_DIR_DEBUG "${PACKAGE_PREFIX_DIR}/debug/@WOLF_INSTALL_PLUGINS_DIR@")
+endif()

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.19)
 
+# 0.1.0.0 carries the first batch of changes to public value types — LanguageStatus grew a
+# reachable depth and a coverage report, and the pipeline extension grew two virtuals. None of that
+# is ABI compatible with 0.0.1.0, and wolf makes no ABI promise before 1.0, so the number moves
+# with the change rather than after it. See README, "Versioning and ABI".
 project(wolf
-    VERSION 0.0.1.0
+    VERSION 0.1.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
     HOMEPAGE_URL "https://github.com/diffscope/wolf"
@@ -62,6 +66,8 @@ endif()
 qm_init_directories()
 
 find_package(synthrt CONFIG REQUIRED)
+find_package(blake3 CONFIG REQUIRED)
+find_package(re2 CONFIG REQUIRED)
 
 # ----------------------------------
 # Tests
