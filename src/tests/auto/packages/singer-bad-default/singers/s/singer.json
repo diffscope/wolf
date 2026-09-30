@@ -1,0 +1,19 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "languages": {
+        "cmn": "lang/a"
+    },
+    "defaultLanguage": "jpn",
+    "imports": [
+        {
+            "role": "lang/a",
+            "ref": ":linguist/cmn-pinyin"
+        },
+        {
+            "role": "lang/b",
+            "ref": ":linguist/jpn-romaji"
+        }
+    ]
+}

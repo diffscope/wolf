@@ -1,0 +1,5 @@
+{
+    "interface": "org.openvpi.wolf.inference.G2P", "level": 1, "variant": "pipe-chain",
+    "exports": {},
+    "configuration": { "formatVersion": 1, "steps": [ { "step": "fallback" } ] }
+}

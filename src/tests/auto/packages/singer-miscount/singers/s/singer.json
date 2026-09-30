@@ -1,0 +1,16 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "name": "Stub Singer",
+    "languages": {
+        "nld": "lang/nld"
+    },
+    "defaultLanguage": "nld",
+    "imports": [
+        {
+            "role": "lang/nld",
+            "ref": "wolf/test-lang-miscount:linguist/nld-ds"
+        }
+    ]
+}

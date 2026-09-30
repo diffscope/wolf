@@ -1,0 +1,15 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-lang-miscount",
+    "version": "1.0.0.0",
+    "compatVersion": "1.0.0.0",
+    "runtimeLevel": 1,
+    "description": "A language whose G2P returns fewer words than it was given. Nothing shipped can do that; the stub does it on request so the guards against it have something to fire on.",
+    "contributions": {
+        "linguist": [ { "id": "nld-ds", "path": "./linguists/x/linguist.json" } ],
+        "inference": [
+            { "id": "g2p", "path": "./inferences/g2p/inference.json" },
+            { "id": "s2p", "path": "./inferences/s2p/inference.json" }
+        ]
+    }
+}

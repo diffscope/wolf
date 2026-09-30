@@ -1,0 +1,10 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-compat-consumer-too-new",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "description": "Asks for a revision newer than anything installed, so it must not resolve. Without this the positive case would pass even if the loader ignored the requested version entirely.",
+    "dependencies": [
+        { "id": "wolf/test-compat-provider", "version": "1.0.0.4" }
+    ]
+}

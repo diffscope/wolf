@@ -1,0 +1,10 @@
+{
+    "interface": "org.openvpi.wolf.linguist.WolfLinguist", "level": 1, "variant": "wolf",
+    "language": "cmn", "scheme": "pinyin",
+    "exports": { "phonemes": [] },
+    "configuration": {},
+    "imports": [
+        { "role": "linguist/g2p", "ref": ":inference/g" },
+        { "role": "linguist/s2p", "ref": ":inference/s" }
+    ]
+}

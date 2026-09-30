@@ -1,0 +1,10 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-compat-consumer",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "description": "Stands in for a voicebank published against packaging revision 2 and never rebuilt.",
+    "dependencies": [
+        { "id": "wolf/test-compat-provider", "version": "1.0.0.2" }
+    ]
+}

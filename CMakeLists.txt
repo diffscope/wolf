@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.19)
 
-# 0.1.0.0 carries the first batch of changes to public value types — LanguageStatus grew a
-# reachable depth and a coverage report, and the pipeline extension grew two virtuals. None of that
-# is ABI compatible with 0.0.1.0, and wolf makes no ABI promise before 1.0, so the number moves
-# with the change rather than after it. See README, "Versioning and ABI".
+# 0.1.0.0 contains the first set of changes to public value types: LanguageStatus gained a
+# reachable depth and a coverage report, and the pipeline extension gained two virtual functions.
+# These changes are not ABI compatible with 0.0.1.0. Versions before 1.0 carry no ABI guarantee, so
+# the version is raised together with the change. See README, "Versioning and ABI".
 project(wolf
     VERSION 0.1.0.0
     LANGUAGES CXX
@@ -72,10 +72,10 @@ find_package(re2 CONFIG REQUIRED)
 # ----------------------------------
 # Optional inference backend
 # ----------------------------------
-# The model backed G2P variant runs its models through dsinfer's driver framework. dsinfer is
-# built by synthrt[onnx] and installs its own CMake package beside synthrt's, so it is found the
-# ordinary way. It is optional, and it can be refused even when it is installed: without that
-# there is no supported way to ask for the minimal build.
+# The model-backed G2P variant runs its models through the driver framework of dsinfer.
+# synthrt[onnx] builds dsinfer, which installs its own CMake package beside the synthrt package, so
+# find_package locates it. dsinfer is optional, and WOLF_DISABLE_DSINFER excludes it even if it is
+# installed; this option is the supported way to request the minimal build.
 option(WOLF_DISABLE_DSINFER "Build without dsinfer even if it is installed" OFF)
 option(WOLF_DISABLE_LUAJIT "Build without LuaJIT even if it is installed" OFF)
 
@@ -86,12 +86,13 @@ endif()
 if(TARGET dsinfer::dsinfer)
     set(WOLF_HAS_DSINFER ON)
     # The ONNX driver ships as a plugin under lib/plugins beside the library, not as a link
-    # target. The dsinfer package says where that tree is through DSINFER_PLUGINS_DIR; an older
-    # package that does not is searched for a lib/plugins/dsinfer tree above its config file,
-    # which is share/dsinfer in a vcpkg tree and lib/cmake/dsinfer in a plain install. A plugin
-    # search path holds one subdirectory per plugin, so this is the parent of the onnx directory.
-    # A vcpkg tree keeps its Debug build under a separate debug/ prefix. Tests hand the directory
-    # to the driver factory at run time.
+    # target. The dsinfer package specifies the location of that tree in DSINFER_PLUGINS_DIR. For
+    # an older package that does not define the variable, the directories above its config file
+    # are searched for a lib/plugins/dsinfer tree; the config file is in share/dsinfer in a vcpkg
+    # tree and in lib/cmake/dsinfer in a plain install. A plugin search path contains one
+    # subdirectory per plugin, so the resulting directory is the parent of the onnx directory. A
+    # vcpkg tree keeps its Debug build under a separate debug/ prefix. Tests pass the directory to
+    # the driver factory at run time.
     set(_wolf_dsinfer_plugins "")
     if(DEFINED DSINFER_PLUGINS_DIR AND IS_DIRECTORY "${DSINFER_PLUGINS_DIR}")
         set(_wolf_dsinfer_plugins "${DSINFER_PLUGINS_DIR}")
@@ -115,24 +116,23 @@ if(TARGET dsinfer::dsinfer)
             set(WOLF_DSINFER_DRIVER_DIR "${_wolf_dsinfer_plugins}/inferencedrivers")
         endif()
     else()
-        message(WARNING "dsinfer was found but its plugin tree was not; the model backed tests "
-                        "will skip for want of a driver")
+        message(WARNING "dsinfer was found, but its plugin tree was not; the model-backed tests "
+                        "will be skipped because no driver is available")
     endif()
     message(STATUS "dsinfer: ${dsinfer_DIR}")
 else()
     set(WOLF_HAS_DSINFER OFF)
     if(WOLF_DISABLE_DSINFER)
-        message(STATUS "dsinfer: disabled; the model backed G2P variant will not be built")
+        message(STATUS "dsinfer: disabled; the model-backed G2P variant will not be built")
     else()
-        message(STATUS "dsinfer: not found; the model backed G2P variant will not be built "
+        message(STATUS "dsinfer: not found; the model-backed G2P variant will not be built "
                        "(install synthrt with the onnx feature to enable it)")
     endif()
 endif()
 
-# The scripted variants embed LuaJIT, which ships a pkg-config file and no CMake package, so it
-# too is located by hand. Its headers live in a versioned subdirectory.
-# The versioned subdirectory is what the Unix makefile installs to; the vcpkg port on Windows uses
-# a plain luajit directory instead.
+# The scripted variants embed LuaJIT, which ships a pkg-config file but no CMake package, so it is
+# also located manually. The Unix makefile installs its headers in a versioned subdirectory
+# (luajit-2.1); the vcpkg port on Windows uses a plain luajit directory instead.
 find_path(WOLF_LUAJIT_INCLUDE_DIR
     NAMES lua.hpp
     PATH_SUFFIXES luajit-2.1 luajit
@@ -160,8 +160,9 @@ else()
     endif()
 endif()
 
-# Where the ONNX Runtime payload was deployed, so tests can hand it to the driver. The driver
-# loads the library itself at run time, which is why this is a directory and not a link target.
+# The directory to which the ONNX Runtime payload was deployed, so that tests can pass it to the
+# driver. The driver loads the library at run time, so the value is a directory and not a link
+# target.
 find_package(onnxruntime-builds CONFIG QUIET)
 if(onnxruntime-builds_FOUND)
     set(WOLF_ONNXRUNTIME_DIR "${ONNXRUNTIME_BUILDS_RUNTIME_DIR}")
@@ -179,6 +180,11 @@ endif()
 set(WOLF_LANG_PACKAGES_SOURCE "" CACHE PATH
     "Unpacked language packages to use instead of the wolf-lang-packages port")
 
+# The voicebank-shaped fixture that scripts/make-voicebank-fixture.py generates from those
+# packages. Only the host flow test reads it, and that test is skipped if the variable is empty.
+set(WOLF_VOICEBANK_FIXTURE_SOURCE "" CACHE PATH
+    "Generated voicebank fixture for the host flow test")
+
 if(NOT WOLF_LANG_PACKAGES_SOURCE)
     find_package(wolf-lang-packages CONFIG QUIET)
     if(wolf-lang-packages_FOUND)
@@ -189,7 +195,7 @@ endif()
 if(WOLF_LANG_PACKAGES_SOURCE)
     message(STATUS "Language packages: ${WOLF_LANG_PACKAGES_SOURCE}")
 else()
-    message(STATUS "Language packages: none; tests that need them will skip")
+    message(STATUS "Language packages: none; tests that require them will be skipped")
 endif()
 
 # ----------------------------------

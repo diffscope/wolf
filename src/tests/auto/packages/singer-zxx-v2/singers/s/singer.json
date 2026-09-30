@@ -1,0 +1,16 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "name": "Stub Singer",
+    "languages": {
+        "zxx": "lang/passthrough"
+    },
+    "defaultLanguage": "zxx",
+    "imports": [
+        {
+            "role": "lang/passthrough",
+            "ref": "wolf/lang-zxx:linguist/zxx-passthrough"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-lang-shallow",
+    "version": "1.0.0.0",
+    "compatVersion": "1.0.0.0",
+    "runtimeLevel": 1,
+    "description": "A language whose composition stops at the pronunciation layer: it declares no linguist/s2p role, which is the shape a language package has when a voicebank supplies the phoneme stage.",
+    "contributions": {
+        "linguist": [ { "id": "nld-ds", "path": "./linguists/x/linguist.json" } ],
+        "inference": [ { "id": "g2p", "path": "./inferences/g2p/inference.json" } ]
+    }
+}

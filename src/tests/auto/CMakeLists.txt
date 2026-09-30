@@ -1,13 +1,14 @@
 include("${SYNTHRT_MODULES_DIR}/AddAutoTest.cmake")
 
-# One directory per layer, so that a name says what a failure is about. Support holds pure units
-# that know nothing of the linguist category; Linguist the category, its declarations and its
-# provider; Inference the chain and the variant interpreters; Runtime the executive tree and the
-# session; EndToEnd the walks over generated packages. Every test shares TestSupport.h from here.
+# One directory per layer, so that the path of a test identifies the layer of a failure. Support
+# contains pure units independent of the linguist category; Linguist the category, its declarations
+# and its provider; Inference the chain and the variant interpreters; Runtime the executive tree
+# and the session; EndToEnd the walks over generated packages. Every test uses TestSupport.h from
+# this directory.
 
-# Registers one test and records its target, so that the settings every test needs below are
-# applied to exactly the tests that exist. A hand kept second list of names was the alternative,
-# and a test missing from it silently lost its environment.
+# Registers a test and records its target, so that the common settings below apply to exactly the
+# tests that exist. The alternative was a manually maintained second list of names, and a test
+# missing from that list silently lost its environment.
 set(_wolf_tests "")
 macro(wolf_add_test _source)
     add_auto_test(${_source} ${ARGN})
@@ -16,23 +17,27 @@ macro(wolf_add_test _source)
 endmacro()
 
 # The stateless helpers are not exported from libwolf; their tests link the static library that
-# carries them, as the plugins do.
+# contains them, as the plugins do.
 wolf_add_test(Support/test_ManifestValues.cpp wolf wolfsupport)
 wolf_add_test(Support/test_Verifier.cpp wolf wolfsupport)
 wolf_add_test(Support/test_ResourceCache.cpp wolf)
 if(TARGET test_ResourceCache)
-    # The test reads the cache's private state through the probe ResourceCache befriends.
+    # The test reads the private state of the cache through the probe class that ResourceCache
+    # declares as a friend.
     target_include_directories(test_ResourceCache PRIVATE "${WOLF_SOURCE_DIR}/src/lib/Support")
 endif()
 
 wolf_add_test(Linguist/test_LinguistContrib.cpp wolf)
+wolf_add_test(Linguist/test_LinguistIdentity.cpp wolf)
+wolf_add_test(Linguist/test_LinguistLoad.cpp wolf)
 wolf_add_test(Linguist/test_LinguistProvider.cpp wolf)
 
 wolf_add_test(Inference/test_OnsetRules.cpp wolf)
 wolf_add_test(Inference/test_S2PVariants.cpp wolf)
 wolf_add_test(Inference/test_PipeChain.cpp wolf)
 wolf_add_test(Inference/test_PinyinBackend.cpp wolf)
-# Each needs the library its variants embed, so each exists only in a build that carries it.
+# Each of these tests requires the library that its variants embed and is built only if that
+# library is available.
 if(WOLF_HAS_LUAJIT)
     wolf_add_test(Inference/test_LuaVariants.cpp wolf)
 endif()
@@ -40,17 +45,23 @@ if(WOLF_HAS_DSINFER)
     wolf_add_test(Inference/test_MultiG2P.cpp wolf dsinfer::dsinfer)
 endif()
 
-# The tests load the library under test, synthrt, its stdcorelib dependencies and, where present,
-# dsinfer and ONNX Runtime at run time. Windows resolves those through PATH; the ELF and Mach-O
-# loaders need their own variables, so name all three. Every test target gets the same
-# environment: a test that forgot to be listed would start on Linux, where the build tree carries
-# an rpath, and fail on Windows, where it does not; wolf_add_test() is what keeps every test on
-# the list.
+wolf_add_test(Runtime/test_LinguistRuntime.cpp wolf)
+wolf_add_test(Runtime/test_LinguistSession.cpp wolf)
+
+wolf_add_test(EndToEnd/test_ConvertedPackages.cpp wolf)
+wolf_add_test(EndToEnd/test_HostFlow.cpp wolf)
+
+# The tests load the library under test, synthrt, its stdcorelib dependencies and, if present,
+# dsinfer and ONNX Runtime at run time. Windows resolves these libraries through PATH; the ELF and
+# Mach-O loaders use their own variables, so all three variables are set. Every test target
+# receives the same environment: an unlisted test would start on Linux, where the build tree
+# carries an rpath, and fail on Windows, where it does not; wolf_add_test() ensures that every test
+# is listed.
 #
 # This covers the executables. A plugin loaded at run time resolves its own dependencies through
-# the loader's search path for plugins, which on Windows is the plugin's directory, the
-# executable's directory and the directories the host registered, not PATH. A deployment puts
-# the libraries a plugin needs beside the executable or registers their directory.
+# the plugin search path of the loader, which on Windows consists of the plugin directory, the
+# executable directory and the directories that the host registered, but not PATH. A deployment
+# places the libraries that a plugin requires beside the executable or registers their directory.
 set(_wolf_test_runtime_dirs
     "$<TARGET_FILE_DIR:wolf>"
     "$<TARGET_FILE_DIR:synthrt::synthrt>"
@@ -77,15 +88,18 @@ foreach(_test IN LISTS _wolf_tests)
     endif()
 endforeach()
 
-# Where the generated data is. Passed as environment rather than compiled in, so pointing a test
-# at a different copy needs no rebuild, and a tree without the data skips instead of looking
-# somewhere else. The tests that need it exit with 77 when it is absent, which ctest shows as a
-# skip rather than a pass.
+# The location of the generated data. It is passed through the environment rather than compiled
+# in, so that pointing a test at a different copy requires no rebuild, and a tree without the data
+# skips the tests instead of searching elsewhere. The tests that require the data exit with 77 if
+# it is absent, which ctest reports as a skip rather than a pass.
 set(_wolf_data_env "")
 if(WOLF_LANG_PACKAGES_SOURCE)
     list(APPEND _wolf_data_env "WOLF_LANG_PACKAGES_SOURCE=${WOLF_LANG_PACKAGES_SOURCE}")
 endif()
-foreach(_test IN ITEMS test_MultiG2P)
+if(WOLF_VOICEBANK_FIXTURE_SOURCE)
+    list(APPEND _wolf_data_env "WOLF_VOICEBANK_FIXTURE_SOURCE=${WOLF_VOICEBANK_FIXTURE_SOURCE}")
+endif()
+foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2P)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES SKIP_RETURN_CODE 77)
         if(_wolf_data_env)
@@ -94,17 +108,17 @@ foreach(_test IN ITEMS test_MultiG2P)
     endif()
 endforeach()
 
-# Tests that run executives on worker threads, or deliberately stop a stage that never returns on
-# its own, carry a timeout: if an interrupt or a wait ever stops working the test must fail rather
-# than hang the build.
-foreach(_test IN ITEMS test_PipeChain test_LuaVariants)
+# Tests that run executives on worker threads, or intentionally stop a stage that does not return
+# by itself, have a timeout: if an interrupt or a wait stops working, the test must fail instead of
+# hanging the build.
+foreach(_test IN ITEMS test_PipeChain test_LuaVariants test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES TIMEOUT 120)
     endif()
 endforeach()
 
-# A plugin search path holds one subdirectory per plugin, so the paths handed to the tests are the
-# parents of the plugin directories.
+# A plugin search path contains one subdirectory per plugin, so the paths passed to the tests are
+# the parents of the plugin directories.
 set(_wolf_fixture_dir "${CMAKE_CURRENT_SOURCE_DIR}/packages")
 set(_wolf_linguist_plugins "$<TARGET_FILE_DIR:wolflinguistprovider>/..")
 set(_wolf_singer_plugins "$<TARGET_FILE_DIR:wolfstubsinger>/..")
@@ -114,6 +128,54 @@ if(TARGET test_LinguistProvider)
     target_compile_definitions(test_LinguistProvider PRIVATE
         WOLF_TEST_PLUGIN_FILE="$<TARGET_FILE:wolflinguistprovider>"
         WOLF_TEST_PLUGIN_DIR="$<TARGET_FILE_DIR:wolflinguistprovider>"
+    )
+endif()
+
+if(TARGET test_LinguistIdentity)
+    target_compile_definitions(test_LinguistIdentity PRIVATE
+        WOLF_TEST_PACKAGE_DIR="${WOLF_SOURCE_DIR}/packages"
+        WOLF_TEST_FIXTURE_DIR="${_wolf_fixture_dir}"
+    )
+endif()
+
+if(TARGET test_LinguistLoad)
+    add_dependencies(test_LinguistLoad wolflinguistprovider wolfstubinference wolfs2p wolfchain
+                     wolfpinyin wolfonset wolfstubsinger)
+    if(WOLF_HAS_LUAJIT)
+        add_dependencies(test_LinguistLoad wolflua)
+        target_compile_definitions(test_LinguistLoad PRIVATE WOLF_TEST_HAS_LUAJIT=1)
+    endif()
+    if(WOLF_HAS_DSINFER)
+        add_dependencies(test_LinguistLoad wolfmultig2p)
+    endif()
+    target_compile_definitions(test_LinguistLoad PRIVATE
+        WOLF_TEST_PACKAGE_DIR="${WOLF_SOURCE_DIR}/packages"
+        WOLF_TEST_FIXTURE_DIR="${_wolf_fixture_dir}"
+        WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
+        WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
+    )
+endif()
+
+foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
+    if(TARGET ${_test})
+        add_dependencies(${_test} wolflinguistprovider wolfstubinference wolfstubsinger wolfs2p)
+        target_compile_definitions(${_test} PRIVATE
+            WOLF_TEST_PACKAGE_DIR="${WOLF_SOURCE_DIR}/packages"
+            WOLF_TEST_FIXTURE_DIR="${_wolf_fixture_dir}"
+            WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
+            WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
+            WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
+        )
+    endif()
+endforeach()
+
+if(TARGET test_ConvertedPackages)
+    add_dependencies(test_ConvertedPackages wolflinguistprovider wolfstubinference wolfs2p)
+    target_compile_definitions(test_ConvertedPackages PRIVATE
+        WOLF_TEST_PACKAGE_DIR="${WOLF_SOURCE_DIR}/packages"
+        WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
     )
 endif()
 
@@ -131,14 +193,14 @@ if(TARGET test_OnsetRules)
     )
 endif()
 
-# The chain and the engine are exercised through the whole tree: a singer declares a language, the
-# language declares a chain, and the chain reaches its backend through an import. Nothing below
-# that is reachable from a test any other way.
+# The chain and the engine are exercised through the complete tree: a singer declares a language,
+# the language declares a chain, and the chain reaches its backend through an import. The
+# components below that level are not reachable from a test in any other way.
 foreach(_test IN ITEMS test_PipeChain test_PinyinBackend)
     if(TARGET ${_test})
         add_dependencies(${_test} wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfstubsinger)
-        # One case needs a package whose phoneme stage is a script, which cannot load at all
-        # without the scripted variants.
+        # One case requires a package whose phoneme stage is a script, which cannot load without
+        # the scripted variants.
         if(WOLF_HAS_LUAJIT)
             add_dependencies(${_test} wolflua)
             target_compile_definitions(${_test} PRIVATE WOLF_TEST_HAS_LUAJIT=1)
@@ -162,6 +224,18 @@ if(TARGET test_MultiG2P)
         WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
         WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
         WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"
+    )
+endif()
+
+# Walks the domain as a host does, over the converted packages and the voicebank-shaped fixture
+# that completes them. Both are generated rather than committed.
+if(TARGET test_HostFlow)
+    add_dependencies(test_HostFlow wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfonset
+                     wolfstubsinger)
+    target_compile_definitions(test_HostFlow PRIVATE
+        WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
+        WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
     )
 endif()
 

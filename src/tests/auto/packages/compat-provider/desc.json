@@ -1,0 +1,8 @@
+{
+    "$version": "1.0",
+    "id": "wolf/test-compat-provider",
+    "version": "1.0.0.3",
+    "compatVersion": "1.0.0.0",
+    "runtimeLevel": 1,
+    "description": "Stands in for a language package at packaging revision 3, whose compatibility floor is revision 0. It carries no contributions: the subject is version resolution, nothing else."
+}
