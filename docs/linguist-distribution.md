@@ -769,7 +769,7 @@ Package，提供者缺失报告 `FeatureNotSupported`，即找不到提供者（
 | :-- | :-- | :-- |
 | `libsynthrt-dsinfer` | `synthrt-main[onnx]` | 链接期，随 wolf 插件解析 |
 | 驱动插件 `libonnxdriver` | `synthrt-main[onnx]`，安装到 `lib/plugins/dsinfer/inferencedrivers/onnx/` | **宿主**把 `inferencedrivers` 目录传给 `ds::InferenceDriverFactory::setPluginPaths` |
-| ONNX Runtime 动态库 | `onnxruntime-builds`，安装到 `share/onnxruntime-builds/runtime/default/` | **宿主**把该目录作为 `DriverInitArgs::runtimePath` 传入 |
+| ONNX Runtime 动态库 | `onnxruntime-builds` 安装到 `share/onnxruntime-builds/runtime/default/`；宿主把它部署到**驱动插件所在目录**下的 `runtime/`（只有 CUDA 载荷多一层 `cuda/`，见 ds-editor-lite 的 `src/libs/SynthrtEngine/DeployLayout.h:41,46`） | **宿主**把**部署后**的 `<驱动插件目录>/runtime` 作为 `DriverInitArgs::runtimePath` 传入 |
 
 第三个组件在运行期经 `dlopen` 加载（`ORT_API_MANUAL_INIT`），**构建期不链接**，因此构建成功不代表
 运行期可用。三个组件齐备后宿主才注册 Runtime Service，模块才能取得驱动（A36）。

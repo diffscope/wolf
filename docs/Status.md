@@ -108,9 +108,12 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 | 宿主对接 | `test_HostFlow` 以真实迁移资源完成「取发音 → 用户改写 → 取音素与 onset」流程 |
 
 **CI**（`.github/workflows/ci.yml`）：在 `ubuntu-24.04`（`x64-linux`）与 `windows-2022`
-（`x64-windows`）上以 `onnx` 与 `tests` 特性安装依赖并构建；依次运行声明 lint 的自测、对
-`packages/wolf-lang-zxx` 的 lint、CTest 与安装包消费检查。CI 不启用 `lang-packages` 特性，
-依赖语言包数据的测试在 CI 中报告为跳过。
+（`x64-windows`）上构建；Linux 端以 `onnx`、`tests` 与 `lang-packages` 特性安装依赖，Windows
+端只启用 `onnx` 与 `tests`。随后依次运行声明 lint 的自测、对 `packages/wolf-lang-zxx` 的 lint、
+发布 pin 与仓内副本的一致性检查（`check-release-assets.py`）、CTest 与安装包消费检查。
+`lang-packages` 是唯一**下载并校验**语言包发布资产的步骤，`test_ConvertedPackages` 因此只在
+Linux 端真跑；`test_MultiG2P` 与 `test_HostFlow` 需要 CI 不提供的模型包与声库夹具，两端都报
+跳过（`.github/workflows/ci.yml:21-31,65-79,92-96`）。
 
 ## 工具
 

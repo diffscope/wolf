@@ -32,11 +32,16 @@
    本地 `dist/` 的 15 个归档与 `assets.cmake` 的 pin **15/15 SHA512 一致**（两轮独立复算）。
    17 个 ctest 用例中只有 3 个依赖下载数据，也只有它们设 `SKIP_RETURN_CODE 77`。
    （**2026-10-03 订正**：该属性现在设在 `src/tests/auto/CMakeLists.txt` 那份 ITEMS 清单所列的**全部测试**上，
-   其中有 7 个读的 `WOLF_TEST_FIXTURES_SOURCE` 是一次性夹具；下面"3 个端到端用例在 CI 中恒被跳过"同样不再成立——
-   CI 已加 "Generate the test fixture packages" 步骤并把该变量传进 Configure。）
+   其中有 7 个读的 `WOLF_TEST_FIXTURES_SOURCE` 是一次性夹具，CI 已加 "Generate the test fixture packages"
+   步骤并把该变量传进 Configure；下面"3 个端到端用例在 CI 中恒被跳过"现在只对其中两个成立——
+   `test_ConvertedPackages` 在 Linux 端真实运行，原因是该 leg 启用了 `lang-packages`（它的跳过门只看
+   `WOLF_LANG_PACKAGES_SOURCE`，来自语言包端口的 config 包，与夹具步骤无关）；`test_MultiG2P`
+   与 `test_HostFlow` 仍跳过（§3.2、§6）。）
 3. **缺的是闭环，不是机制**：CI 两个 leg 都不启用 `lang-packages`（`.github/workflows/ci.yml:23,27`），
    因此 3 个端到端用例在 CI 中恒被跳过（`docs/Status.md:112-113` 自认），pin 的 URL 与 SHA512 从未被自动化
    触碰；发布动作（打 tag + 上传资产）无自动化；pin ↔ manifest ↔ 文档表之间无机检。
+   （**时效注 2026-10-03**：G1 已落地——Linux 端现启用 `lang-packages`（`.github/workflows/ci.yml:26`），
+   `docs/Status.md` 的 CI 段已同步改写；上面"两个 leg 都不启用"与所引 `:23,27` 是方案制定时的现状，见 §3.2 与 §7。）
 4. **原以为的两处红灯，实际只有一处**（详见 §3.1）：一处是上游 `synthrt` 的**拒绝文案漂移**（wolf 无缺陷），
    已在批 1 修好并使门禁转绿；另一处是**本文档体系自己的门禁脚本 bug**（`if (...)` 块内 `%ERRORLEVEL%`
    解析期展开），修好后 HostFlow 真实退出码为 0。
