@@ -59,6 +59,11 @@ namespace wolf {
             auto result = m_body(static_cast<const Input &>(input));
             if (!result) {
                 setState(Failed);
+                // The cancelled callback runs after every run, a failed one included: it calls
+                // onSettled(), which the base class documents as running once after every run, and
+                // it consumes the stop flag. Consuming it here is what keeps a stop that arrived
+                // during this run from cancelling the next one.
+                (void) m_cancelled();
                 return result.takeError();
             }
             setState(m_cancelled() ? Canceled : Succeeded);

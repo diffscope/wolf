@@ -1,11 +1,21 @@
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include <synthrt/SVS/SingerProvider.h>
 #include <synthrt/SVS/SingerProviderPlugin.h>
 
 namespace wolf::stub {
+
+    /// The contract that `plugin.json` declares for this plugin.
+    ///
+    /// The plugin metadata and this class have to agree on the triple: the loader matches a
+    /// declaration against the metadata before it reaches this class, so a drift here would
+    /// otherwise be invisible until something else compared the two.
+    inline constexpr std::string_view INTERFACE = "org.openvpi.wolf.test.Singer";
+    inline constexpr int LEVEL = 1;
+    inline constexpr std::string_view VARIANT = "stub";
 
     /// Singer provider that accepts any configuration.
     ///
@@ -44,6 +54,9 @@ namespace wolf::stub {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
+            if (interfaceName != INTERFACE || level != LEVEL || variant != VARIANT) {
+                return srt::Error(srt::Error::InvalidArgument, "unsupported stub singer contract");
+            }
             return std::unique_ptr<srt::ContribInterpreter>(
                 new StubSingerProvider(std::string(interfaceName), std::string(variant), level));
         }

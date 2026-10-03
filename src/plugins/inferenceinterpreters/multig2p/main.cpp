@@ -1,4 +1,5 @@
 #include <atomic>
+#include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -214,11 +215,16 @@ namespace wolf::multig2p {
                         }
                         mapped = languageMap.take();
                     } else if (key == "maxLen") {
-                        if (!item.isInt() || item.toInt() < 1) {
+                        // The decoder counts steps with an `int` (`Decoder.cpp`:287), so a value
+                        // that does not fit one is rejected instead of being narrowed: it would
+                        // become zero or negative, the loop would not run at all, and every word
+                        // would come back as its first token alone.
+                        const auto length = item.isInt() ? item.toInt() : 0;
+                        if (length < 1 || length > std::numeric_limits<int>::max()) {
                             return srt::Error(srt::Error::InvalidFormat,
-                                              "maxLen must be a positive integer");
+                                              "maxLen must be a positive integer that fits an int");
                         }
-                        result->maxLength = static_cast<int>(item.toInt());
+                        result->maxLength = static_cast<int>(length);
                     } else if (key == "beamSize" || key == "topK") {
                         // Both keys widen the search, which only beam decoding performs. This
                         // build decodes greedily, so accepting a wider setting and silently

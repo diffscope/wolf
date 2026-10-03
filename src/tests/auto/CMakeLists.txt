@@ -20,6 +20,7 @@ endmacro()
 # contains them, as the plugins do.
 wolf_add_test(Support/test_ManifestValues.cpp wolf wolfsupport)
 wolf_add_test(Support/test_Verifier.cpp wolf wolfsupport)
+wolf_add_test(Support/test_ExecutiveTask.cpp wolf wolfsupport)
 wolf_add_test(Support/test_ResourceCache.cpp wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache
