@@ -1,0 +1,21 @@
+{
+  "$id": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/linguist-1-exports.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "org.openvpi.wolf.linguist.WolfLinguist Level 1 exports",
+  "type": "object",
+  "properties": {
+    "phonemes": {
+      "$ref": "https://raw.githubusercontent.com/diffscope/wolf/main/docs/schemas/string-set.schema.json",
+      "description": "The content phonemes with which the closed chain of the language can end. Reserved phonemes such as SP, AP and EP are not listed. The list is complete unless openSet is true."
+    },
+    "openSet": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether output may fall outside the declared list. False, the default, indicates that the list is the complete output set. A chain whose last step outputs the original word if no step matched must set this flag to true, because its output set is unbounded and the list contains only the known part; a static comparison against the list is then incomplete rather than authoritative."
+    }
+  },
+  "required": [
+    "phonemes"
+  ],
+  "additionalProperties": false
+}

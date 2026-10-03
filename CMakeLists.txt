@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.19)
 
+# 0.1.0.0 contains the first set of changes to public value types: LanguageStatus gained a
+# reachable depth and a coverage report, and the pipeline extension gained two virtual functions.
+# These changes are not ABI compatible with 0.0.1.0. Versions before 1.0 carry no ABI guarantee, so
+# the version is raised together with the change. See README, "Versioning and ABI".
 project(wolf
-    VERSION 0.0.1.0
+    VERSION 0.1.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
     HOMEPAGE_URL "https://github.com/diffscope/wolf"
@@ -62,6 +66,144 @@ endif()
 qm_init_directories()
 
 find_package(synthrt CONFIG REQUIRED)
+find_package(blake3 CONFIG REQUIRED)
+find_package(re2 CONFIG REQUIRED)
+
+# ----------------------------------
+# Optional inference backend
+# ----------------------------------
+# The model-backed G2P variant runs its models through the driver framework of dsinfer.
+# synthrt[onnx] builds dsinfer, which installs its own CMake package beside the synthrt package, so
+# find_package locates it. dsinfer is optional, and WOLF_DISABLE_DSINFER excludes it even if it is
+# installed; this option is the supported way to request the minimal build.
+option(WOLF_DISABLE_DSINFER "Build without dsinfer even if it is installed" OFF)
+option(WOLF_DISABLE_LUAJIT "Build without LuaJIT even if it is installed" OFF)
+
+if(NOT WOLF_DISABLE_DSINFER)
+    find_package(dsinfer CONFIG QUIET)
+endif()
+
+if(TARGET dsinfer::dsinfer)
+    set(WOLF_HAS_DSINFER ON)
+    # The ONNX driver ships as a plugin under lib/plugins beside the library, not as a link
+    # target. The dsinfer package specifies the location of that tree in DSINFER_PLUGINS_DIR. For
+    # an older package that does not define the variable, the directories above its config file
+    # are searched for a lib/plugins/dsinfer tree; the config file is in share/dsinfer in a vcpkg
+    # tree and in lib/cmake/dsinfer in a plain install. A plugin search path contains one
+    # subdirectory per plugin, so the resulting directory is the parent of the onnx directory. A
+    # vcpkg tree keeps its Debug build under a separate debug/ prefix. Tests pass the directory to
+    # the driver factory at run time.
+    set(_wolf_dsinfer_plugins "")
+    if(DEFINED DSINFER_PLUGINS_DIR AND IS_DIRECTORY "${DSINFER_PLUGINS_DIR}")
+        set(_wolf_dsinfer_plugins "${DSINFER_PLUGINS_DIR}")
+    else()
+        set(_wolf_dsinfer_prefix "${dsinfer_DIR}")
+        foreach(_step RANGE 3)
+            get_filename_component(_wolf_dsinfer_prefix "${_wolf_dsinfer_prefix}" DIRECTORY)
+            if(IS_DIRECTORY "${_wolf_dsinfer_prefix}/lib/plugins/dsinfer")
+                set(_wolf_dsinfer_plugins "${_wolf_dsinfer_prefix}/lib/plugins/dsinfer")
+                break()
+            endif()
+        endforeach()
+    endif()
+    set(WOLF_DSINFER_DRIVER_DIR "")
+    if(_wolf_dsinfer_plugins)
+        get_filename_component(_wolf_dsinfer_prefix "${_wolf_dsinfer_plugins}/../../.." ABSOLUTE)
+        if(IS_DIRECTORY "${_wolf_dsinfer_prefix}/debug/lib/plugins/dsinfer")
+            set(WOLF_DSINFER_DRIVER_DIR
+                "${_wolf_dsinfer_prefix}/$<$<CONFIG:Debug>:debug/>lib/plugins/dsinfer/inferencedrivers")
+        else()
+            set(WOLF_DSINFER_DRIVER_DIR "${_wolf_dsinfer_plugins}/inferencedrivers")
+        endif()
+    else()
+        message(WARNING "dsinfer was found, but its plugin tree was not; the model-backed tests "
+                        "will be skipped because no driver is available")
+    endif()
+    message(STATUS "dsinfer: ${dsinfer_DIR}")
+else()
+    set(WOLF_HAS_DSINFER OFF)
+    if(WOLF_DISABLE_DSINFER)
+        message(STATUS "dsinfer: disabled; the model-backed G2P variant will not be built")
+    else()
+        message(STATUS "dsinfer: not found; the model-backed G2P variant will not be built "
+                       "(install synthrt with the onnx feature to enable it)")
+    endif()
+endif()
+
+# The scripted variants embed LuaJIT, which ships a pkg-config file but no CMake package, so it is
+# also located manually. The Unix makefile installs its headers in a versioned subdirectory
+# (luajit-2.1); the vcpkg port on Windows uses a plain luajit directory instead.
+find_path(WOLF_LUAJIT_INCLUDE_DIR
+    NAMES lua.hpp
+    PATH_SUFFIXES luajit-2.1 luajit
+)
+find_library(WOLF_LUAJIT_LIBRARY
+    NAMES luajit-5.1 lua51 luajit
+)
+
+if(WOLF_LUAJIT_INCLUDE_DIR AND WOLF_LUAJIT_LIBRARY AND NOT WOLF_DISABLE_LUAJIT)
+    set(WOLF_HAS_LUAJIT ON)
+    if(NOT TARGET wolf::luajit)
+        add_library(wolf::luajit UNKNOWN IMPORTED)
+        set_target_properties(wolf::luajit PROPERTIES
+            IMPORTED_LOCATION "${WOLF_LUAJIT_LIBRARY}"
+            INTERFACE_INCLUDE_DIRECTORIES "${WOLF_LUAJIT_INCLUDE_DIR}"
+        )
+    endif()
+    message(STATUS "LuaJIT: ${WOLF_LUAJIT_LIBRARY}")
+else()
+    set(WOLF_HAS_LUAJIT OFF)
+    if(WOLF_DISABLE_LUAJIT)
+        message(STATUS "LuaJIT: disabled; the scripted variants will not be built")
+    else()
+        message(STATUS "LuaJIT: not found; the scripted variants will not be built")
+    endif()
+endif()
+
+# The directory to which the ONNX Runtime payload was deployed, so that tests can pass it to the
+# driver. The driver loads the library at run time, so the value is a directory and not a link
+# target.
+find_package(onnxruntime-builds CONFIG QUIET)
+if(onnxruntime-builds_FOUND)
+    set(WOLF_ONNXRUNTIME_DIR "${ONNXRUNTIME_BUILDS_RUNTIME_DIR}")
+    message(STATUS "ONNX Runtime: ${WOLF_ONNXRUNTIME_DIR}")
+else()
+    set(WOLF_ONNXRUNTIME_DIR "")
+endif()
+
+# ----------------------------------
+# Language package data
+# ----------------------------------
+# Tests that load real packages require the resources. The wolf-lang-packages port normally
+# provides them. A local unpacked copy overrides the port, which allows a build without network
+# access and a test against unpublished package data.
+set(WOLF_LANG_PACKAGES_SOURCE "" CACHE PATH
+    "Unpacked language packages to use instead of the wolf-lang-packages port")
+
+# The voicebank-shaped fixture that scripts/make-voicebank-fixture.py generates from those
+# packages. Only the host flow test reads it, and that test is skipped if the variable is empty.
+set(WOLF_VOICEBANK_FIXTURE_SOURCE "" CACHE PATH
+    "Generated voicebank fixture for the host flow test")
+
+# The fixture packages that the automated tests read. scripts/make-test-fixtures.py generates them
+# and the build does not, so that the repository carries test code rather than package artifacts.
+# Point this variable at the generated directory; the tests that read them are skipped when it is
+# empty and ctest reports them as not run.
+set(WOLF_TEST_FIXTURES_SOURCE "" CACHE PATH
+    "Generated test fixture packages for the automated tests")
+
+if(NOT WOLF_LANG_PACKAGES_SOURCE)
+    find_package(wolf-lang-packages CONFIG QUIET)
+    if(wolf-lang-packages_FOUND)
+        set(WOLF_LANG_PACKAGES_SOURCE "${WOLF_LANG_PACKAGES_DIR}")
+    endif()
+endif()
+
+if(WOLF_LANG_PACKAGES_SOURCE)
+    message(STATUS "Language packages: ${WOLF_LANG_PACKAGES_SOURCE}")
+else()
+    message(STATUS "Language packages: none; tests that require them will be skipped")
+endif()
 
 # ----------------------------------
 # Tests

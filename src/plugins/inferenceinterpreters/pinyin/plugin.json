@@ -1,0 +1,10 @@
+{
+    "name": "wolfpinyin",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.G2P",
+            "level": 1,
+            "variant": "algo-pinyin"
+        }
+    ]
+}

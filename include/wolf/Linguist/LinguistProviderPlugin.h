@@ -10,6 +10,10 @@ namespace wolf {
     /// Creates providers for supported linguist contracts.
     class WOLF_EXPORT LinguistProviderPlugin : public srt::ContribInterpreterPlugin {
     public:
+        /// The plugin interface identifier of the linguist category.
+        ///
+        /// src/plugins/linguistproviders/CMakeLists.txt reads this line to stamp the provider
+        /// plugins' metadata, so the literal stays on one line in this form.
         static constexpr const char *IID = "org.openvpi.wolf.plugin.LinguistProvider";
 
         ~LinguistProviderPlugin() = default;

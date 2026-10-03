@@ -1,0 +1,3 @@
+# The release script archives the packages that scripts/make-test-fixtures.py writes, and the
+# wolf-lang-packages port pins the hash of that archive. The generator writes UTF-8 with plain
+# line feeds on every host, so no attribute is needed here to keep that hash identical.

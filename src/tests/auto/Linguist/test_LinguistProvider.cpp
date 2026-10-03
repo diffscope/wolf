@@ -10,6 +10,8 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
+#include "TestSupport.h"
+
 namespace fs = std::filesystem;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 
@@ -24,7 +26,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistProvider_CreatesSupportedContract) {
     BOOST_REQUIRE_EQUAL(loader.state(), stdc::plugin::PluginLoader::Read);
     const auto &metadata = loader.metadata();
     BOOST_REQUIRE(metadata.isObject());
-    BOOST_CHECK_EQUAL(metadata["name"].toString(), "wolflinguist");
+    BOOST_CHECK_EQUAL(metadata["name"].toString(), "wolflinguistprovider");
     BOOST_REQUIRE(metadata["interpreters"].isArray());
     BOOST_CHECK_EQUAL(metadata["interpreters"].toArray().size(), 1u);
 

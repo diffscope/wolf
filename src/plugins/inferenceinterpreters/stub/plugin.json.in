@@ -1,0 +1,15 @@
+{
+    "name": "wolfstubinference",
+    "interpreters": [
+        {
+            "interface": "org.openvpi.wolf.inference.G2P",
+            "level": 1,
+            "variant": "stub-miscount"
+        },
+        {
+            "interface": "org.openvpi.wolf.inference.G2P",
+            "level": 1,
+            "variant": "multig2p-onnx"
+        }
+    ]
+}

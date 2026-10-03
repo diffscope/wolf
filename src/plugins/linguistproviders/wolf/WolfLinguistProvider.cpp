@@ -1,9 +1,11 @@
 #include "WolfLinguistProvider.h"
 
+#include "LinguistExecutiveImpl.h"
 #include "WolfPipelineExecutive.h"
 
 #include <algorithm>
 #include <filesystem>
+#include <map>
 #include <fstream>
 #include <set>
 #include <sstream>
@@ -14,12 +16,18 @@
 #include <stdcorelib/path.h>
 
 #include <synthrt/Core/ContribImportBinding.h>
+#include <synthrt/SVS/SingerContrib.h>
 
+#include <wolf/Api/Inferences/Common/1/CommonApiL1.h>
 #include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
 #include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
+#include <wolf/Linguist/SingerLanguages.h>
+#include <wolf/Support/ContractValues.h>
+#include <wolf/Support/Logging.h>
+#include <wolf/Support/ManifestValues.h>
 
 namespace fs = std::filesystem;
 
@@ -45,8 +53,7 @@ namespace wolf {
                         "linguist runtime options have an incompatible contract identity");
                 }
                 return std::unique_ptr<srt::ContribExecutive>(
-                    new LinguistApi::LinguistExecutive(
-                        *m_binding->target().as<wolf::LinguistSpec>()));
+                    new LinguistExecutiveImpl(*m_binding->target().as<wolf::LinguistSpec>()));
             }
 
         private:
@@ -54,22 +61,102 @@ namespace wolf {
         };
 
         bool isSingerSpec(const srt::ContribSpec &spec) {
-            return spec.locator().category() == "singer";
+            return spec.locator().category() == srt::SingerCategory::NAME;
         }
 
         bool isLinguistSpec(const srt::ContribSpec &spec) {
             return spec.locator().category() == LINGUIST_CATEGORY;
         }
 
+        /// Returns whether an import is bound to a linguist of the contract that this provider
+        /// serves. The extension reads the exports of the target as linguist exports without a
+        /// further check, so this function compares the whole contract triple and not only the
+        /// category.
         bool isLinguistTarget(const srt::ContribImport &item) {
-            return item.binding() &&
-                   item.binding()->target().locator().category() == LINGUIST_CATEGORY;
+            if (!item.binding()) {
+                return false;
+            }
+            const auto &target = item.binding()->target();
+            return target.locator().category() == LINGUIST_CATEGORY &&
+                   target.interface() == LinguistApi::API_INTERFACE &&
+                   target.variant() == LinguistApi::API_VARIANT &&
+                   target.level() == LinguistApi::API_LEVEL;
         }
 
-        bool hasLinguistRole(const srt::ContribImport &item) {
-            constexpr std::string_view prefix = "linguist/";
-            return item.role().size() > prefix.size() &&
-                   item.role().compare(0, prefix.size(), prefix) == 0;
+        /// Validates one entry of the language map of a singer against the contribution that the
+        /// entry names.
+        ///
+        /// The shape of the map key is not checked here. The key must equal the \c language of the
+        /// target, which the linguist category has already validated, so a malformed key cannot
+        /// match, and a separate rule could only conflict with this one.
+        ///
+        /// \return Success if the entry is valid; otherwise an error that describes the first
+        /// violation.
+        srt::Expected<void> validateSingerLanguage(const srt::ContribSpec &singer,
+                                                   const SingerLanguage &entry) {
+            const auto import = singer.findImport(entry.role);
+            if (!import || !import->binding()) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "singer language " + entry.language + " has no prepared binding");
+            }
+            const auto &target = import->binding()->target();
+            if (target.locator().category() != LINGUIST_CATEGORY) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "singer language " + entry.language +
+                                      " names an import that is not a linguist contribution");
+            }
+            if (target.interface() != LinguistApi::API_INTERFACE ||
+                target.variant() != LinguistApi::API_VARIANT ||
+                target.level() != LinguistApi::API_LEVEL) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "singer linguist import has an incompatible contract identity");
+            }
+            if (!import->executiveFactory()) {
+                return srt::Error(srt::Error::FeatureNotSupported,
+                                  "linguist import has no execution factory");
+            }
+            if (target.as<LinguistSpec>()->language() != entry.language) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "singer language " + entry.language +
+                                      " names a contribution whose language is " +
+                                      target.as<LinguistSpec>()->language());
+            }
+            return {};
+        }
+
+        /// Checks that the language/scheme pair of a linguist is among the pairs that its chain
+        /// member declares.
+        ///
+        /// The two declarations are duals: a G2P module declares the pairs that it produces, an
+        /// S2P module declares the pairs that it consumes, and both use the same key. A module that
+        /// declares no pairs skips the static check rather than failing, because an empty list is
+        /// the only accurate declaration for variants with an open or script-defined output set.
+        /// The host issues a warning in that case instead.
+        ///
+        /// The downcast is unchecked because the provider ABI contract requires the concrete type
+        /// to match the triple that the loader has already compared.
+        ///
+        /// \return Success if the target declares \a pair or declares no pairs. An InvalidFormat
+        /// error if the target has no interpreted exports or does not declare \a pair.
+        template <class Exports>
+        srt::Expected<void> validateLanguageMatch(const srt::ContribSpec &target,
+                                                  const Api::Common::L1::LanguageScheme &pair,
+                                                  std::string_view what) {
+            auto exports = target.exports();
+            if (!exports) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  std::string(what) + " target has no interpreted exports");
+            }
+            const auto &declared = exports->as<Exports>()->languages;
+            if (declared.empty()) {
+                return {};
+            }
+            if (std::find(declared.begin(), declared.end(), pair) == declared.end()) {
+                return srt::Error(srt::Error::InvalidFormat, "the " + std::string(what) +
+                                                                 " target does not declare " +
+                                                                 pair.language + "/" + pair.scheme);
+            }
+            return {};
         }
 
         srt::Expected<void> validateLinguistRole(const srt::ContribImport &item,
@@ -93,58 +180,75 @@ namespace wolf {
         public:
             srt::Expected<void> validateImports(const srt::ContribSpec &spec) const override {
                 if (isLinguistSpec(spec)) {
+                    auto linguist = spec.as<LinguistSpec>();
+                    const Api::Common::L1::LanguageScheme pair(linguist->language(),
+                                                               linguist->scheme());
                     bool hasG2P = false;
-                    bool hasS2P = false;
                     for (const auto &item : spec.imports()) {
-                        if (item.role() == "linguist/g2p") {
+                        if (item.role() == LinguistApi::ROLE_G2P) {
                             if (auto result =
                                     validateLinguistRole(item, Api::G2P::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
+                            if (auto result = validateLanguageMatch<Api::G2P::L1::G2PExports>(
+                                    item.binding()->target(), pair, LinguistApi::ROLE_G2P);
+                                !result) {
+                                return result.takeError();
+                            }
                             hasG2P = true;
-                        } else if (item.role() == "linguist/s2p") {
+                        } else if (item.role() == LinguistApi::ROLE_S2P) {
                             if (auto result =
                                     validateLinguistRole(item, Api::S2P::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
-                            hasS2P = true;
-                        } else if (item.role() == "linguist/onset") {
+                            if (auto result = validateLanguageMatch<Api::S2P::L1::S2PExports>(
+                                    item.binding()->target(), pair, LinguistApi::ROLE_S2P);
+                                !result) {
+                                return result.takeError();
+                            }
+                        } else if (item.role() == LinguistApi::ROLE_ONSET) {
                             if (auto result =
                                     validateLinguistRole(item, Api::Onset::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
+                        } else {
+                            // No executive binds this role: the executive creates children for
+                            // the three roles only, so a misspelled role such as linguist/onsets
+                            // loads and leaves the composition with fewer stages than the
+                            // declaration lists. Rejecting the role would change which packages
+                            // load; the lint rejects it, and the loader reports a warning.
+                            logCategory().srtWarning(
+                                "linguist %1 imports the role \"%2\", which the %3 contract "
+                                "does not bind; the import is ignored",
+                                spec.locator().toString(), item.role(), LinguistApi::API_INTERFACE);
                         }
                     }
-                    if (!hasG2P || !hasS2P) {
+                    // Only the g2p role is required. A composition without linguist/s2p is valid
+                    // and ends at the pronunciation layer. The ecosystem already uses this
+                    // combination when a language package supplies the G2P module and a voicebank
+                    // supplies the phoneme stage. The importing variant determines which roles are
+                    // required, and the upper specification states that an importer *may*
+                    // require a role, not that it must.
+                    if (!hasG2P) {
                         return srt::Error(srt::Error::InvalidFormat,
-                                          "linguist imports require linguist/g2p and "
-                                          "linguist/s2p roles");
+                                          std::string("linguist imports require a ") +
+                                              LinguistApi::ROLE_G2P + " role");
                     }
                 }
                 if (isSingerSpec(spec)) {
-                    for (const auto &item : spec.imports()) {
-                        if (!isLinguistTarget(item)) {
-                            continue;
-                        }
-                        if (!hasLinguistRole(item)) {
-                            return srt::Error(
-                                srt::Error::InvalidFormat,
-                                "singer linguist imports require a linguist/* role");
-                        }
-                        const auto &target = item.binding()->target();
-                        if (target.interface() != LinguistApi::API_INTERFACE ||
-                            target.variant() != LinguistApi::API_VARIANT ||
-                            target.level() != LinguistApi::API_LEVEL) {
-                            return srt::Error(
-                                srt::Error::InvalidFormat,
-                                "singer linguist import has an incompatible contract identity");
-                        }
-                        if (!item.executiveFactory()) {
-                            return srt::Error(srt::Error::FeatureNotSupported,
-                                              "linguist import has no execution factory");
+                    // The language map of the singer specifies language identity, not the role
+                    // names: a role is a local slot name, and the map assigns a language to each
+                    // role.
+                    auto languages = readSingerLanguages(spec);
+                    if (!languages) {
+                        return languages.takeError();
+                    }
+                    for (const auto &entry : languages->entries) {
+                        if (auto result = validateSingerLanguage(spec, entry); !result) {
+                            return result.takeError();
                         }
                     }
                 }
@@ -154,15 +258,82 @@ namespace wolf {
 
         class WolfPipelineExtension : public LinguistApi::WolfPipelineExtension {
         public:
-            WolfPipelineExtension(srt::SingerSpec &spec, std::vector<std::string> linguistRoles)
+            WolfPipelineExtension(srt::SingerSpec &spec, SingerLanguages languages)
                 : LinguistApi::WolfPipelineExtension(
-                      spec, srt::ContribSpecExtensionTraits<srt::SingerSpec,
-                                                            LinguistApi::WolfPipelineExecutive>::ID),
-                  m_linguistRoles(std::move(linguistRoles)) {
+                      spec,
+                      srt::ContribSpecExtensionTraits<srt::SingerSpec,
+                                                      LinguistApi::WolfPipelineExecutive>::ID),
+                  m_languages(std::move(languages)) {
+                m_handles.reserve(m_languages.entries.size());
+                for (const auto &entry : m_languages.entries) {
+                    m_handles.push_back(entry.language);
+                    // The binding is read once, here, because the declaration fixes it, and a
+                    // caller that requests it must not need to access the loader.
+                    const auto import = spec.findImport(entry.role);
+                    if (!import || !import->binding()) {
+                        continue;
+                    }
+                    const auto &target = import->binding()->target();
+                    if (auto linguist = target.as<LinguistSpec>()) {
+                        m_bindings.emplace(entry.language,
+                                           Api::Common::L1::LanguageScheme(linguist->language(),
+                                                                           linguist->scheme()));
+                    }
+                    // The reachable depth is determined by the import set of the composition, so
+                    // it is computed once here rather than detected from a truncated conversion
+                    // result.
+                    auto depth = LinguistApi::Depth::Pronunciation;
+                    if (target.findImport(LinguistApi::ROLE_S2P)) {
+                        depth = target.findImport(LinguistApi::ROLE_ONSET)
+                                    ? LinguistApi::Depth::Onsets
+                                    : LinguistApi::Depth::Phonemes;
+                    }
+                    m_depths.emplace(entry.language, depth);
+                    if (auto values = target.exports()) {
+                        m_exports.emplace(entry.language,
+                                          values->as<LinguistApi::LinguistExports>());
+                    }
+                }
             }
 
-            const std::vector<std::string> &linguistRoles() const override {
-                return m_linguistRoles;
+            const std::vector<std::string> &languages() const override {
+                return m_handles;
+            }
+
+            const std::string &defaultLanguage() const override {
+                return m_languages.defaultLanguage;
+            }
+
+            const srt::ContribLocator *locate(std::string_view language) const override {
+                for (const auto &entry : m_languages.entries) {
+                    if (entry.language != language) {
+                        continue;
+                    }
+                    const auto import = spec().findImport(entry.role);
+                    if (import && import->binding()) {
+                        return &import->binding()->target().locator();
+                    }
+                }
+                return nullptr;
+            }
+
+            const Api::Common::L1::LanguageScheme *
+                binding(std::string_view language) const override {
+                const auto it = m_bindings.find(std::string(language));
+                return it == m_bindings.end() ? nullptr : &it->second;
+            }
+
+            LinguistApi::Depth maxDepth(std::string_view language) const override {
+                // A language that this singer does not declare has no linguist, so its depth is
+                // the shallowest value, which is also the value that LanguageStatus reports for
+                // an unknown language.
+                const auto it = m_depths.find(std::string(language));
+                return it == m_depths.end() ? LinguistApi::Depth::Pronunciation : it->second;
+            }
+
+            const LinguistApi::LinguistExports *exports(std::string_view language) const override {
+                const auto it = m_exports.find(std::string(language));
+                return it == m_exports.end() ? nullptr : it->second;
             }
 
             srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
@@ -175,63 +346,20 @@ namespace wolf {
                         "wolf pipeline options have an incompatible contract identity");
                 }
                 return std::unique_ptr<srt::SingerPipelineExecutive>(
-                    new WolfPipelineExecutive(spec(), m_linguistRoles));
+                    new WolfPipelineExecutive(spec(), m_languages));
             }
 
         private:
-            std::vector<std::string> m_linguistRoles;
+            SingerLanguages m_languages;
+            std::vector<std::string> m_handles;
+            std::map<std::string, Api::Common::L1::LanguageScheme> m_bindings;
+            std::map<std::string, LinguistApi::Depth> m_depths;
+            /// Non-owning pointers into the linguist specs, which may belong to other packages. The
+            /// package of the singer keeps its resolved dependencies loaded, and this extension is
+            /// owned by the spec of the singer, so every referenced object outlives this
+            /// extension.
+            std::map<std::string, const LinguistApi::LinguistExports *> m_exports;
         };
-
-        srt::Expected<srt::JsonValue> readJsonFile(const fs::path &path) {
-            std::ifstream file(path);
-            if (!file.is_open()) {
-                return srt::Error(srt::Error::FileNotOpen, "failed to open linguist exports file");
-            }
-            std::ostringstream stream;
-            stream << file.rdbuf();
-            stdc::json::ParseError error;
-            auto value = srt::JsonValue::fromJson(stream.str(), true, &error);
-            if (error) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "linguist exports file contains invalid JSON");
-            }
-            return value;
-        }
-
-        srt::Expected<void> readPhonemes(std::vector<std::string> &phonemes,
-                                         const srt::JsonValue &value, const fs::path &basePath) {
-            const srt::JsonValue *source = &value;
-            srt::JsonValue fileValue;
-            if (value.isString()) {
-                auto path = stdc::path::from_utf8(value.toString());
-                if (path.is_relative()) {
-                    path = basePath / path;
-                }
-                auto result = readJsonFile(path.lexically_normal());
-                if (!result) {
-                    return result.takeError();
-                }
-                fileValue = result.take();
-                source = &fileValue;
-            }
-            if (!source->isArray()) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "linguist exports phonemes must be an array or JSON path");
-            }
-            std::set<std::string> unique;
-            for (const auto &item : source->toArray()) {
-                if (!item.isString() || item.toString().empty()) {
-                    return srt::Error(srt::Error::InvalidFormat,
-                                      "linguist phoneme entries must be nonempty strings");
-                }
-                if (!unique.insert(item.toString()).second) {
-                    return srt::Error(srt::Error::InvalidFormat,
-                                      "linguist phoneme entries must be unique");
-                }
-                phonemes.push_back(item.toString());
-            }
-            return {};
-        }
 
     }
 
@@ -252,15 +380,25 @@ namespace wolf {
         if (!isSingerSpec(spec)) {
             return result;
         }
-        std::vector<std::string> linguistRoles;
-        for (const auto &item : spec.imports()) {
-            if (isLinguistTarget(item) && hasLinguistRole(item)) {
-                linguistRoles.push_back(item.role());
+        auto languages = readSingerLanguages(spec);
+        if (!languages) {
+            return languages.takeError();
+        }
+        // The validator rejects an entry whose target is not a linguist contribution, so a load
+        // that reaches Commit mounts the whole map. The filter remains because the framework does
+        // not guarantee that validators run before extensions are created, and the extension
+        // reads the exports of the target as linguist exports without a further check.
+        SingerLanguages mounted;
+        mounted.defaultLanguage = languages->defaultLanguage;
+        for (auto &entry : languages->entries) {
+            const auto import = spec.findImport(entry.role);
+            if (import && isLinguistTarget(*import)) {
+                mounted.entries.push_back(std::move(entry));
             }
         }
-        if (!linguistRoles.empty()) {
+        if (!mounted.empty()) {
             result.emplace_back(
-                new WolfPipelineExtension(*spec.as<srt::SingerSpec>(), std::move(linguistRoles)));
+                new WolfPipelineExtension(*spec.as<srt::SingerSpec>(), std::move(mounted)));
         }
         return result;
     }
@@ -268,9 +406,8 @@ namespace wolf {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         WolfLinguistProvider::createImportOptions(const srt::ContribSpec &target,
                                                   const srt::JsonValue &manifestOptions) const {
-        if (!manifestOptions.isObject()) {
-            return srt::Error(srt::Error::InvalidFormat,
-                              "linguist import options must be an object");
+        if (auto checked = requireNoImportOptions(manifestOptions, "linguist"); !checked) {
+            return checked.takeError();
         }
         if (target.interface() != LinguistApi::API_INTERFACE ||
             target.variant() != LinguistApi::API_VARIANT ||
@@ -278,8 +415,7 @@ namespace wolf {
             return srt::Error(srt::Error::InvalidArgument,
                               "linguist import target has an unsupported contract");
         }
-        return std::unique_ptr<srt::ContribImportOptions>(
-            new LinguistApi::LinguistImportOptions());
+        return std::unique_ptr<srt::ContribImportOptions>(new LinguistApi::LinguistImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
@@ -289,19 +425,15 @@ namespace wolf {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         WolfLinguistProvider::createExports(const srt::ContribSpec &spec) const {
-        if (!spec.manifestExports().isObject()) {
-            return srt::Error(srt::Error::InvalidFormat, "linguist exports must be an object");
-        }
-        const auto &object = spec.manifestExports().toObject();
-        const auto it = object.find("phonemes");
-        if (it == object.end()) {
-            return srt::Error(srt::Error::InvalidFormat, "linguist exports require phonemes");
+        // Both the phoneme inventory and the exports block that contains it are required.
+        constexpr ExportsShape shape{false, "phonemes", true, true, false};
+        auto read = readContractExports(spec, shape, "linguist exports");
+        if (!read) {
+            return read.takeError();
         }
         auto result = std::make_unique<LinguistApi::LinguistExports>();
-        const auto basePath = spec.as<LinguistSpec>()->declarationPath().parent_path();
-        if (auto parsed = readPhonemes(result->phonemes, it->second, basePath); !parsed) {
-            return parsed.takeError();
-        }
+        result->phonemes = std::move(read->strings);
+        result->openSet = read->openSet;
         return std::unique_ptr<srt::ContribExports>(std::move(result));
     }
 
@@ -315,8 +447,7 @@ namespace wolf {
             return srt::Error(srt::Error::InvalidFormat,
                               "the wolf linguist configuration must be empty at Level 1");
         }
-        return std::unique_ptr<srt::ContribConfiguration>(
-            new LinguistApi::LinguistConfiguration());
+        return std::unique_ptr<srt::ContribConfiguration>(new LinguistApi::LinguistConfiguration());
     }
 
 }
