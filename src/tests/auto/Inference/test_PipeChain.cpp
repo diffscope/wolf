@@ -9,6 +9,7 @@
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
 
+#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 #include <wolf/Session/LinguistSession.h>
@@ -19,6 +20,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
+namespace G2PApi = wolf::Api::G2P::L1;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
@@ -99,6 +101,101 @@ namespace {
 }
 
 BOOST_AUTO_TEST_SUITE(test_PipeChain)
+
+/// A stop request reaches the backends of the chain, so a step that is inside one of them ends
+/// instead of waiting for the batch to come back. This is the property A51 measures for the stages
+/// of the linguist executive, where a table answers at once but a model or a script is the wait a
+/// caller means to interrupt.
+///
+/// The backend is the stub, whose batch holds for a configured number of milliseconds and ends that
+/// hold when it is stopped. Both packages are written into the temporary directory and no ONNX
+/// driver is involved, so the case runs wherever the stub plugin does.
+BOOST_AUTO_TEST_CASE(test_PipeChain_ForwardsAStopToItsBackend) {
+    constexpr int HOLD_MS = 1200;
+
+    const auto root = fs::temp_directory_path() / "wolf-chain-stop";
+    fs::remove_all(root);
+    fs::create_directories(root / "backend" / "inferences" / "g2p");
+    fs::create_directories(root / "chain" / "inferences" / "g2p");
+
+    std::ofstream(root / "backend" / "desc.json") << R"({
+    "$version": "1.0",
+    "id": "wolf/test-chain-stop-backend",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "contributions": { "inference": [ { "id": "g2p", "path": "./inferences/g2p/inference.json" } ] }
+})";
+    std::ofstream(root / "backend" / "inferences" / "g2p" / "inference.json")
+        << R"({
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "stub-miscount",
+    "exports": { "languages": [ { "language": "eng", "scheme": "arpabet" } ] },
+    "configuration": { "dropWords": 0, "holdMs": )" << HOLD_MS << R"( }
+})";
+    std::ofstream(root / "chain" / "desc.json") << R"({
+    "$version": "1.0",
+    "id": "wolf/test-chain-stop",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "contributions": { "inference": [ { "id": "g2p", "path": "./inferences/g2p/inference.json" } ] },
+    "dependencies": [ { "id": "wolf/test-chain-stop-backend", "version": "1.0.0.0" } ]
+})";
+    std::ofstream(root / "chain" / "inferences" / "g2p" / "inference.json") << R"({
+    "interface": "org.openvpi.wolf.inference.G2P",
+    "level": 1,
+    "variant": "pipe-chain",
+    "exports": { "languages": [ { "language": "eng", "scheme": "arpabet" } ] },
+    "configuration": {
+        "formatVersion": 1,
+        "steps": [ { "step": "model", "params": { "role": "backend" } } ]
+    },
+    "imports": [ { "role": "backend", "ref": "wolf/test-chain-stop-backend:inference/g2p" } ]
+})";
+
+    srt::SynthUnit unit;
+    unit.setPackagePaths({root});
+    unit.setPluginPaths("inference", {fs::path(WOLF_TEST_INFERENCE_PLUGIN_DIR)});
+    auto handle = unit.openPackage(root / "chain", srt::SynthUnit::Load);
+    BOOST_REQUIRE_MESSAGE(static_cast<bool>(handle),
+                          "the chain package should have loaded: " + wolf::test::why(handle));
+    auto *spec = handle->contribution("inference", "g2p")->as<srt::InferenceSpec>();
+    BOOST_REQUIRE(spec != nullptr);
+
+    G2PApi::G2PImportOptions importOptions(spec->variant());
+    G2PApi::G2PRuntimeOptions runtimeOptions(spec->variant());
+    runtimeOptions.binding = {"eng", "arpabet"};
+    auto executive = spec->createInference(importOptions, runtimeOptions);
+    BOOST_REQUIRE_MESSAGE(static_cast<bool>(executive), wolf::test::why(executive));
+    auto *chain = static_cast<G2PApi::G2PExecutive *>(executive->get());
+
+    G2PApi::G2PStartInput input;
+    input.lyrics = {"hello"};
+
+    // The request arrives while the batch is inside the backend, which is the only moment the chain
+    // can do anything about it: its own loop reads the flag between steps.
+    bool produced = false;
+    std::thread runner([&] {
+        auto result = chain->start(input);
+        produced = static_cast<bool>(result);
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds(HOLD_MS / 4));
+    const auto askedAt = std::chrono::steady_clock::now();
+    (void) chain->stop();
+    runner.join();
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                             std::chrono::steady_clock::now() - askedAt)
+                             .count();
+
+    BOOST_TEST_MESSAGE("the request ended the batch after " + std::to_string(elapsed) + " ms of " +
+                       std::to_string(HOLD_MS));
+    BOOST_CHECK_MESSAGE(elapsed < HOLD_MS / 2,
+                        "the request should end the batch rather than wait for the hold: " +
+                            std::to_string(elapsed) + " ms of " + std::to_string(HOLD_MS));
+    BOOST_CHECK(!produced || chain->state() == srt::ITask::Canceled);
+
+    fs::remove_all(root);
+}
 
 /// The chain in the fixture consists of dictionary, cleanup and dictionary steps, the structure
 /// used by the shipped English package. A word that only the second lookup can find proves that

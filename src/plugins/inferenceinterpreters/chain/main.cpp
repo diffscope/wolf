@@ -2,6 +2,7 @@
 #include <map>
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -470,6 +471,31 @@ namespace wolf::chain {
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
+            /// Forwards a stop request to the backends of the steps, the way the linguist executive
+            /// forwards it to its own stages (A51). A model or a script backend is exactly the wait
+            /// that a caller wants to interrupt, and a batch sitting inside one of them sees no flag
+            /// of this executive, so without this the request would only take effect at the next
+            /// step boundary.
+            ///
+            /// A batch fills the map while it runs, on its own thread, so every access to it is
+            /// guarded and the backends are stopped once the guard is released: a backend may
+            /// return through this executive while its own stop runs.
+            void onStop() override {
+                std::vector<G2PApi::G2PExecutive *> backends;
+                {
+                    std::lock_guard<std::mutex> guard(m_backendsMutex);
+                    backends.reserve(m_backends.size());
+                    for (const auto &entry : m_backends) {
+                        backends.push_back(entry.second);
+                    }
+                }
+                for (auto *backend : backends) {
+                    if (backend != nullptr) {
+                        (void) backend->stop();
+                    }
+                }
+            }
+
         protected:
             Batch runBatch(const G2PApi::G2PStartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
@@ -729,9 +755,12 @@ namespace wolf::chain {
             }
 
             srt::Expected<G2PApi::G2PExecutive *> resolveBackend(const std::string &role) {
-                const auto it = m_backends.find(role);
-                if (it != m_backends.end()) {
-                    return it->second;
+                {
+                    std::lock_guard<std::mutex> guard(m_backendsMutex);
+                    const auto it = m_backends.find(role);
+                    if (it != m_backends.end()) {
+                        return it->second;
+                    }
                 }
                 const auto import = spec().findImport(role);
                 if (!import || !import->binding()) {
@@ -745,12 +774,17 @@ namespace wolf::chain {
                     return child.takeError();
                 }
                 auto *backend = static_cast<G2PApi::G2PExecutive *>(child.take());
-                m_backends.emplace(role, backend);
+                {
+                    std::lock_guard<std::mutex> guard(m_backendsMutex);
+                    m_backends.emplace(role, backend);
+                }
                 return backend;
             }
 
             const Configuration *m_configuration;
             Api::Common::L1::LanguageScheme m_binding;
+            /// Guards \c m_backends: the map is filled while a batch runs, and read by onStop().
+            std::mutex m_backendsMutex;
             std::map<std::string, G2PApi::G2PExecutive *> m_backends;
         };
 

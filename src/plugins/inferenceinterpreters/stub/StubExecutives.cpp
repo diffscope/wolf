@@ -1,6 +1,8 @@
 #include "StubExecutives.h"
 
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 #include <utility>
 
@@ -19,7 +21,8 @@ namespace wolf::stub {
         /// substitutes accurately for a real variant: a stub with an incorrect waitForFinished()
         /// would hide exactly the class of defect that the real variants had. A stub has no work to
         /// cancel within a batch, so its runBatch() never reads the stop flag; a stop request still
-        /// sets the run state to Canceled, as it does for a real variant.
+        /// sets the run state to Canceled, as it does for a real variant. The one exception is the
+        /// hold of StubConfiguration::holdMs, which is what gives a batch something to cancel.
         template <class Base, class Input, class Result>
         using StubExecutive = ExecutiveBase<Base, Input, Result>;
 
@@ -75,6 +78,11 @@ namespace wolf::stub {
             /// so the stub must produce it; a guard against a contract violation has value only if
             /// a test demonstrates that the guard triggers.
             std::size_t dropWords = 0;
+
+            /// Milliseconds a batch of this stub holds before it answers, used to test that a stop
+            /// request reaches the backends of a chain rather than waiting for the batch to end.
+            /// Zero, which every fixture but that one sets, holds nothing.
+            int holdMs = 0;
         };
 
         std::vector<std::string> splitOnSpaces(const std::string &text) {
@@ -90,8 +98,8 @@ namespace wolf::stub {
         class StubG2PExecutive
             : public StubExecutive<G2PApi::G2PExecutive, G2PApi::G2PStartInput, G2PApi::G2PResult> {
         public:
-            StubG2PExecutive(srt::InferenceSpec &spec, std::size_t dropWords)
-                : ExecutiveBase(spec), m_dropWords(dropWords) {
+            StubG2PExecutive(srt::InferenceSpec &spec, std::size_t dropWords, int holdMs)
+                : ExecutiveBase(spec), m_dropWords(dropWords), m_holdMs(holdMs) {
             }
 
             ~StubG2PExecutive() {
@@ -104,6 +112,15 @@ namespace wolf::stub {
 
         protected:
             Batch runBatch(const G2PApi::G2PStartInput &input) override {
+                // The one thing this stub waits for: the hold stands for the work of a model or a
+                // script backend, and a stop request ends it, which is how a caller can tell whether
+                // the request reached this executive at all.
+                const auto deadline = std::chrono::steady_clock::now() +
+                                      std::chrono::milliseconds(m_holdMs);
+                while (m_holdMs > 0 && std::chrono::steady_clock::now() < deadline &&
+                       !stopRequested()) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                }
                 auto result = std::make_unique<G2PApi::G2PResult>();
                 result->words.reserve(input.lyrics.size());
                 for (const auto &lyric : input.lyrics) {
@@ -127,6 +144,7 @@ namespace wolf::stub {
 
         private:
             std::size_t m_dropWords = 0;
+            int m_holdMs = 0;
         };
 
         class StubS2PExecutive
@@ -205,6 +223,13 @@ namespace wolf::stub {
                 }
                 result->dropWords = static_cast<std::size_t>(it->second.toInt());
             }
+            if (const auto it = object.find("holdMs"); it != object.end()) {
+                if (!it->second.isInt() || it->second.toInt() < 0) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "stub holdMs must be a non-negative integer");
+                }
+                result->holdMs = static_cast<int>(it->second.toInt());
+            }
         }
         return std::unique_ptr<srt::ContribConfiguration>(std::move(result));
     }
@@ -221,7 +246,8 @@ namespace wolf::stub {
                                             const srt::InferenceRuntimeOptions &) {
         const auto *configuration = static_cast<const StubConfiguration *>(spec.configuration());
         return std::unique_ptr<srt::InferenceExecutive>(
-            new StubG2PExecutive(spec, configuration ? configuration->dropWords : 0));
+            new StubG2PExecutive(spec, configuration ? configuration->dropWords : 0,
+                                 configuration ? configuration->holdMs : 0));
     }
 
     // ---------------------------------------------------------------- S2P
