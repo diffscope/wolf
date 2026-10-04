@@ -161,6 +161,94 @@ BOOST_AUTO_TEST_CASE(test_LinguistRuntime_ConvertsThroughTheChain) {
     BOOST_CHECK((*linguist)->state() == srt::ITask::Succeeded);
 }
 
+/// A pinned phoneme layer is granted at the depth that asks for it, so one locked word of a batch
+/// does not carry fields that the depth it was converted at does not grant.
+BOOST_AUTO_TEST_CASE(test_LinguistRuntime_RequiresThePhonemeDepthForAPinnedLayer) {
+    srt::SynthUnit unit;
+    configure(unit);
+
+    auto handle =
+        unit.openPackage(wolf::test::fixtureRoot() / "singer-zxx", srt::SynthUnit::Load);
+    BOOST_REQUIRE(handle);
+
+    auto *extension = extensionOf(handle->contribution("singer", "s"));
+    LinguistApi::WolfPipelineRuntimeOptions pipelineOptions;
+    auto pipeline = extension->createPipeline(pipelineOptions);
+    BOOST_REQUIRE(pipeline);
+
+    LinguistApi::LinguistRuntimeOptions options;
+    auto linguist =
+        (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
+    BOOST_REQUIRE(linguist);
+
+    LinguistApi::LinguistConvertInput input;
+    input.depth = LinguistApi::Depth::Pronunciation;
+    input.words.push_back({"123", std::nullopt, std::nullopt});
+    LinguistApi::LinguistWordInput pinned;
+    pinned.lyric = "x";
+    pinned.locked = LinguistApi::LockedPhonemes{
+        {"a",  "b"  },
+        {true, false}
+    };
+    input.words.push_back(pinned);
+
+    auto result = (*linguist)->start(input);
+    if (!result) {
+        BOOST_FAIL("the conversion should have run: " + result.error().toString());
+    }
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 2u);
+
+    // The word the stage converted carries no phonemes at this depth, and the locked word joins it
+    // instead of answering with the layer it pinned while the rest of the batch answers by depth.
+    BOOST_CHECK((*result)->words[0].phonemes.empty());
+    const auto &locked = (*result)->words[1];
+    BOOST_CHECK(locked.hitStage == LinguistApi::HitStage::Locked);
+    BOOST_CHECK_EQUAL(locked.pronunciation, "x");
+    BOOST_CHECK(locked.phonemes.empty());
+    BOOST_CHECK(locked.onsets.empty());
+}
+
+/// At Phonemes the pinned layer grants the phonemes and still withholds the onsets.
+BOOST_AUTO_TEST_CASE(test_LinguistRuntime_RequiresTheOnsetDepthForAPinnedLayer) {
+    srt::SynthUnit unit;
+    configure(unit);
+
+    auto handle =
+        unit.openPackage(wolf::test::fixtureRoot() / "singer-zxx", srt::SynthUnit::Load);
+    BOOST_REQUIRE(handle);
+
+    auto *extension = extensionOf(handle->contribution("singer", "s"));
+    LinguistApi::WolfPipelineRuntimeOptions pipelineOptions;
+    auto pipeline = extension->createPipeline(pipelineOptions);
+    BOOST_REQUIRE(pipeline);
+
+    LinguistApi::LinguistRuntimeOptions options;
+    auto linguist =
+        (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
+    BOOST_REQUIRE(linguist);
+
+    LinguistApi::LinguistConvertInput input;
+    input.depth = LinguistApi::Depth::Phonemes;
+    LinguistApi::LinguistWordInput pinned;
+    pinned.lyric = "x";
+    pinned.locked = LinguistApi::LockedPhonemes{
+        {"a",  "b"  },
+        {true, false}
+    };
+    input.words.push_back(pinned);
+
+    auto result = (*linguist)->start(input);
+    if (!result) {
+        BOOST_FAIL("the conversion should have run: " + result.error().toString());
+    }
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
+
+    const auto &locked = (*result)->words[0];
+    BOOST_REQUIRE_EQUAL(locked.phonemes.size(), 2u);
+    BOOST_CHECK_EQUAL(locked.phonemes[1], "b");
+    BOOST_CHECK(locked.onsets.empty());
+}
+
 /// A conversion that stops at the pronunciation layer does not build the downstream executives,
 /// so a caller that requires only pronunciations does not incur the cost of phoneme conversion.
 BOOST_AUTO_TEST_CASE(test_LinguistRuntime_StopsAtRequestedDepth) {

@@ -228,8 +228,16 @@ namespace wolf {
                 }
                 output.mode = G2PApi::Mode::Copy;
                 output.pronunciation = word.pronunciation.value_or(word.lyric);
-                output.phonemes = word.locked->phonemes;
-                output.onsets = word.locked->onsets;
+                // A pinned layer is granted at the depth that asks for it, like the layer a stage
+                // produces: phonemes from Phonemes upwards and onsets at Onsets. A caller that reads
+                // an empty phoneme list as the mark of the depth it received is otherwise misled by
+                // a single locked word of the batch.
+                if (input.depth != LinguistApi::Depth::Pronunciation) {
+                    output.phonemes = word.locked->phonemes;
+                }
+                if (input.depth == LinguistApi::Depth::Onsets) {
+                    output.onsets = word.locked->onsets;
+                }
                 output.hitStage = LinguistApi::HitStage::Locked;
                 continue;
             }

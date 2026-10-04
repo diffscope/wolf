@@ -98,10 +98,10 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 
 | 项 | 结果 |
 | :-- | :-- |
-| 完整构建 | CTest 注册 20 个测试二进制，共 137 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）；曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
+| 完整构建 | CTest 注册 **20** 个测试二进制、**137** 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）——这两个数是权威，其它文档引用它们时只写指针；曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
 | 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaVariants` 与 `test_MultiG2P`）全部通过；现行该配置为 17 个，被排除的三个见 `src/tests/auto/CMakeLists.txt` 的注册条件 |
 | ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2P`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
-| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，17 个测试二进制以该树为数据源通过（A67） |
+| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，当时的 17 个测试二进制以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(wolf)` 并链接；检查 `wolf::wolf` 目标、`WOLF_PLUGINS_DIR` 下的两个类别目录，以及安装包中不含 Support 头文件。把私有依赖放回公开链接接口时，配置期断言即失败 |
 | 版本区间 | 消费者夹具钉在修订 2，由安装的修订 3 供给：解析结果版本为 `1.0.0.3`，请求侧不是该版本（A68；用例为 `test_LinguistLoad.cpp` 的 `ServesAConsumerPinnedToAnOlderRevision`） |
 | 归档 | `make-lang-release.py --verify` 解开归档后与源逐文件比对通过 |
@@ -112,7 +112,8 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 端只启用 `onnx` 与 `tests`。随后依次运行声明 lint 的自测、对 `packages/wolf-lang-zxx` 的 lint、
 发布 pin 与仓内副本的一致性检查（`check-release-assets.py`）、CTest 与安装包消费检查。
 `lang-packages` 是唯一**下载并校验**语言包发布资产的步骤，`test_ConvertedPackages` 因此只在
-Linux 端真跑；`test_MultiG2P` 与 `test_HostFlow` 需要 CI 不提供的模型包与声库夹具，两端都报
+Linux 端真跑；`test_MultiG2P`、`test_MultiG2PMaxLen` 与 `test_HostFlow` 需要 CI 不提供的共享
+G2P 模型后端（该端口只在非缺省的 `multi` 特性下安装）或声库夹具，两端都报
 跳过（`.github/workflows/ci.yml:21-31,65-79,92-96`）。
 
 ## 工具
@@ -122,7 +123,7 @@ Linux 端真跑；`test_MultiG2P` 与 `test_HostFlow` 需要 CI 不提供的模�
 | `scripts/convert-g2p-packages.py` | 把旧套件转换为 spec 2.4 格式，并生成 `wolf/g2p-pinyin` |
 | `scripts/make-lang-release.py` | 打包、计算 SHA512、重新生成端口的 `assets.cmake` 与 `version-string`；`--verify` 解开归档与源逐文件比对，不一致时拒绝打包 |
 | `scripts/make-voicebank-fixture.py` | 由语言包生成歌手包形状的夹具，补齐语言包不提供的 S2P 与 onset（发布文档 §3.2） |
-| `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供 17 个 ctest 用例中的 7 个读取；`--check` 与已有目录逐字节比对，不一致时非零退出 |
+| `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供当时的 17 个 ctest 用例中的 7 个读取；`--check` 与已有目录逐字节比对，不一致时非零退出 |
 | `scripts/check-declarations.py` | 用 `docs/schemas/` 校验声明，并执行三项打包期 lint（含 `openSet` 推导）。发布脚本在打包前调用，有错误时拒绝打包 |
 
 夹具包不随仓库分发：生成到构建目录后由 `WOLF_TEST_FIXTURES_SOURCE` 指过去，数据缺失时相关用例以状态 77 报跳过
