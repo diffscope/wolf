@@ -659,10 +659,9 @@ wolf 不为自身提供端口，而是直接把 `synthrt-main` 列为清单依�
 2. **CMake 取用**：根 `CMakeLists.txt` 定义缓存变量 `WOLF_LANG_PACKAGES_SOURCE`（缺省为空）。该变量
    为空时执行 `find_package(wolf-lang-packages CONFIG QUIET)`，找到时以 `WOLF_LANG_PACKAGES_DIR` 作为
    其值；两者皆无时**配置不失败**，只输出提示，依赖数据的测试将跳过；
-3. **测试装配**：`test_ConvertedPackages` 与 `test_HostFlow` 无条件注册，`test_MultiG2P` 与
-   `test_MultiG2PMaxLen` 仅在找到 dsinfer 时注册；设 `SKIP_RETURN_CODE 77` 的**不止这三个**——以
-   `src/tests/auto/CMakeLists.txt` 里那份 ITEMS 清单为准（2026-10-03 订正：旧文写"三者"，实际给整份
-   清单都设了该属性）。有数据时经测试属性
+3. **测试装配**：`test_ConvertedPackages` 与 `test_HostFlow` 无条件注册，`test_MultiG2P` 仅在找到
+   dsinfer 时注册；设 `SKIP_RETURN_CODE 77` 的**不止这三个**——以 `src/tests/auto/CMakeLists.txt` 里那份
+   ITEMS 清单为准（2026-10-03 订正：旧文写"三者"，实际给整份清单都设了该属性）。有数据时经测试属性
    `ENVIRONMENT` 传入 `WOLF_LANG_PACKAGES_SOURCE`、`WOLF_VOICEBANK_FIXTURE_SOURCE` **与
    `WOLF_TEST_FIXTURES_SOURCE`**；数据缺失时测试以 77 退出，ctest
    记为跳过，因此未安装该 feature 的常规构建结果不受影响；
