@@ -98,8 +98,8 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 
 | 项 | 结果 |
 | :-- | :-- |
-| 完整构建 | CTest 注册 17 个测试二进制，共 124 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）；曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
-| 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 15 个测试二进制（不含 `test_LuaVariants` 与 `test_MultiG2P`）全部通过 |
+| 完整构建 | CTest 注册 20 个测试二进制，共 137 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）；曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
+| 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaVariants` 与 `test_MultiG2P`）全部通过；现行该配置为 17 个，被排除的三个见 `src/tests/auto/CMakeLists.txt` 的注册条件 |
 | ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2P`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
 | 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，17 个测试二进制以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(wolf)` 并链接；检查 `wolf::wolf` 目标、`WOLF_PLUGINS_DIR` 下的两个类别目录，以及安装包中不含 Support 头文件。把私有依赖放回公开链接接口时，配置期断言即失败 |

@@ -189,8 +189,10 @@ cmake --build build --target install
 ### Tests
 
 `-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build`
-runs them. A full build registers 17 test binaries. A build without LuaJIT or without dsinfer
-omits `test_LuaVariants` or `test_MultiG2P` respectively.
+runs them. A full build registers 20 test binaries. A build without LuaJIT omits
+`test_LuaVariants`, and a build without dsinfer omits `test_MultiG2P` and `test_MultiG2PMaxLen`
+(the registration conditions are the single source of truth for the list:
+`src/tests/auto/CMakeLists.txt`).
 
 The tests that load real language packages read them from the location given by the cache
 variable `WOLF_LANG_PACKAGES_SOURCE`, which names a directory of unpacked packages. If the variable

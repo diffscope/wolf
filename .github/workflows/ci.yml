@@ -22,7 +22,9 @@ jobs:
             triplet: x64-linux
             # The lang-packages feature installs the data packages from the release that the
             # port pins, which is the only step that touches those URLs and SHA512 values.
-            # It covers test_ConvertedPackages; the two heavier cases still skip here.
+            # It covers test_ConvertedPackages; the cases that need the shared G2P model backend,
+            # which the port installs only with its non-default `multi` feature, or the voicebank
+            # fixture, which this workflow never generates, still skip here.
             features: "--x-feature=onnx --x-feature=tests --x-feature=lang-packages"
             options: ""
           - os: windows-2022

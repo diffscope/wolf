@@ -45,6 +45,7 @@ if(WOLF_HAS_LUAJIT)
 endif()
 if(WOLF_HAS_DSINFER)
     wolf_add_test(Inference/test_MultiG2P.cpp wolf dsinfer::dsinfer)
+    wolf_add_test(Inference/test_MultiG2PMaxLen.cpp wolf dsinfer::dsinfer)
 endif()
 
 wolf_add_test(Runtime/test_LinguistRuntime.cpp wolf)
@@ -104,7 +105,7 @@ endif()
 if(WOLF_TEST_FIXTURES_SOURCE)
     list(APPEND _wolf_data_env "WOLF_TEST_FIXTURES_SOURCE=${WOLF_TEST_FIXTURES_SOURCE}")
 endif()
-foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2P
+foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2P test_MultiG2PMaxLen
                        test_LinguistIdentity test_LinguistLoad test_PipeChain test_PinyinBackend
                        test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
@@ -215,6 +216,18 @@ if(TARGET test_MultiG2P)
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
         WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
         WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
+        WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
+        WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"
+    )
+endif()
+
+# The limit case binds the backend directly rather than through a chain, so it needs neither the
+# linguist provider nor the singer plugin: it assembles the smallest tree in which a declaration
+# reaches a model.
+if(TARGET test_MultiG2PMaxLen)
+    add_dependencies(test_MultiG2PMaxLen wolfmultig2p)
+    target_compile_definitions(test_MultiG2PMaxLen PRIVATE
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfmultig2p>/.."
         WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
         WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"
     )
