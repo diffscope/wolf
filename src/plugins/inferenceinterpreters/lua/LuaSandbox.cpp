@@ -163,20 +163,32 @@ namespace wolf::lua {
         int utf8Next(lua_State *state) {
             std::size_t size = 0;
             const auto *text = luaL_checklstring(state, 1, &size);
-            auto position = static_cast<std::size_t>(luaL_checkinteger(state, 2));
+            const auto position = luaL_checkinteger(state, 2);
+            // The standard iterator treats a position at or below the start as the start and a
+            // position past the text as the end of the iteration; anything inside the text is the
+            // character the caller stepped over. Clamping the position here is also what keeps
+            // every offset used below inside the text, whatever the caller passed.
+            std::size_t index = 0;
+            if (position > static_cast<lua_Integer>(size)) {
+                return 0;
+            }
             if (position > 0) {
                 std::uint32_t skipped = 0;
-                position += decodeUtf8(text + position - 1, size - (position - 1), skipped) - 1;
+                const auto previous =
+                    decodeUtf8(text + position - 1, size - (position - 1), skipped);
+                // A byte that begins no sequence is one character on its own, as in the splitter,
+                // so the iteration steps over exactly that byte instead of stepping backwards.
+                index = static_cast<std::size_t>(position) - 1 + (previous == 0 ? 1 : previous);
             }
-            if (position >= size) {
+            if (index >= size) {
                 return 0;
             }
             std::uint32_t code = 0;
-            const auto step = decodeUtf8(text + position, size - position, code);
+            const auto step = decodeUtf8(text + index, size - index, code);
             if (step == 0) {
                 return luaL_error(state, "invalid UTF-8 code");
             }
-            lua_pushinteger(state, static_cast<lua_Integer>(position + 1));
+            lua_pushinteger(state, static_cast<lua_Integer>(index + 1));
             lua_pushinteger(state, static_cast<lua_Integer>(code));
             return 2;
         }

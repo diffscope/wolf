@@ -54,7 +54,7 @@
 | 检查 | 运行方式 | [现状]（2026-09-21） |
 | :-- | :-- | :-- |
 | 编译器检查 | 两棵已配置的树增量构建：`cmake --build build/cmake`（Release）、`cmake --build build/cmake-debug`（Debug）；两者均为 `WOLF_BUILD_TESTS=ON` | 插件源文件与头文件共 31 个，两棵树各自重新编译受影响的编译单元（共 40 个编译动作、18 次链接），**退出码 0，无告警** |
-| 自动测试 | `ctest --test-dir build/cmake` | **17/17 通过**（7.00 s）；完整构建注册 17 个测试二进制 |
+| 自动测试 | `ctest --test-dir build/cmake` | 当时 **17/17 通过**（7.00 s）；现行完整构建的注册数量见 `docs/Status.md` 的验证表（清单与条件见 `src/tests/auto/CMakeLists.txt`），本机 debug 树带数据变量的实测（2026-10-04）为 20/20 |
 
 测试按层放在 `src/tests/auto/`，各层的职责写在该目录 `CMakeLists.txt` 的注释中（Support 为纯单元；
 Linguist 为类别与声明；Inference 为链与变体解释器；Runtime 为执行树与会话；EndToEnd 为生成包的

@@ -1722,6 +1722,10 @@ SHA512，而生态中实际安装的端口是 1.24.4，即**更换 ORT 版本须
 删除 `third-party/`、把两处 CMake 改接 `find_package(onnxruntime-builds)` 之后，**两个仓库中不再
 出现 ORT 版本号**，唯一来源是端口的 `versions.cmake`。
 
+**（已执行）**：synthrt `e94e022`（`onnxruntime-builds-uptake`）已删除该文件与 `third-party/`，两处 CMake 改接
+`find_package(onnxruntime-builds)`；该文件在 synthrt 当前树中已不存在，wolf 的 `synthrt-main` 端口固定在这个
+分支上，本节其余文字保留为当时的问题陈述。
+
 **可以不部署的理由**：`DriverInitArgs::runtimePath` 是**宿主传入的目录**，驱动自身从不在
 `runtimes/onnx/` 中查找（`OnnxDriver.cpp:68`，空路径时退回系统加载器）。构建期的那份拷贝**唯一
 的实际消费者是 synthrt 自身的驱动测试**，该测试把已传入的路径又重新拼接了一遍

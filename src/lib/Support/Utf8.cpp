@@ -9,18 +9,24 @@ namespace wolf {
             return 1;
         }
         if ((lead & 0xE0) == 0xC0) {
-            return 2;
+            // C0 and C1 can only begin a sequence that decodes below 0x80, which the shorter
+            // encoding of that value already covers.
+            return lead < 0xC2 ? 0 : 2;
         }
         if ((lead & 0xF0) == 0xE0) {
             return 3;
         }
         if ((lead & 0xF8) == 0xF0) {
-            return 4;
+            // The four byte sequences above F4 exceed U+10FFFF, the last code point.
+            return lead < 0xF5 ? 4 : 0;
         }
         return 0;
     }
 
     std::size_t decodeUtf8(const char *text, std::size_t available, std::uint32_t &code) noexcept {
+        if (available == 0) {
+            return 0;
+        }
         const auto lead = static_cast<unsigned char>(text[0]);
         const auto length = utf8SequenceLength(lead);
         if (length == 0 || length > available) {
@@ -35,6 +41,12 @@ namespace wolf {
                 return 0;
             }
             code = (code << 6) | (continuation & 0x3FU);
+        }
+        // A sequence that decodes below the smallest value its length can encode is overlong,
+        // and a surrogate or a value above U+10FFFF is not a code point.
+        static constexpr std::uint32_t MINIMUM[] = {0, 0, 0x80, 0x800, 0x10000};
+        if (code < MINIMUM[length] || code > 0x10FFFF || (code >= 0xD800 && code <= 0xDFFF)) {
+            return 0;
         }
         return length;
     }

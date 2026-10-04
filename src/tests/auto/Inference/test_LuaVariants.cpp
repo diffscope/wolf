@@ -159,6 +159,36 @@ end
     BOOST_CHECK_EQUAL(phonemes[3], "3");
 }
 
+/// The iterator of the utf8 library stands in for the standard one, so a position the script hands
+/// it must be handled the way the standard library handles it: a position at or before the start
+/// restarts the iteration, and a position past the text ends it. Such a position used to reach the
+/// decoder unchecked, where a negative one became a huge offset.
+BOOST_AUTO_TEST_CASE(test_LuaVariants_ClampsTheUtf8IteratorPosition) {
+    srt::SynthUnit unit;
+    auto handle = load(unit, writePackage("utf8-position", "S2P", R"(
+function s2p(pronunciation)
+    local iterator, text = utf8.codes(pronunciation)
+    local out = {}
+    -- Before the start: the first character is returned again, as position and code point.
+    local position, code = iterator(text, -1)
+    out[#out + 1] = tostring(position) .. ":" .. tostring(code)
+    -- Past the text: the iteration ends and returns nothing at all.
+    out[#out + 1] = tostring(#{ iterator(text, #text + 1) })
+    out[#out + 1] = tostring(#{ iterator(text, 4096) })
+    return out
+end
+)"));
+    if (!handle) {
+        BOOST_FAIL("the script should have loaded: " + handle.error().toString());
+    }
+    // One character of three bytes, so that a position of one is inside the text.
+    const auto phonemes = convert(*handle, "\xE4\xB8\xAD");
+    BOOST_REQUIRE_EQUAL(phonemes.size(), 3u);
+    BOOST_CHECK_EQUAL(phonemes[0], "1:20013");
+    BOOST_CHECK_EQUAL(phonemes[1], "0");
+    BOOST_CHECK_EQUAL(phonemes[2], "0");
+}
+
 /// A language package is data. The sandbox removes every facility for accessing resources outside
 /// the process, so none of those globals is visible to a script.
 BOOST_AUTO_TEST_CASE(test_LuaVariants_RemovesTheWayOut) {
