@@ -298,6 +298,7 @@ namespace wolf {
         void describeCoverage(const SingerKey &key, const LanguageEntry &language,
                               LanguageStatus &status) const {
             status.maxDepth = language.maxDepth;
+            status.hasSeparatePronunciationLayer = language.hasSeparatePronunciationLayer;
             if (language.phonemes.empty()) {
                 return; // no declared inventory to measure against
             }
@@ -376,6 +377,8 @@ namespace wolf {
                             language.binding = *binding;
                         }
                         language.maxDepth = extension->maxDepth(handle);
+                        language.hasSeparatePronunciationLayer =
+                            extension->hasSeparatePronunciationLayer(handle);
                         if (auto values = extension->exports(handle)) {
                             language.phonemes = values->phonemes;
                             language.openSet = values->openSet;

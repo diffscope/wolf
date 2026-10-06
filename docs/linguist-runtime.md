@@ -131,6 +131,10 @@ public:
     /// 语言句柄对应的组合可达的最深层，由其 imports 集合读出（语言域契约 §5.0.1）。
     virtual Depth maxDepth(std::string_view language) const = 0;
 
+    /// 语言句柄对应的组合是否把发音层与音素层分成两层，由其 S2P 成员的 variant 读出
+    /// （语言域契约 §5.0.2）。
+    virtual bool hasSeparatePronunciationLayer(std::string_view language) const = 0;
+
     /// 语言句柄对应的组合所声明的音素清单与 openSet；未声明的句柄返回 nullptr。
     virtual const LinguistExports *exports(std::string_view language) const = 0;
 };
@@ -138,7 +142,8 @@ public:
 
 `createPipeline(const srt::SingerPipelineRuntimeOptions &)` 继承自
 `srt::SingerPipelineExtension`，由 wolf provider 实现，返回 `WolfPipelineExecutive`（§7）。
-`binding()`、`maxDepth()` 与 `exports()` 均在构造 extension 时读出，调用时不创建任何执行体。
+`binding()`、`maxDepth()`、`hasSeparatePronunciationLayer()` 与 `exports()` 均在构造 extension 时读出，
+调用时不创建任何执行体。
 `exports()` 返回的指针指向 linguist spec 的 exports（可能属于另一个包），在宿主持有歌手包的
 `PackageHandle` 期间有效；需要跨越该期间保留时，调用方应复制其中的值。
 

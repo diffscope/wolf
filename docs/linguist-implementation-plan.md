@@ -242,7 +242,8 @@ W5.1 是本里程碑的主要工作量，也是唯一无法从旧栈复制的部
 ### M6 — 收尾
 
 四项收尾工作（W6.1–W6.4）：`exports` 与 `imports[].options` 的 JSON Schema 发布物（spec 2.4:596-602
-的硬性要求，Q3）；打包期 lint 工具（域契约 §12 的比对清单 + 贡献 ID 书写惯例，A4 / Q4）；文档回写
+的硬性要求，Q3）；打包期 lint 工具（域契约 §12 中只依赖声明本身的清单：未引用的 import、贡献 ID
+书写惯例与 S2P 表内容级恒等，A4 / Q4 / A81）；文档回写
 实测值（`stop()` 的词边界响应时延建议值，Q2；B2 清点结论；各语言 `scheme` 定案）；旧栈遗留退役
 （DiffSinger 歌手 `configuration` 的 `dict` 键，Q5；旧声库 manifest 的 `g2pPackageVersion` 映射，P6）。
 
@@ -304,7 +305,8 @@ W5.1 是本里程碑的主要工作量，也是唯一无法从旧栈复制的部
   以及全部 `Api::*L1` 的 payload 都是头文件中的值类型，增加字段即破坏 ABI。W7.4 / W7.5 与 M8 的
   任何公开结构体变更**必须与一次 `WOLF_VERSION` 变更同批发布**，并在 README 中写明 1.0 之前不作
   ABI 保证。`LinguistSession` 与 `CancelToken` 采用 pimpl，是仅有的两个不受影响的类型。[现状：
-  版本已升至 0.1.0.0，CMake 包的版本兼容性为 `ExactVersion`，README 已增加《Versioning and ABI》]
+  版本已随本轮公开结构体变更升至 0.2.0.0（此前为 0.1.0.0），CMake 包的版本兼容性为
+  `ExactVersion`，README 已增加《Versioning and ABI》]
 - **D2 — 并行加载**：**包加载的并行度恒为 1**，由 spec §加载事务规定（「load 与 release 事务
   必须串行执行」），synthrt 以 `SynthUnit::openPackage` 全程持有 `loadMutex` 强制执行。wolf 不提供
   并行加载。语言域的并行发生在执行体构建与转换这一层：`warm()` 线程安全且按语言独立，宿主可以

@@ -1103,9 +1103,10 @@ exports 中的二元组应遵循同一条规则，各保留一份副本终将产
 **校验器自带边界声明**：校验器只实现这些 Schema 用到的关键字，遇到其他关键字时**报错而非放行**。
 静默跳过无法识别的约束的校验器，比没有校验器更有害。
 
-**与 Q4 的关系**：该脚本即打包期 lint 工具，不单独立项。域契约 §12 中**只依赖声明本身**的两项
-（未被 `languages` 引用的 import、贡献 ID 书写惯例）已接入为**警告**；另两项（音素集交集裁决、
-`symbols` 的归属口径）需要声库或模型的音素表，已定为编辑器运行期的职责，打包期无法检查。
+**与 Q4 的关系**：该脚本即打包期 lint 工具，不单独立项。域契约 §12 中**只依赖声明本身**的三项
+（未被 `languages` 引用的 import、贡献 ID 书写惯例、S2P 表内容级恒等）已接入为**警告**；另两项
+（音素集交集裁决、`symbols` 的归属口径）需要声库或模型的音素表，已定为编辑器运行期的职责，打包期
+无法检查。
 
 **严格度与运行时对齐**：schema 不符判为**错误**（加载器同样拒绝），lint 项判为**警告**（加载器
 不据此失败）。`make-lang-release.py` 在打包前调用该脚本，并**在有错误时拒绝打包**。打包前是纠正
@@ -1778,6 +1779,46 @@ port），独立构建时是测试自身。库与插件都不负责部署。
 
 ---
 
+### A81 — 发音层是否独立于音素层由 S2P 变体判定，内容级例外只做 lint
+
+**决策**：新增事前查询 `WolfPipelineExtension::hasSeparatePronunciationLayer`，并随 `maxDepth` 的
+同一条链路暴露到 `LanguageStatus` 与 `LanguageEntry`。取值口径：
+**S2P 成员不存在或为恒等切分 ⇒ `false`，其余 ⇒ `true`**。音素层始终存在——最深可达层的符号即音素层。
+
+**版本口径**：**包的 `compatVersion` 不动**（语言包与后端包都没有因此改变契约，这仍是纯增量，先例
+A70 讲的是包的区间）；但**库 ABI 版本必须同批抬升**——公开值类型各增一个字段、契约接口新增一个纯虚
+函数，混用两个版本的头文件是无诊断的未定义行为。按 README《Versioning and ABI》与本计划 D1，本轮
+随批把 `WOLF_VERSION` 由 `0.1.0.0` 抬到 `0.2.0.0`（先例 A70 的那一批 `ad2d356` 同样在加虚函数的同一
+批次里抬了库版本，正是本条的依据）。`API_LEVEL` 是变体接口自身的等级，不受本条影响。
+
+**为什么需要新属性**：`maxDepth` 只回答「能到多深」，不回答「发音与音素是不是两层」。eng 的 S2P 是
+`direct`（按保留分隔符切分、不改符号），发音层就是音素层；cmn 的声库侧 S2P 是 `dict`（真分解），发音
+层是独立一层。两者的 `maxDepth` 相同，`imports` 集合区分不出来，宿主此前没有判据：lite 侧唯一相关的
+代码是按 `onsets.size() != phonemes.size()` 兜底的启发式，其注释也已自陈应当先读会话状态。
+
+**判据只读 variant 的理由**：该查询必须与 `maxDepth` 同源、不创建对象，而 `dict` / `mapping` 的表与
+`lua` 脚本要到 Acquire 期才由插件读入，声明期不可见。`direct` 的语义由接口定义
+（`S2PApiL1.h` 的 `VARIANT_DIRECT` 与 `variantKeepsSymbols()`），是唯一可静态断言的恒等变体。
+
+**内容级例外的处理**（"内容推导优先、不可推导由作者声明"的落地）：
+
+- `dict` / `mapping` 的表可在打包期读：逐行只做等同或切分时 `check-declarations.py` 报 warning，
+  由作者改用 `direct`（§3.2、§12）；
+- `lua` 的输出无法静态判定 ⇒ 一律按 `true`（保守方向：宁可多呈现一层发音，不把发音误判成音素）；
+- **本轮不引入显式声明字段**：那要动两份 schema、`ContractValues.cpp:24-32` 的未知键白名单与 15 个
+  已装包，而现网没有触发该例外的声明。留待 Q8 复议。
+
+**不做的**：不把该值放进 `LinguistConvertResult`（组合级常量塞进每次结果属过度设计，且与
+`LinguistApiL1.h:96-99`、`:211-215` 的「宿主在转换前查询，不从输出推断」取向相反）；不新增
+`Depth` 取值。
+
+**依据**：`WolfLinguistProvider.cpp` 构造 extension 时已读 S2P 目标的 variant（与 `maxDepth` 同一处）；
+`docs/linguist-variants.md` §3.2 变体表；`test_LinguistSession`（direct / 无 S2P / 未声明 / 不可用四种
+形态）与 `test_HostFlow`（字典形态为真）各有断言。
+
+**来源**：用户拍板 D1（语义）、D2（判据来源）、D3（事前查询形态）、D4（wolf 实现并顺带接线 lite 的
+`maxDepth` 缺口）。
+
 ## 现行未决项
 
 | # | 项 | 状态 |
@@ -1785,10 +1826,11 @@ port），独立构建时是测试自身。库与插件都不负责部署。
 | Q1 | 未被 `languages` 引用的 linguist import：现定为编辑期 lint 警告，不判加载失败 | 已定，可复议 |
 | Q2 | `stop()` 在词边界响应的时延上界 | **已回写**：实测约 50 µs（最坏情形，运行时文档 §4.2）。仍不写入规范，因为上界由钩子的指令预算决定，而非计时器 |
 | Q3 | `exports` 与 `imports[].options` 的 JSON Schema 发布物（spec 2.4:596-602 要求） | **已产出**：`docs/schemas/`，四个契约各两份，另有两份共享形状。由 `scripts/check-declarations.py` 对真实包执行 |
-| Q4 | wolf 打包期 lint 工具是否单独立项 | **已定**：不单独立项，由 `scripts/check-declarations.py` 承担，并由 `make-lang-release.py` 在打包前调用。schema 一致性与 §12 中只依赖声明的两项（未引用的 import、贡献 ID 惯例）已接入；另两项需要外部音素表，归编辑器运行期 |
+| Q4 | wolf 打包期 lint 工具是否单独立项 | **已定**：不单独立项，由 `scripts/check-declarations.py` 承担，并由 `make-lang-release.py` 在打包前调用。schema 一致性与 §12 中只依赖声明的三项（未引用的 import、贡献 ID 惯例、S2P 表内容级恒等）已接入；另两项需要外部音素表，归编辑器运行期 |
 | Q5 | DiffSinger 歌手 `configuration` 仍强制要求 `dict` 路径（`dsinfer/plugins/singerproviders/diffsinger/DiffSingerProvider.cpp:171-185`），属旧 G2P 栈遗留 | 语言域迁移完成后应退役，不在本轮范围内 |
 | Q6 | A11 的上游合并时点 | **已落地**于 synthrt 分支 `onnxruntime-builds-uptake`（A26 补记），端口固定在该分支上；并入 synthrt main 有待上游 |
 | Q7 | `srt::ITask::startAsync` 的 `finish()` 在**释放互斥量之后**才调用 `notify_all()`，等待方因此可能在通知进行中析构条件变量。TSan 在 `test_LinguistRuntime` 中报告一处，但整条调用栈都位于未插桩的 `libsynthrt.so` 内，与既有的 `libonnxruntime.so` 报告同类；按 `shared_ptr` 引用计数推演存在合法的 happens-before 关系，因此**倾向于判定为误报**。定论需要一个插桩的 synthrt 构建 | 上游，待定论 |
+| Q8 | S2P 层形状的内容级例外（`dict`/`mapping` 表逐行恒等、`lua` 脚本恒等）：运行期按变体名判定，前两者由 `check-declarations.py` 报警，`lua` 一律按独立层。变体清单在 C++（`S2PApiL1.h` 的 `variantKeepsSymbols()`）、Python lint 与变体文档 §5.0.2 三处各有一份，新增读表变体时**须三处同改**，无脚本交叉校验 | **已定，可复议**（A81）。若将来出现此类声明，再评估新增显式声明字段（需动两份 schema 与 `ContractValues` 白名单） |
 
 ---
 

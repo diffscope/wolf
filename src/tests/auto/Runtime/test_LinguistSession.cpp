@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
@@ -135,6 +136,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_NamesWhyItIsUnavailable) {
     // of more than exists. Regression: an unavailable status must not carry Onsets.
     BOOST_CHECK(status.maxDepth == LinguistApi::Depth::Pronunciation);
     BOOST_CHECK(missing.maxDepth == LinguistApi::Depth::Pronunciation);
+
+    // The layer query describes the shape a composition declares, so an undeclared language reports
+    // false for want of any declaration to describe. This is not a claim that an unavailable
+    // language has no layer: a declared language that became unavailable keeps the value of its
+    // composition, which test_LinguistSession_ReportsTheDeclaredShapeOfAnUnroutableLanguage pins.
+    BOOST_CHECK(!status.hasSeparatePronunciationLayer);
+    BOOST_CHECK(!missing.hasSeparatePronunciationLayer);
 }
 
 /// Every entry point rejects an undeclared language in the same way, based on the catalog rather
@@ -646,6 +654,11 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsHowDeepALanguageGoes) {
     BOOST_CHECK(status.readiness == wolf::Readiness::Cold);
     BOOST_CHECK(status.maxDepth == LinguistApi::Depth::Pronunciation);
 
+    // A composition without an S2P member reaches phonemes with the pronunciation as the deepest
+    // layer, so the pronunciation holds the symbols of the phoneme layer and is not a layer of its
+    // own. Regression: this shape must not be reported as holding a separate pronunciation layer.
+    BOOST_CHECK(!status.hasSeparatePronunciationLayer);
+
     // A request deeper than the composition supports returns the available layers rather than an
     // error or a silent gap.
     auto result = session.convert(singer, "nld", Line({"x"}, LinguistApi::Depth::Onsets));
@@ -654,6 +667,121 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsHowDeepALanguageGoes) {
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "a b");
     BOOST_CHECK((*result)->words[0].phonemes.empty());
     BOOST_CHECK((*result)->words[0].onsets.empty());
+}
+
+/// A composition that stops at the phoneme layer reports that depth, so a host can ask for it.
+///
+/// The ecosystem already uses this combination: the language package supplies the G2P and an S2P
+/// member, and a voicebank supplies the onset stage, which leaves the phoneme layer as the deepest
+/// one the composition reaches. This fixture is that shape with an S2P member that only splits the
+/// pronunciation, so it is not a layer of its own either: the two answers are independent, which is
+/// why the depth alone cannot tell a host whether a deeper request would lose a layer.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsAPhonemeLayerAsTheDeepestLayer) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto package = load(unit, "singer-chain");
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    const auto status = session.probe(singer, "eng");
+    BOOST_CHECK(status.readiness == wolf::Readiness::Cold);
+    BOOST_CHECK(status.maxDepth == LinguistApi::Depth::Phonemes);
+    BOOST_CHECK(!status.hasSeparatePronunciationLayer);
+
+    // Asking for a layer that this composition does not reach returns the layer it has instead of
+    // an error, and the onsets are then either absent or as long as the phoneme list.
+    auto result = session.convert(singer, "eng", Line({"hello"}, LinguistApi::Depth::Onsets));
+    BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
+    BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "hh ax l ow");
+    BOOST_CHECK_EQUAL((*result)->words[0].phonemes.size(), 4u);
+    BOOST_CHECK((*result)->words[0].onsets.empty() ||
+                (*result)->words[0].onsets.size() == (*result)->words[0].phonemes.size());
+}
+
+/// The layer query answers from the declaration even when the session cannot use the composition.
+///
+/// This pins the wording of LanguageStatus::hasSeparatePronunciationLayer: it describes the shape
+/// that the composition declares, so a declared language keeps its value when routing turns it
+/// unavailable after the declaration has been read. The coverage verdict of probe() is made after
+/// describeCoverage() has filled the status in, so an unusable status still carries that value.
+///
+/// The voicebank fixture supplies the real resources: cmn reaches phonemes through an S2P member
+/// that reads a dictionary, so its pronunciation is a layer of its own, and the language declares a
+/// phoneme list. A singer with one phoneme that the language does not declare covers none of them,
+/// which is the one coverage outcome the session turns into Unavailable.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheDeclaredShapeOfAnUnroutableLanguage) {
+    const auto voicebank = wolf::test::voicebankRoot();
+    if (!fs::is_directory(voicebank / "wolf-voicebank-zh")) {
+        wolf::test::skip("no voicebank fixture; set WOLF_VOICEBANK_FIXTURE_SOURCE");
+    }
+    // The voicebank depends on the language packages, and both are generated.
+    BOOST_REQUIRE_MESSAGE(fs::is_directory(wolf::test::convertedRoot() / "wolf-lang-cmn"),
+                          "no converted language packages; set WOLF_LANG_PACKAGES_SOURCE");
+
+    srt::SynthUnit unit;
+    // The voicebank depends on the language packages, so the unit searches both directories. The
+    // helper of this file takes no paths, so the shared one is called by its qualified name.
+    wolf::test::configure(unit, {wolf::test::fixtureRoot(), wolf::test::convertedRoot()});
+    auto package = unit.openPackage(voicebank / "wolf-voicebank-zh", srt::SynthUnit::Load);
+    BOOST_REQUIRE_MESSAGE(package, wolf::test::why(package));
+
+    wolf::LinguistSession session(unit);
+    const wolf::SingerRef singer{srt::ContribLocator(package->id(), "singer", "zh"),
+                                 package->version()};
+
+    // The phoneme comes from the catalog rather than from a literal, so the test states the
+    // condition it needs (a phoneme the language does not declare) instead of assuming one.
+    const auto *entry = session.catalog()->find(singer);
+    BOOST_REQUIRE(entry != nullptr);
+    const auto declared = std::find_if(entry->languages.begin(), entry->languages.end(),
+                                       [](const wolf::LanguageEntry &item) {
+                                           return item.handle == "cmn";
+                                       });
+    BOOST_REQUIRE(declared != entry->languages.end());
+    BOOST_REQUIRE(!declared->phonemes.empty());
+    std::string unsingable = "none";
+    while (std::find(declared->phonemes.begin(), declared->phonemes.end(), unsingable) !=
+           declared->phonemes.end()) {
+        unsingable += "1";
+    }
+    session.setSingerPhonemes(singer, {unsingable});
+
+    const auto status = session.probe(singer, "cmn");
+    BOOST_REQUIRE(status.readiness == wolf::Readiness::Unavailable);
+    // The composition declares a separate layer, and becoming unusable does not clear the value.
+    BOOST_CHECK(status.hasSeparatePronunciationLayer);
+    // The verdict comes from coverage, not from an undeclared language.
+    BOOST_CHECK_MESSAGE(status.reason.find("sings none of") != std::string::npos, status.reason);
+}
+
+/// The layer query answers from the declaration, before any conversion and for a language whose S2P
+/// member copies the symbols of its input.
+///
+/// wolf/lang-zxx declares the direct variant, which splits the pronunciation on the reserved
+/// delimiter without changing the symbols, so the pronunciation of zxx is its phoneme layer. The
+/// other shape that reports true, a member that converts the symbols, is covered by the test above
+/// and by the end-to-end test, which converts a package that reaches phonemes through a dictionary.
+///
+/// Regression: a declared language whose S2P member copies the symbols must report false instead of
+/// reporting a layer of its own, and an undeclared handle must not report true.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsWhetherThePronunciationIsALayerOfItsOwn) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto package = load(unit, "singer-zxx");
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    // Readiness does not matter: the value describes the declaration, and the route has not been
+    // tried.
+    const auto status = session.probe(singer, "zxx");
+    BOOST_CHECK(status.readiness != wolf::Readiness::Unavailable);
+    BOOST_CHECK(!status.hasSeparatePronunciationLayer);
+
+    // A handle that the singer does not declare has no composition and therefore no layer.
+    BOOST_CHECK(!session.probe(singer, "cmn").hasSeparatePronunciationLayer);
 }
 
 /// Coverage is reported without a verdict, except if no phoneme is covered.

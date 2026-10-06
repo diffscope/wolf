@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -19,6 +20,45 @@ namespace wolf::Api::S2P::L1 {
 
     /// Identifies Level 1 of the phonological symbol to phoneme inference contract.
     inline constexpr int API_LEVEL = 1;
+
+    /// The variant whose output holds the symbols of its input.
+    ///
+    /// A pronunciation is already a space delimited sequence of pronunciation units (see
+    /// S2PStartInput), and this variant copies every unit, so the layer it produces is the
+    /// pronunciation layer rather than a layer of its own. The identity is a property of the
+    /// symbols and not of the text: a run of spaces collapses into one unit and the spaces around
+    /// the units are dropped, so the two layers hold the same units rather than the same string.
+    ///
+    /// The other variants of this contract rewrite the symbols of a pronunciation, through a
+    /// dictionary entry, a mapping row or a script, so the two layers are distinct. A scripted
+    /// variant, however, cannot be decided from its declaration: whether its output keeps the
+    /// symbols is known only after it runs. Such a variant is reported as holding a layer of its
+    /// own, which is the conservative answer: presenting a pronunciation layer that turns out to be
+    /// the phoneme layer is a smaller error than hiding a layer that exists.
+    ///
+    /// A host must not treat this as an exhaustive list of the variants that keep the symbols. A
+    /// third-party variant may keep them as well, and no version of this header can say so.
+    inline constexpr char VARIANT_DIRECT[] = "direct";
+
+    /// Whether \a variant converts a pronunciation without changing its symbols. See VARIANT_DIRECT.
+    ///
+    /// Only VARIANT_DIRECT is known to keep the symbols; every other name returns false. That
+    /// includes a variant this version does not know, because a caller must not assume that an
+    /// unknown variant keeps the symbols — it can assume the opposite, which is also the direction
+    /// the report of a separate pronunciation layer takes for a variant whose output is not
+    /// statically known.
+    ///
+    /// A host asks this about a declaration rather than about output, because it has to know the
+    /// shape of the two layers before it converts: a conversion reports the symbols of one layer,
+    /// not whether the other layer would hold the same ones.
+    ///
+    /// The packaging pass keeps its own list of the variants whose table it reads
+    /// (TABLE_VARIANTS in scripts/check-declarations.py), and the variants guide states the same
+    /// table in §5.0.2. A variant that reads a table must be added in all three places; no script
+    /// cross-checks them against this function.
+    inline constexpr bool variantKeepsSymbols(std::string_view variant) {
+        return variant == VARIANT_DIRECT;
+    }
 
     /// Input and output declaration of one S2P module.
     class S2PExports : public srt::ContribExports {

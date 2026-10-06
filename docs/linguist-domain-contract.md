@@ -289,6 +289,46 @@ onset，缺少歌手包部分时的正确行为是停在发音层。深度上限
 导入方自己的 `variant`，并写明导入方「**仍可**」严格要求，即允许而非必须。对既有声明而言这是
 纯增量修改（原先失败的声明变为可加载，可加载声明的行为不变），因此不触发 `compatVersion` 抬升。
 
+### 5.0.2 发音层是否独立于音素层
+
+两层形状由 S2P 成员决定，且**在初始化期即可读出**（A81）：经
+`WolfPipelineExtension::hasSeparatePronunciationLayer` 与
+`LanguageStatus::hasSeparatePronunciationLayer` 提供给宿主，与 `maxDepth` 同源、同样不创建任何对象。
+
+**有独立发音层 ⇔ S2P 成员转换符号**：
+
+| 组合形态 | 发音层与音素层 | 取值 |
+| :-- | :-- | :-- |
+| S2P 成员为 `direct` | 符号相同（只按保留分隔符切分） | `false` |
+| S2P 成员为 `dict` / `mapping` / `lua` | 改写字素（逐行查表／逐音素替换／脚本） | `true` |
+| 无 S2P 成员（§5.0.1 形态） | 发音即最深可达层 | `false` |
+
+**音素层始终存在**：最深可达层的符号即音素层。宿主据此判断 `pronunciation` 是独立的发音层还是
+音素层的内容本身。该判定与 `maxDepth` **正交**：可达 `Onsets` 的组合两种取值都有——字典形态的 cmn
+为 `true`，`direct` 形态的语言为 `false`。
+
+判据只读 **variant**：S2P 成员的 TSV 表与脚本在 Acquire 期读取，查询期不创建对象。因此「表内容
+其实是恒等」这类内容级事实不由运行期判定：`dict` / `mapping` 的表逐行只做等同或切分时，
+`check-declarations.py` 报 warning 由作者定夺（§12）；`mapping` 表可读但无任何可用行时同理——没有
+条目可套用，其产出就是 `direct` 的产出；`lua` 的输出无法静态判定，一律按 `true` 处理——宁可多呈现
+一层发音，不把发音误判成音素。**`dict` 空表不在此列**：它未命中键时产出空序列，是另一种缺陷。
+
+**该布尔值的粒度是整个组合，不到音节**。现实里存在**混合表**：本仓声库夹具实测，
+`wolf-voicebank-zh/inferences/s2p-cmn/opencpop-extension.txt` 的 615 个有效行中有 13 行符号恒等，
+`s2p-yue/jyutping-extension.txt` 的 639 行中有 25 行恒等。这类表整体仍在改写符号（绝大多数行确实
+在改写），因此整语言按变体名报 `true`。消费方**不得**把 `true` 读成「每个音节的发音层都独立」；
+逐音节的判断只能看该音节自身的产出。
+
+`direct` 的恒等是**符号级**而非字符串级：连续空格被折叠成一个分隔、首尾空格丢弃，所以
+`"a  b"` 与 `"a b"` 产出同一组符号。不要拿原始字符串比较来判定恒等。
+
+内容级例外只产生 **warning**，不阻断发布：`make-lang-release.py` 只在脚本以非零退出码结束时中止
+（`scripts/make-lang-release.py:191-197`），而 `check-declarations.py` 只在存在 error 时返回 1。
+因此「改用 `direct`」是**容错性建议**，是否照做由作者判断（§12）。
+
+本节是**纯增量查询**（既有声明的加载与转换行为不变，只多一条可读属性），不触发 `compatVersion`
+抬升。
+
 ### 5.1 基数的两侧分工
 
 - **上界由框架结构性保证**：`role` 在模块内唯一由框架强制（spec 2.4:634；
@@ -466,9 +506,12 @@ wolf 的歌手侧校验不执行。**
 - G2P `symbols` 可为音节等非音素原子符号，与音素类导出集异类，Level 1 **不**为其规定与任何
   音素集的跨键比对；
 - 未被 `languages` 引用的 linguist import（§10.3）；
-- 贡献 ID 不符合 `<language>-<scheme>[-<qualifier>]` 书写惯例（§2.2）。
+- 贡献 ID 不符合 `<language>-<scheme>[-<qualifier>]` 书写惯例（§2.2）；
+- S2P `dict` / `mapping` 表的内容级恒等（§5.0.2）：表的每一可用行都保持其键的符号时，组合会被
+  上报为持有独立发音层，与表中实际内容矛盾；`mapping` 表可读但没有任何可用行时同理（其产出与
+  `direct` 逐符号相同）。
 
-**执行方**：后两项只依赖声明本身，由 `scripts/check-declarations.py` 执行，并由
+**执行方**：后三项只依赖声明本身，由 `scripts/check-declarations.py` 执行，并由
 `make-lang-release.py` 在打包前调用，因为打包是修正不合规声明成本最低的最后环节，也是声明
 成为他人下载物的起点。前四项需要声库或模型的音素表，属于编辑器运行期职责，打包期无法执行。
 

@@ -79,7 +79,7 @@ Linking alone is not sufficient. A linker that drops unreferenced libraries, as 
 
 ## Versioning and ABI
 
-The current version is 0.1.0.0. **No ABI guarantee applies before version 1.0.** Most types that a
+The current version is 0.2.0.0. **No ABI guarantee applies before version 1.0.** Most types that a
 host uses are value types in public headers, namely `LanguageStatus`, `LanguageEntry`,
 `SingerEntry`, `SingerRef` and every payload under `Api/`. A new field changes the size of such a
 type, and a new virtual function changes the vtable of a contract interface such as

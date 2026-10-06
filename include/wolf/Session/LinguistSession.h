@@ -78,6 +78,21 @@ namespace wolf {
         /// not necessarily hold the catalog entry, and neither query has a cost.
         Api::Linguist::L1::Depth maxDepth = Api::Linguist::L1::Depth::Pronunciation;
 
+        /// Whether the pronunciation layer of this language is a layer of its own instead of being
+        /// the phoneme layer.
+        ///
+        /// The value equals \c LanguageEntry::hasSeparatePronunciationLayer for the same language
+        /// and is derived from the declaration of its composition. It is repeated here for the same
+        /// reason as \c maxDepth. It describes the shape that the composition \e declares, so it is
+        /// reported for every language the singer declares, including one that the session could
+        /// not route: a language this singer does not declare reports false, because no declaration
+        /// describes it, but a declared language whose status is Unavailable keeps the value of its
+        /// composition. Routing can make a language unavailable after the declaration is known, for
+        /// example when the session holds phonemes for the singer that cover none of the phonemes
+        /// the language declares. A caller must therefore read \c readiness before it reads this
+        /// value, and it may still learn the shape of a composition it cannot use.
+        bool hasSeparatePronunciationLayer = false;
+
         CoverageKind coverageKind = CoverageKind::Unknown;
 
         /// Value between 0 and 1, meaningful only if coverageKind is not Unknown.
@@ -100,6 +115,14 @@ namespace wolf {
         /// exists only for a language that the singer declares, and the value is therefore always
         /// meaningful.
         Api::Linguist::L1::Depth maxDepth = Api::Linguist::L1::Depth::Onsets;
+
+        /// Whether the pronunciation layer of this composition is a layer of its own instead of
+        /// being the phoneme layer.
+        ///
+        /// The value equals the value that \c probe() reports for this language, and it is
+        /// independent of \c maxDepth: a composition that reaches Onsets may hold a separate
+        /// pronunciation layer or not.
+        bool hasSeparatePronunciationLayer = false;
 
         /// Phonemes that the composition declares as possible output, and whether the list is
         /// complete.

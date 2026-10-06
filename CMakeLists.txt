@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.19)
 
+# ABI-relevant version history. Versions before 1.0 carry no ABI guarantee, so a version is raised
+# together with every change that breaks it. See README, "Versioning and ABI".
+#
 # 0.1.0.0 contains the first set of changes to public value types: LanguageStatus gained a
 # reachable depth and a coverage report, and the pipeline extension gained two virtual functions.
-# These changes are not ABI compatible with 0.0.1.0. Versions before 1.0 carry no ABI guarantee, so
-# the version is raised together with the change. See README, "Versioning and ABI".
+#
+# 0.2.0.0 makes the pronunciation layer a reported property of a composition: the pipeline extension
+# gained the pure virtual function hasSeparatePronunciationLayer, and the public value types
+# LanguageStatus and LanguageEntry each gained one field.
 project(wolf
-    VERSION 0.1.0.0
+    VERSION 0.2.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
     HOMEPAGE_URL "https://github.com/diffscope/wolf"

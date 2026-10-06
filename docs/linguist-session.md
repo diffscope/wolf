@@ -87,6 +87,12 @@ namespace wolf {
         /// 仅在 readiness 不为 Unavailable 时有意义；缺省取最浅层级。
         Api::Linguist::L1::Depth maxDepth = Api::Linguist::L1::Depth::Pronunciation;
 
+        /// 该语言的发音层是否是独立的层，由其 S2P 成员的 variant 读出（A81）。
+        /// 与 maxDepth 同源：它描述组合**声明**出的形状，凡歌手声明了该语言就会被报出；
+        /// 路由后变为不可用（如歌手音素表覆盖度为 0）时**不清位**。仅当歌手未声明该语言时为
+        /// 缺省 false。读取该值前必须先看 readiness。
+        bool hasSeparatePronunciationLayer = false;
+
         CoverageKind coverageKind = CoverageKind::Unknown;
         double coverage = 0.0;                      ///< 0 到 1，仅在 coverageKind 不为 Unknown 时有意义
         std::vector<std::string> missingPhonemes;   ///< 歌手无法演唱的声明音素，截断至前 16 条
@@ -98,6 +104,7 @@ namespace wolf {
         Api::Common::L1::LanguageScheme binding;
         srt::ContribLocator linguist;               ///< 承载该语言的 linguist 贡献
         Api::Linguist::L1::Depth maxDepth = Api::Linguist::L1::Depth::Onsets;  ///< 与 probe() 报告的值相同
+        bool hasSeparatePronunciationLayer = false;  ///< 与 probe() 报告的值相同（A81）
         std::vector<std::string> phonemes;          ///< 组合声明可能产出的音素
         bool openSet = false;                       ///< 为真时 phonemes 不是全集
     };
@@ -215,8 +222,8 @@ namespace wolf {
 
 **`Cold` 不保证资源能够加载，但保证不再有待定事项**（A71，收紧了 A58 原先的表述）。A69 否决
 运行期能力解析之后，绑定在加载期已由 `imports[].ref` 完全确定，`maxDepth` 从 `imports` 集合直接
-读出，覆盖度只是一次集合运算。这三项在初始化期都已确定，且都不需要打开任何模型，因此 `Cold` 与
-`Ready` 的区别只在于资源是否已在内存中。
+读出，`hasSeparatePronunciationLayer` 从其 S2P 成员的 variant 读出，覆盖度只是一次集合运算。这四项
+在初始化期都已确定，且都不需要打开任何模型，因此 `Cold` 与 `Ready` 的区别只在于资源是否已在内存中。
 
 只有 `warm()` 才能暴露的失败是：驱动未安装、模型无法打开、词典无法读取。这些是**安装环境与包
 内容**的属性（A36 已有同样的划分），无法从清单中得知，任何设计都不能在初始化期确定。

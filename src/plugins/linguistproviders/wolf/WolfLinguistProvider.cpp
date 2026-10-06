@@ -283,12 +283,24 @@ namespace wolf {
                     // it is computed once here rather than detected from a truncated conversion
                     // result.
                     auto depth = LinguistApi::Depth::Pronunciation;
-                    if (target.findImport(LinguistApi::ROLE_S2P)) {
+                    // A layer of its own exists when the S2P member converts the symbols, and the
+                    // variant of that member decides this. The tables and the scripts of a member
+                    // are read during Acquire and are not available to a query that runs while the
+                    // composition is only declared, so the variant is the source used here. A
+                    // composition without an S2P member reaches phonemes without a layer in
+                    // between, which leaves this false.
+                    auto separateLayer = false;
+                    if (const auto s2p = target.findImport(LinguistApi::ROLE_S2P)) {
                         depth = target.findImport(LinguistApi::ROLE_ONSET)
                                     ? LinguistApi::Depth::Onsets
                                     : LinguistApi::Depth::Phonemes;
+                        if (const auto *binding = s2p->binding()) {
+                            separateLayer =
+                                !Api::S2P::L1::variantKeepsSymbols(binding->target().variant());
+                        }
                     }
                     m_depths.emplace(entry.language, depth);
+                    m_layers.emplace(entry.language, separateLayer);
                     if (auto values = target.exports()) {
                         m_exports.emplace(entry.language,
                                           values->as<LinguistApi::LinguistExports>());
@@ -331,6 +343,15 @@ namespace wolf {
                 return it == m_depths.end() ? LinguistApi::Depth::Pronunciation : it->second;
             }
 
+            bool hasSeparatePronunciationLayer(std::string_view language) const override {
+                // A language that this singer does not declare has no linguist, and a language
+                // whose pronunciation is its phoneme layer holds no layer of its own. Both cases
+                // report false, which is also the value that LanguageStatus reports for an
+                // unknown language.
+                const auto it = m_layers.find(std::string(language));
+                return it != m_layers.end() && it->second;
+            }
+
             const LinguistApi::LinguistExports *exports(std::string_view language) const override {
                 const auto it = m_exports.find(std::string(language));
                 return it == m_exports.end() ? nullptr : it->second;
@@ -354,6 +375,9 @@ namespace wolf {
             std::vector<std::string> m_handles;
             std::map<std::string, Api::Common::L1::LanguageScheme> m_bindings;
             std::map<std::string, LinguistApi::Depth> m_depths;
+            /// Whether the pronunciation layer of a language is a layer of its own. See
+            /// hasSeparatePronunciationLayer().
+            std::map<std::string, bool> m_layers;
             /// Non-owning pointers into the linguist specs, which may belong to other packages. The
             /// package of the singer keeps its resolved dependencies loaded, and this extension is
             /// owned by the spec of the singer, so every referenced object outlives this

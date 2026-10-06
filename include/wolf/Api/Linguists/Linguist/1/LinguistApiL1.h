@@ -324,6 +324,26 @@ namespace wolf::Api::Linguist::L1 {
         /// distinguishes that case.
         virtual Depth maxDepth(std::string_view language) const = 0;
 
+        /// Returns whether the pronunciation layer of the composition behind a handle is a layer of
+        /// its own instead of being the phoneme layer.
+        ///
+        /// A composition reaches phonemes through one S2P step. A member that converts the symbols
+        /// produces a phoneme layer that differs from its input, and the pronunciation is then a
+        /// layer of its own. A member that copies the symbols (see S2P::L1::VARIANT_DIRECT) produces
+        /// the phoneme layer without adding one, and so does a composition without an S2P member,
+        /// whose reachable layers end at the pronunciation. The symbols of the deepest reachable
+        /// layer are the phoneme layer in every case.
+        ///
+        /// A host uses this to know whether a word has a pronunciation to show next to its phonemes,
+        /// or whether the two hold the same symbols. The value is read from the declaration of the
+        /// S2P member, and this query therefore creates no object. It answers a different question
+        /// than maxDepth(): a composition that reaches Onsets may hold a separate pronunciation
+        /// layer or not.
+        ///
+        /// Returns false for a handle that this singer does not declare. locate() distinguishes that
+        /// case.
+        virtual bool hasSeparatePronunciationLayer(std::string_view language) const = 0;
+
         /// Returns the phoneme inventory that the composition behind a handle declares, together
         /// with the flag that indicates whether the list is complete.
         ///

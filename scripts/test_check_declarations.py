@@ -92,6 +92,32 @@ def load_lint_module():
     return module
 
 
+def s2p_package(root: Path, name: str, variant: str, table=None) -> Path:
+    """Writes a minimal package whose only inference declaration is an S2P declaration, and returns
+    it.
+
+    The declaration names table.tsv next to itself, as the loader resolves a relative table path
+    against the directory of the declaration. \a table is written as the given text, byte for byte,
+    and omitted entirely if it is None.
+    """
+    package = root / name
+    (package / "inferences" / "s2p").mkdir(parents=True)
+    (package / "desc.json").write_text(json.dumps({
+        "$version": "1.0", "id": f"wolf/test-{name}", "version": "1.0.0.0",
+        "compatVersion": "1.0.0.0", "runtimeLevel": 1,
+        "contributions": {
+            "inference": [{"id": "s2p", "path": "./inferences/s2p/inference.json"}],
+        }}))
+    (package / "inferences" / "s2p" / "inference.json").write_text(json.dumps({
+        "interface": "org.openvpi.wolf.inference.S2P", "level": 1, "variant": variant,
+        "configuration": {"file": "table.tsv"}}))
+    if table is not None:
+        # Written as bytes, because the reading of the loader strips a byte order mark and a
+        # carriage return, and a text mode write would not keep both.
+        (package / "inferences" / "s2p" / "table.tsv").write_bytes(table.encode("utf-8"))
+    return package
+
+
 class Lint(unittest.TestCase):
     def test_the_shipped_package_passes_clean(self):
         # The package this repository ships is generated with the fixtures, because the repository
@@ -187,6 +213,98 @@ class Lint(unittest.TestCase):
             result = lint(root)
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("org.openvpi.wolf.inference.G2P", result.stdout)
+
+    def test_a_table_that_only_keeps_symbols_is_reported(self):
+        """A dict or mapping table whose every row keeps the symbols of its key contradicts the
+        separate pronunciation layer that the name of its variant reports (variants guide §3.2).
+
+        The criterion is the one the loader applies, not Python's own whitespace rule: the loader
+        splits on the ASCII space alone and drops the empty pieces. A row whose key holds two spaces
+        and whose value holds one therefore keeps the symbols of its key, and the first case below
+        pins that, because the previous criterion of this lint let it pass silently.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            # The dict table also exercises the reading rules of the loader: a byte order mark, CR
+            # line endings, a blank line and rows of a shape the loader rejects. None of those is a
+            # finding of its own, because the loader is the one that reports them.
+            cases = {
+                "identity-dict": ("dict", "\ufeffx\tx\r\na b\ta b\r\n\r\nno-tab-here\r\n\tz\r\n"),
+                "identity-mapping": ("mapping", "p\tp\nk\tk\n"),
+                # The value holds one space where the key holds two.
+                "collapsed-dict": ("dict", "a  b\ta b\n"),
+                "collapsed-mapping": ("mapping", "a  b\ta b\n"),
+            }
+            for name, (variant, table) in cases.items():
+                with self.subTest(package=name):
+                    result = lint(s2p_package(root, name, variant, table))
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn(f"warning: wolf/test-{name}:s2p:", result.stdout)
+                    self.assertIn(f"every row of the {variant} table keeps the symbols of its "
+                                  f"pronunciation", result.stdout)
+                    self.assertIn("use the direct variant", result.stdout)
+                    self.assertEqual(result.stdout.count("warning:"), 1,
+                                     result.stdout + result.stderr)
+
+    def test_a_mapping_table_without_a_usable_row_is_reported(self):
+        """A mapping table that is readable but holds no row the loader accepts rewrites nothing.
+
+        Its conversion is then the split of the pronunciation, which is what direct produces, so the
+        composition would be reported as holding a separate pronunciation layer that it does not
+        have. A dict table in the same state is not reported, because a dict row is looked up as a
+        whole and produces an empty sequence instead (pinned by the test below). A table that cannot
+        be read at all, or that is absent, stays silent as well, because the loader reports those
+        conditions itself.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            cases = {
+                "empty-mapping": ("mapping", "\ufeff\r\n\r\n"),
+                "unusable-mapping": ("mapping", "no-tab-here\n\tz\ny\t\n"),
+            }
+            for name, (variant, table) in cases.items():
+                with self.subTest(package=name):
+                    result = lint(s2p_package(root, name, variant, table))
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn(f"warning: wolf/test-{name}:s2p:", result.stdout)
+                    self.assertIn("the mapping table holds no usable row", result.stdout)
+                    self.assertIn("produces the same symbols as direct", result.stdout)
+                    self.assertNotIn("every row of the", result.stdout)
+                    self.assertEqual(result.stdout.count("warning:"), 1,
+                                     result.stdout + result.stderr)
+
+    def test_a_table_that_rewrites_symbols_is_not_reported(self):
+        """The reverse of the checks above, and the cases in which they stay silent: a row that
+        rewrites a symbol, a dict table without a usable row, a table that cannot be read, the
+        variants whose layer shape is not inferred from the content of a table, and a value that
+        separates its symbols with a character the loader does not treat as a separator.
+
+        The last case is the important one: the no-break space and the ideographic space are not
+        spaces to the loader, so such a row rewrites its symbols and the composition does hold a
+        separate layer. Folding them, as Python's own str.split() does, would report the table and
+        advise the direct variant, which would silently drop the rewrite.
+        """
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            cases = {
+                # One row keeps its symbols and one rewrites them; one rewriting row is enough.
+                "splitting-dict": ("dict", "x\tx\nni\tn i\n"),
+                "rewriting-mapping": ("mapping", "p\tb\n"),
+                # No row has the shape the loader accepts, so the dict table settles nothing.
+                "unusable-dict": ("dict", "no-tab-here\n\tz\ny\t\n"),
+                "absent-table": ("dict", None),
+                "direct": ("direct", "x\tx\n"),
+                "lua": ("lua", "x\tx\n"),
+                # A no-break space and an ideographic space are symbols in their own right.
+                "nbsp-dict": ("dict", "a b\ta\u00a0b\n"),
+                "ideographic-space-mapping": ("mapping", "a b\ta\u3000b\n"),
+            }
+            for name, (variant, table) in cases.items():
+                with self.subTest(package=name):
+                    result = lint(s2p_package(root, name, variant, table))
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertNotIn("warning:", result.stdout)
+                    self.assertIn("0 error(s), 0 warning(s)", result.stdout)
 
     def test_a_malformed_declaration_is_reported_not_raised(self):
         with tempfile.TemporaryDirectory() as scratch:

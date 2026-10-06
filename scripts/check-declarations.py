@@ -6,10 +6,12 @@ by the specification. Publishing them is useful only if they agree with the load
 therefore reads real packages and validates the exports and import options of every declaration
 against them.
 
-The script also runs two checks from the lint list of the domain contract, namely the two that
-require only the declarations. The other two checks in that list compare declarations against the
-phoneme tables of a voicebank or a model. They belong to the editor at run time and are outside the
-scope of a packaging pass.
+The script also runs the checks from the lint list of the domain contract that a packaging pass can
+run, namely the three that require only the declarations, plus the layer shape of a dict or mapping
+S2P declaration, which the domain contract assigns to this script (§5.0.2) and whose criterion the
+variants guide states (§3.2); that check reads the table its declaration names. The remaining
+checks in that list compare declarations against the phoneme tables of a voicebank or a model. They
+belong to the editor at run time and are outside the scope of a packaging pass.
 
 Each finding is an error or a warning. Errors correspond to conditions the loader rejects: schema
 violations, missing identity fields and roles, invalid package ids and versions, a malformed singer
@@ -44,7 +46,7 @@ from pathlib import Path
 
 from declarations import (INFERENCE_CATEGORY, LINGUIST_CATEGORY, LINGUIST_INTERFACE,
                           LINGUIST_ROLES, ROLE_G2P, ROLE_INTERFACES, ROLE_ONSET, ROLE_S2P,
-                          SINGER_CATEGORY,
+                          S2P_INTERFACE, SINGER_CATEGORY,
                           is_package_id, load_json, parse_version, schema_pattern, split_ref)
 
 
@@ -201,6 +203,65 @@ def unbounded_chain(declaration: dict) -> bool:
     # the word unchanged.
     return any(step.get("step") == "fallback" and step.get("params", {}).get("useOriginal", True)
                for step in declaration.get("configuration", {}).get("steps", []))
+
+
+# The S2P variants whose table this lint reads. Both rewrite the symbols of a pronunciation through
+# the table, which is why the host reports a separate pronunciation layer for them; see
+# variantKeepsSymbols() in include/wolf/Api/Inferences/S2P/1/S2PApiL1.h. That header holds the
+# authoritative list, and the variants guide states the same table in §5.0.2; a new table-reading
+# variant must be added in all three places.
+TABLE_VARIANTS = ("dict", "mapping")
+
+# The state of a dict or mapping table that the lint reads, as far as it concerns the layer shape.
+NO_TABLE = "no-table"          # Not readable, or absent: the loader reports that itself.
+NO_USABLE_ROW = "no-usable-row"  # Readable, but without a single row of the accepted shape.
+IDENTITY = "identity"          # Every usable row keeps the symbols of its key.
+REWRITES = "rewrites"          # At least one usable row rewrites a symbol.
+
+
+def units_bytes(value: bytes) -> list:
+    """Splits a pronunciation into its symbols, the way the loader does.
+
+    This mirrors splitPronunciation() in src/plugins/inferenceinterpreters/s2p/S2PTables.cpp: the
+    separator is the ASCII space alone, and the empty pieces it produces are dropped. Python's own
+    str.split() is not the same rule, because it folds every Unicode whitespace, which would make a
+    table with a no-break space or an ideographic space look like a table of identity rows.
+    """
+    return [piece for piece in value.split(b" ") if piece]
+
+
+def read_table(path: Path, unit) -> str:
+    """Classifies a dict or mapping table by the rows the loader would accept.
+
+    The file is read as bytes and never decoded, because the loader compares its columns as bytes
+    too; a table that is not valid UTF-8 therefore takes this same path (see stripLineDecorations()
+    in src/lib/Support/Files.cpp, which removes a byte order mark from the first line and one
+    carriage return from every line, and never decodes). A row is usable in the shape
+    DictionaryTable::load() and MappingTable::load() accept: exactly two columns separated by one
+    tab, neither column empty. A file that cannot be read, or that holds no usable row at all, says
+    nothing about the layer shape and returns NO_TABLE or NO_USABLE_ROW; the caller decides whether
+    that state is a finding.
+    """
+    try:
+        content = path.read_bytes()
+    except OSError:
+        return NO_TABLE
+
+    usable = 0
+    for number, line in enumerate(content.split(b"\n")):
+        if number == 0 and line.startswith(b"\xef\xbb\xbf"):  # Byte order mark, as the loader sees it.
+            line = line[3:]
+        if line.endswith(b"\r"):
+            line = line[:-1]
+        if not line:
+            continue
+        columns = line.split(b"\t")
+        if len(columns) != 2 or not columns[0] or not columns[1]:
+            continue
+        usable += 1
+        if unit(columns[1]) != unit(columns[0]):
+            return REWRITES
+    return IDENTITY if usable else NO_USABLE_ROW
 
 
 def local_import(declaration: dict, role: str, inferences: dict):
@@ -415,12 +476,15 @@ def lint_package(directory: Path, warnings: list) -> None:
     contributions = desc.get("contributions", {})
 
     # Read the package's inference declarations first, because the linguist check below inspects
-    # the chain that each linguist imports.
+    # the chain that each linguist imports. Each declaration keeps its path, because the check on
+    # an S2P table resolves the table against the directory of the declaration that names it.
     inferences = {}
+    inference_paths = {}
     for entry in contributions.get("inference", []):
         path = (directory / entry["path"]).resolve()
         if path.is_file():
             inferences[entry["id"]] = load_json(path)
+            inference_paths[entry["id"]] = path
 
     for entry in contributions.get("linguist", []):
         path = (directory / entry["path"]).resolve()
@@ -452,7 +516,40 @@ def lint_package(directory: Path, warnings: list) -> None:
 
     # Apply the same check to the symbols list of each chain that declares a symbols list.
     for entry_id, declaration in inferences.items():
-        if declaration.get("variant") != "pipe-chain":
+        variant = declaration.get("variant")
+
+        # The layer shape of a composition is bound to the name of its S2P variant: dict, mapping
+        # and lua rewrite the symbols, so the host reports a separate pronunciation layer. A table
+        # whose every usable row keeps the symbols of its key contradicts that name, and the report
+        # would describe a layer that the composition does not have (variants guide §3.2). A
+        # mapping table without a usable row contradicts it for the same reason: with no entry to
+        # apply, its conversion is the split of the pronunciation, which is what direct produces.
+        # An empty dict table is not reported: a dict row is looked up as a whole, so a composition
+        # with such a table produces an empty sequence instead, which is a different defect and
+        # shows up as missing phonemes rather than as a layer that does not exist.
+        if (declaration.get("interface") == S2P_INTERFACE and declaration.get("level") == 1
+                and variant in TABLE_VARIANTS):
+            configuration = declaration.get("configuration")
+            file = configuration.get("file") if isinstance(configuration, dict) else None
+            path = inference_paths.get(entry_id)
+            if path is not None and isinstance(file, str) and file:
+                # The loader rewrites a backslash into a separator before it opens the file
+                # (pathFromManifest in src/lib/Support/ManifestValues.cpp), so a declared path
+                # that uses one names the same file on both platforms.
+                table = read_table(path.parent / file.replace("\\", "/"), units_bytes)
+                if table == IDENTITY:
+                    warnings.append(
+                        f"{desc['id']}:{entry_id}: every row of the {variant} table keeps the "
+                        f"symbols of its pronunciation, so the composition would be reported as "
+                        f"holding a separate pronunciation layer; use the direct variant if the "
+                        f"table only splits")
+                elif table == NO_USABLE_ROW and variant == "mapping":
+                    warnings.append(
+                        f"{desc['id']}:{entry_id}: the mapping table holds no usable row, so the "
+                        f"composition produces the same symbols as direct; use the direct variant "
+                        f"if the table is meant to be empty")
+
+        if variant != "pipe-chain":
             continue
         exports = declaration.get("exports", {})
         open_chain = unbounded_chain(declaration)

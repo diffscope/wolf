@@ -7,7 +7,7 @@
 
 wolf 在 synthrt spec 2.4 之上建立开放的**语言域**：注册 `linguist` 贡献类别，发布语言组合契约与
 链推理契约，提供语言 Provider 插件与歌手语言 Pipeline，不把具体语言能力写入 synthrt 或 dsinfer。
-当前版本为 **0.1.0.0**（根 `CMakeLists.txt` 的 `project(VERSION)`）。
+当前版本为 **0.2.0.0**（根 `CMakeLists.txt` 的 `project(VERSION)`）。
 
 设计以 **[linguist-architecture.md](linguist-architecture.md)** 为索引，分七层展开
 （L0 框架不变量 / L1 语言域身份 / L2 语言组合契约 / L3 链推理契约 / L4 运行时装配 / L5 宿主接入
@@ -57,7 +57,8 @@ Executive Factory；G2P / S2P / Onset 三份独立的推理契约，经三个固
 各自的析构函数中先调用 `finish()`。
 
 **降级**：`linguist/s2p` 可以缺席，此时该语言的最大深度为 `Pronunciation`（域契约 §5.0.1）；
-`LanguageStatus` 提供 `maxDepth` 与音素覆盖度，门限由宿主决定。唯一的例外是清单声明为全集而
+`LanguageStatus` 提供 `maxDepth`、`hasSeparatePronunciationLayer`（发音层是否独立于音素层，域契约
+§5.0.2、A81）与音素覆盖度，门限由宿主决定。唯一的例外是清单声明为全集而
 声库不支持其中任何音素的情形，会话直接将其判为不可用（A70）。
 
 **变体**（收录表无缺口）：S2P `direct` / `dict` / `mapping` / `lua`；Onset `rule` / `lua`；
@@ -124,7 +125,7 @@ G2P 模型后端（该端口只在非缺省的 `multi` 特性下安装）或声�
 | `scripts/make-lang-release.py` | 打包、计算 SHA512、重新生成端口的 `assets.cmake` 与 `version-string`；`--verify` 解开归档与源逐文件比对，不一致时拒绝打包 |
 | `scripts/make-voicebank-fixture.py` | 由语言包生成歌手包形状的夹具，补齐语言包不提供的 S2P 与 onset（发布文档 §3.2） |
 | `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供当时的 17 个 ctest 用例中的 7 个读取；`--check` 与已有目录逐字节比对，不一致时非零退出 |
-| `scripts/check-declarations.py` | 用 `docs/schemas/` 校验声明，并执行三项打包期 lint（含 `openSet` 推导）。发布脚本在打包前调用，有错误时拒绝打包 |
+| `scripts/check-declarations.py` | 用 `docs/schemas/` 校验声明，并执行四项打包期 lint（含 `openSet` 推导与 S2P 表内容级恒等）。发布脚本在打包前调用，有错误时拒绝打包 |
 
 夹具包不随仓库分发：生成到构建目录后由 `WOLF_TEST_FIXTURES_SOURCE` 指过去，数据缺失时相关用例以状态 77 报跳过
 （ctest 记为未运行）。`scripts/test_check_declarations.py` 未配置该变量时会现场生成到临时目录。
@@ -149,7 +150,7 @@ M5 剩余项：`eng` / `por` / `kor` / `ita` 四种语言已构成完整的语�
 | 组 | 缺陷 | 处置（现行结论） |
 | :-- | :-- | :-- |
 | 任务面与取消 | X3、X5、S6 | `start()` 以 `exchange` 消费取消位，`enrol()` 返回布尔值；十一个执行体统一持有 `srt::ITask`（`wolf::ExecutiveTask`），不再手写任务面；子执行体创建失败不再停留在 `Running` |
-| 链接接口与版本口径 | X1、X2、B4、B5 | 私有依赖移出公开链接接口，并以配置期断言约束（CI 另经 `.github/consumer` 检查安装包）；语言包 `compatVersion` 一律取修订号下沿，依赖未指向下沿时 lint 判为错误；确立 ABI 规则并随公开结构体变更升至 **0.1.0.0**；声明根未知键改为警告 |
+| 链接接口与版本口径 | X1、X2、B4、B5 | 私有依赖移出公开链接接口，并以配置期断言约束（CI 另经 `.github/consumer` 检查安装包）；语言包 `compatVersion` 一律取修订号下沿，依赖未指向下沿时 lint 判为错误；确立 ABI 规则并随公开结构体变更升至 **0.1.0.0**（后续 L1 发音层查询的公开变更已随批升至 **0.2.0.0**）；声明根未知键改为警告 |
 | 资源、契约与并发 | X4、X6、X7、X8、P3、X9 | 保留词拦截不吞用户锁定的音素层；缓存条目按阈值回收；契约违例在三层统一为整批拒绝；pinyin 词典根的保留改为 RAII 随模块 `Configuration` 存续，临界区收窄（构造移出进程级锁）；两个会话共用一个 unit 经测试证明安全并**取消该限制** |
 
 **编号 ↔ 决策台账**：X1→A74，X2→A68，X3→A73，X5→A75，X8→A72，B4→D1，B5→A77，X9→A78；X4、

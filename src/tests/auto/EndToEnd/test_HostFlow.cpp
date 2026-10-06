@@ -469,6 +469,13 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_TheSameLineThroughTheSession) {
     BOOST_CHECK(session.probe(singer, "cmn").readiness == wolf::Readiness::Cold);
     BOOST_CHECK(session.probe(singer, "eng").readiness == wolf::Readiness::Unavailable);
 
+    // cmn reaches phonemes through the dictionary that the voicebank supplies, which converts the
+    // pronunciation into phonemes, so its pronunciation is a layer of its own. eng is not declared
+    // by this singer and holds no layer. Both answers come from the declaration, before any
+    // conversion has run.
+    BOOST_CHECK(session.probe(singer, "cmn").hasSeparatePronunciationLayer);
+    BOOST_CHECK(!session.probe(singer, "eng").hasSeparatePronunciationLayer);
+
     // Stage A. SP is sent with the other words; the session converts it and never passes it to
     // the language.
     LinguistApi::LinguistConvertInput first;

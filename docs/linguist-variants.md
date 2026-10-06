@@ -108,6 +108,18 @@ object**，属于 spec 2.4:74 末句「贡献类别、interface 与 variant 定�
 `dict` 与 `mapping` 的 TSV 每行必须恰好包含一个制表符且两列均非空；空行忽略，首行的 UTF-8 BOM
 与行尾 CR 被剥离。三个变体均拒绝 `file` 以外的键。
 
+**层形状**（A81）与变体名绑定：`direct` 的产出与输入同符号，用它的组合**没有独立的发音层**；
+`dict`、`mapping`、`lua` 都改写符号，组合的发音层是独立的一层（`lua` 的输出无法静态判定，一律
+按独立处理）。宿主经 `WolfPipelineExtension::hasSeparatePronunciationLayer` 读取该形状，不需要先
+转换（域契约 §5.0.2）。若某个 `dict` / `mapping` 的表**每一可用行**都只做等同或切分，
+`check-declarations.py` 报 warning：此时按变体名判定出的「独立发音层」与表内容不符，
+**若该表确实只做切分**，作者应改用 `direct`。
+
+**不能无条件照做**：`dict` 未命中键时产出**空序列**，而 `direct` 产出切分结果，两者不等价——把
+只有恒等行的 `dict` 换成 `direct` 会让未命中的发音从「没有音素」变为「按空格切分的音素」。真正与
+`direct` 等价的是 `mapping`：它逐音素替换、未列出的音素原样透传，表里没有可用条目时其产出就是
+`direct` 的产出。`mapping` 可读但无任何可用行时，脚本按这一条单独报警。
+
 `exports.phonemes`（产出集）的推导口径：`dict` 取 TSV 音素列的并集；`mapping` 取
 「目标列 ∪ 透传域」的上界集；`direct` 开放无界，`lua` 不可静态推导，这两类由作者显式补齐
 或省略。
