@@ -110,8 +110,9 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 
 **CI**（`.github/workflows/ci.yml`）：在 `ubuntu-24.04`（`x64-linux`）与 `windows-2022`
 （`x64-windows`）上构建；Linux 端以 `onnx`、`tests` 与 `lang-packages` 特性安装依赖，Windows
-端只启用 `onnx` 与 `tests`。随后依次运行声明 lint 的自测、对 `packages/wolf-lang-zxx` 的 lint、
-发布 pin 与仓内副本的一致性检查（`check-release-assets.py`）、CTest 与安装包消费检查。
+端只启用 `onnx` 与 `tests`。随后依次运行声明 lint 的自测、对 `build/test-fixtures/wolf-lang-zxx`
+（由 CI 的 `Generate the test fixture packages` 步骤产出）的 lint、发布 pin 与仓内副本的一致性
+检查（`check-release-assets.py`）、CTest 与安装包消费检查。
 `lang-packages` 是唯一**下载并校验**语言包发布资产的步骤，`test_ConvertedPackages` 因此只在
 Linux 端真跑；`test_MultiG2P`、`test_MultiG2PMaxLen` 与 `test_HostFlow` 需要 CI 不提供的共享
 G2P 模型后端（该端口只在非缺省的 `multi` 特性下安装）或声库夹具，两端都报

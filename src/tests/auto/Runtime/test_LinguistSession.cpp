@@ -700,6 +700,63 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsAPhonemeLayerAsTheDeepestLayer)
                 (*result)->words[0].onsets.size() == (*result)->words[0].phonemes.size());
 }
 
+/// A composition whose linguist binds an onset member reports the onset layer as its deepest one.
+///
+/// This is the depth that the release wording of the domain contract (§5.4) reads to detect whether
+/// a published composition reaches the onset layer: a deployment (language package plus voicebank)
+/// must let every language it declares reach Depth::Onsets, and a report of Depth::Phonemes or
+/// Depth::Pronunciation is the signal that the language has no onset member at all. The voicebank
+/// fixture is that shape: the language packages supply the G2P, the voicebank supplies the S2P
+/// dictionary and the onset rules, and no shallower module in the chain can stop the composition
+/// early.
+///
+/// Regression: the two cases above pin the shallower depths, so a session that reported one layer
+/// short of the composition would leave every case green while a release check passed a composition
+/// that cannot reach the onset layer at all.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheOnsetLayerAsTheDeepestLayer) {
+    const auto voicebank = wolf::test::voicebankRoot();
+    if (!fs::is_directory(voicebank / "wolf-voicebank-zh")) {
+        wolf::test::skip("no voicebank fixture; set WOLF_VOICEBANK_FIXTURE_SOURCE");
+    }
+    // The voicebank depends on the language packages, and both are generated.
+    BOOST_REQUIRE_MESSAGE(fs::is_directory(wolf::test::convertedRoot() / "wolf-lang-cmn"),
+                          "no converted language packages; set WOLF_LANG_PACKAGES_SOURCE");
+
+    srt::SynthUnit unit;
+    // The voicebank depends on the language packages, so the unit searches both directories. The
+    // helper of this file takes no paths, so the shared one is called by its qualified name.
+    wolf::test::configure(unit, {wolf::test::fixtureRoot(), wolf::test::convertedRoot()});
+    auto package = unit.openPackage(voicebank / "wolf-voicebank-zh", srt::SynthUnit::Load);
+    BOOST_REQUIRE_MESSAGE(package, wolf::test::why(package));
+
+    wolf::LinguistSession session(unit);
+    const wolf::SingerRef singer{srt::ContribLocator(package->id(), "singer", "zh"),
+                                 package->version()};
+
+    // The requirement names every declared language, so the handles are read from the catalog
+    // instead of being listed here, and no table of singer phonemes is supplied: coverage stays
+    // Unknown, which is not the one outcome that turns a route Unavailable.
+    const auto *entry = session.catalog()->find(singer);
+    BOOST_REQUIRE(entry != nullptr);
+    BOOST_REQUIRE(!entry->languages.empty());
+    for (const auto &language : entry->languages) {
+        const auto status = session.probe(singer, language.handle);
+        BOOST_CHECK_MESSAGE(status.readiness == wolf::Readiness::Cold, status.reason);
+        BOOST_CHECK_MESSAGE(status.maxDepth == LinguistApi::Depth::Onsets,
+                            language.handle + " should reach the onset layer");
+    }
+
+    // The reported depth is realized rather than only declared: asking for the deepest layer
+    // returns the onsets that the rules of the voicebank marked, so the composition does not stop
+    // at the phoneme layer on the way.
+    auto result = session.convert(singer, "cmn", Line({"wo"}, LinguistApi::Depth::Onsets));
+    BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
+    BOOST_REQUIRE(!(*result)->words[0].onsets.empty());
+    BOOST_CHECK_EQUAL((*result)->words[0].onsets.size(), (*result)->words[0].phonemes.size());
+    BOOST_CHECK((*result)->words[0].onsets[0]);
+}
+
 /// The layer query answers from the declaration even when the session cannot use the composition.
 ///
 /// This pins the wording of LanguageStatus::hasSeparatePronunciationLayer: it describes the shape

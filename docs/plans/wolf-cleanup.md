@@ -22,9 +22,11 @@
 ## 2. 现状盘点（结论先行）
 
 1. **「二进制包/产物不得进 git 追踪」已经达标**。跟踪文件 308 个、合计 1.39 MiB，最大者是文档
-   （`docs/linguist-decisions.md`，113.5 KiB）；唯一入库的"包"是 `packages/wolf-lang-zxx` 的 4 个声明文件
-   （2171 B，无资源）。133 个 `.json` 与 52 个 `.txt` 逐个裁定**无一为生成产物**；19 MB 模型与 133k 行词典
-   既不在工作树也不在对象库（历史一并成立）。最小必要集合 1,420 KB / 308 文件。
+   （`docs/linguist-decisions.md`，113.5 KiB）；唯一入库的"包"内容仍是 `wolf-lang-zxx` 的 4 个声明文件
+   （当时位于 `packages/wolf-lang-zxx/`，2171 B——CRLF 检出读数，对象库内 4 个文件共 2092 B；现由
+   `scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项承载，无资源）。133 个 `.json` 与 52 个
+   `.txt` 逐个裁定**无一为生成产物**；19 MB 模型与 133k 行词典既不在工作树也不在对象库（历史一并
+   成立）。最小必要集合 1,420 KB / 308 文件。
 2. **「测试可以从 release 下载包」的机制已经存在并跑通**，形态与 otter 同构：
    release 资产 → 纯数据 vcpkg 端口（`scripts/vcpkg-ports/wolf-lang-packages/portfile.cmake`，下载后校验
    SHA512）→ CMake config 包 → `CMakeLists.txt` 的 `find_package(wolf-lang-packages CONFIG QUIET)` →

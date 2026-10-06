@@ -28,7 +28,8 @@
 - **该目录有第二个消费者**：`scripts/test_check_declarations.py:24` 硬编码 `FIXTURES = <repo>/src/tests/auto/packages`，
   并在 `:80-84` 的 `test_every_test_package_has_a_recorded_verdict` 里遍历它核对 verdicts。夹具改为生成后，
   这个脚本必须改为指向生成目录（或按需自行生成），否则它会**静默 lint 0 个包**而测试仍然"通过"。
-- 现状可达性：夹具目录与唯一发布包 `packages/wolf-lang-zxx` 无同名项，二者是两回事。
+- 现状可达性：夹具目录与唯一发布包 `wolf-lang-zxx` 无同名项，二者是两回事（该发布包当时位于
+  `packages/wolf-lang-zxx/`，现由 `scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项生成）。
 - **本仓已有"测试自己造包"的先例**：`Inference/test_LuaVariants.cpp:32-47`、`Inference/test_OnsetRules.cpp:24-39`、
   `Inference/test_PipeChain.cpp:69`、`Inference/test_MultiG2P.cpp:99-101` 都在运行期用 `ofstream`/`fs::copy` 现造包。
 - **生成器先例**：`scripts/make-voicebank-fixture.py`（266 行）+ `CMakeLists.txt:185` 的 `WOLF_VOICEBANK_FIXTURE_SOURCE`
@@ -144,7 +145,7 @@
 ## 6. 不做的事
 
 - 不改夹具内容与语义（等价重构），不顺带重命名包或重排清单。
-- 不动 `packages/wolf-lang-zxx`（发布包，非测试夹具）。
+- 不动发布包 `wolf-lang-zxx`（当时位于 `packages/wolf-lang-zxx/`，非测试夹具）。
 - 不在本轮处理 otter（第三阶段单独进行，标准与本方案一致）。
 - 不做远端操作；不 push。
 

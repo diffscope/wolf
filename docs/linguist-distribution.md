@@ -54,7 +54,8 @@ if (!isDirectory) { return Error(Error::FileNotFound, "Package path is not a dir
 语言包的目标形态是**完整语言闭包**：`contributions` 同时含 `linguist` 与 `inference`。
 
 **当前进度**：`eng`、`por`、`kor`、`ita` 四种已闭包。这四种语言的 `scheme` 已确定（A49），且其
-G2P 产出空格分隔的音素，因此 S2P 使用 `direct`；Onset 按契约可以省略，且没有可用的规则资源。
+G2P 产出空格分隔的音素，因此 S2P 使用 `direct`；Onset 按契约可以省略，且没有可用的规则资源——
+**契约允许省略不等于发布口径允许默默缺层**：达标按组合判定，见域契约 §5.4 与本文 §3.3 的核对表。
 其余八种只有 `inference`：五种等待 P7 定名；`cmn`、`yue`、`jpn` 产出的是**音节**而非音素，其 S2P
 需要一份音节到音素的词典，而**该词典属于歌手包的内容**（spec 2.3 的 `languages[].dict`），不由
 语言包提供。因此这三种语言只含 `inference` 是最终形态，而非缺口（A66）。
@@ -253,7 +254,7 @@ Phonetic-Suite-**Num**、**Punc**、**Unknown** 合并为**一个**语言包。
 | `scheme` | `passthrough` |
 | G2P | `pipe-chain`：单个 `verify` 步，正则合并为 `\p{N}|\p{P}|[.]+` → `copy`；接 `fallback: useOriginal` |
 | S2P | `direct`（按空格切分，无资源） |
-| Onset | 省略（0..1，宿主合成全 `false`） |
+| Onset | 省略（0..1，宿主合成全 `false`）；**契约允许省略 ≠ 发布允许默默缺层**，见域契约 §5.4 与本文 §3.3 |
 
 **`zxx` 是 ISO 639-3 的正式代码，含义为「无语言内容」**（no linguistic content），与数字、标点和
 孤立符号的语义一致。因此无需为其破坏 `language` 的 `[a-z]{3}` 规则，也无需使用私用码
@@ -264,8 +265,10 @@ Phonetic-Suite-**Num**、**Punc**、**Unknown** 合并为**一个**语言包。
 
 **本包是发布链的引导包**：本包不含词典与模型，不涉及许可问题，但完整覆盖「`desc.json`、语言声明、
 两个推理模块、歌手映射」的全链路，因此在实施方案中排在最前（见
-[linguist-implementation-plan.md](linguist-implementation-plan.md) M3.5）。本包的源文件位于
-`packages/wolf-lang-zxx/`，由 `make-lang-release.py --extra` 纳入发布。
+[linguist-implementation-plan.md](linguist-implementation-plan.md) M3.5）。本包的声明位于
+`scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，由该脚本生成到构建目录（惯例为
+`build/test-fixtures/wolf-lang-zxx/`，生成物不入库，CMake 构建**不**生成它），再由
+`make-lang-release.py --extra` 指向该生成目录纳入发布。
 
 ## 3. 结构迁移
 
@@ -290,11 +293,15 @@ Phonetic-Suite-Cmn/                         wolf-lang-cmn/
 每个包必须**新写**的内容（旧格式中没有对应物）：
 
 1. `desc.json` 的全部内容（含 `runtimeLevel: 1`、`compatVersion`、`dependencies`）；
-2. `linguist.json`，即语言组合声明，含 `language`、`scheme`、`exports.phonemes` 与三条 role imports；
+2. `linguist.json`，即语言组合声明，含 `language`、`scheme`、`exports.phonemes` 与**两条** role imports
+   （`linguist/g2p` 与 `linguist/s2p`；实测 `eng`、`ita`、`kor`、`por` 四个语言包均只有这两条）。语言包
+   **不要求**自带 onset：卡拍层由语言包或声库提供、两方都无法提供时须显式登记为无卡拍层（见域契约 §5.4）；
 3. 各推理模块的 `exports`：G2P 的 `languages` 与 `symbols`、S2P 的 `languages` 与 `phonemes`、
    Onset 的 `knownPhonemes`；
 4. **S2P 与 Onset 模块本身**：旧栈中二者是声库 manifest 的 `s2pMode`、`s2pFile`、`onsetFile`
-   字段，而非模块。公共语言包要成为完整闭包，必须为每种语言产出默认的 S2P 与 Onset 声明。
+   字段，而非模块。**这两类声明不要求由语言包提供**：发布口径按**组合**判定，每个声明语言的卡拍层
+   由语言包提供、由声库提供、或两方都无法提供规则资源时登记为无卡拍层（已知限制）三者之一——
+   口径与判据见域契约 §5.4，逐语言现状核对见 §3.3。
 
 第 4 条是迁移的主要工作量，因此必须在首次 release 之前完成。
 
@@ -314,7 +321,7 @@ BSD-2-Clause 声明在改编时被删除。
 
 | 位置 | 内容 |
 | :-- | :-- |
-| **wolf git** | 转换与发布脚本；`wolf/lang-zxx` 的**源文件**（`packages/wolf-lang-zxx/`，无资源，约 2 KB，属于源文件而非构建产物）；负面用例夹具的**生成器**（`scripts/make-test-fixtures.py`，41 包 / 141 文件，生成物不入库） |
+| **wolf git** | 转换与发布脚本；`wolf/lang-zxx` 的**源文件**（`scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，无资源，约 2 KB，属于源文件而非构建产物，生成到构建目录后不入库）；负面用例夹具的**生成器**（`scripts/make-test-fixtures.py`，41 包 / 141 文件，生成物不入库） |
 | **gitignored 暂存目录** | 转换的全部输出，位于 `build/lang-packages/`，由现有 `.gitignore` 的 `build/` 规则覆盖 |
 | **wolf release** | zip 资产与 `manifest.json` |
 | **本仓 overlay 端口** | `scripts/vcpkg-ports/wolf-lang-packages/` 的 `assets.cmake` 与 `vcpkg.json`（生成物，随 release 同步） |
@@ -386,6 +393,59 @@ stat**，因为重写可以保持大小与时间不变），任一不符即**拒
 每一个音节都有词条，这正是测试所需；具体音素集由各歌手包自行决定。
 
 依赖版本取自语言包自身的 `compatVersion`，不写死：若写死版本，打包修订号一经变动即无法解析。
+
+### 3.3 逐语言达标核对表（发布清单）
+
+> **本表是发布核对清单，不是引擎约束。** 它记录每个语言的卡拍层由哪一侧提供，供发布方出包前逐项
+> 核对；引擎允许更浅的组合，浅组合是**合法的语言形态**（两种更浅的形态各有回归用例），因此本表
+> **不**新增任何加载期校验。口径、检测方式与后果见域契约 §5.4。
+
+| 语言 | 卡拍层由谁提供（语言包 / 声库） | 是否登记为无卡拍层 |
+| :-- | :-- | :-- |
+| `cmn` | 声库（本机夹具实测；发布中的歌手包未实测） | 否（夹具组合按声明达标） |
+| `yue` | 声库（同 `cmn`） | 否（夹具组合按声明达标） |
+| `eng` | 语言包实测**不提供**（其 linguist 只有 G2P 与 S2P）；声库未实测 | 未实测 |
+| `ita` | 同 `eng` | 未实测 |
+| `kor` | 同 `eng` | 未实测 |
+| `por` | 同 `eng` | 未实测 |
+| `jpn` | 语言包实测**不提供**（该包只发 G2P，不发 linguist）；声库未实测 | 未实测 |
+| `deu` | 同 `jpn` | 未实测 |
+| `fil` | 同 `jpn` | 未实测 |
+| `fra` | 同 `jpn` | 未实测 |
+| `rus` | 同 `jpn` | 未实测 |
+| `spa` | 同 `jpn` | 未实测 |
+| `zxx` | 语言包实测**不提供**（`wolf-lang-zxx` 的 linguist 只有 G2P 与 S2P）；声库未实测 | 未实测 |
+
+**本机实测依据**（`build/` 是 gitignored 的产物目录，以下核查全部只读）：
+
+- **语言包侧一律不提供卡拍层**：`build/lang-packages-current` 的 14 个包（12 个语言包，加
+  `wolf/g2p-multi`、`wolf/g2p-pinyin` 两个共享后端包）共有 18 份 `inference.json`，**没有一份**
+  声明 Onset 接口（`org.openvpi.wolf.inference.Onset`）；按文件名递归找 `*onset*` 同样一份也没有；
+- **只有 `cmn`、`yue` 有实测的声库侧来源**：`build/` 下唯一的 Onset 模块在歌手包形状的
+  `build/voicebank-fixture/wolf-voicebank-zh`（4 份 `inference.json` 中有 2 份声明 Onset：
+  `onset-cmn`、`onset-yue`），且其歌手把它们**绑定在自己身上**——`singers/zh/singer.json` 把 `cmn`、
+  `yue` 映射到 `:linguist/cmn-pinyin`、`:linguist/yue-jyutping`，两条 linguist 的 `imports` 各自
+  引用本包的 `onset-cmn`、`onset-yue`。它是**夹具**，不是发布中的歌手包；
+- **语言包侧只有两种形状**：`cmn`、`yue`、`jpn`、`deu`、`fil`、`fra`、`rus`、`spa` 八个包只有
+  `inferences/g2p`，**不发 linguist**，这些语言的组合只能绑定声库侧的 linguist；`eng`、`ita`、
+  `kor`、`por` 四个包另有 `linguists/<language>-<scheme>/linguist.json`，其 `imports` 只有
+  `linguist/g2p` 与 `linguist/s2p`，**没有** `linguist/onset`；
+- **「达标」已由回归用例守住**：`build/test-fixtures` 的 30 份 `inference.json` 同样没有 Onset
+  声明；守住达标的是 `src/tests/auto/Runtime/test_LinguistSession.cpp` 的
+  `test_LinguistSession_ReportsTheOnsetLayerAsTheDeepestLayer`（:716-758），它在夹具组合上对歌手
+  声明的每个语言断言 `probe().maxDepth == Depth::Onsets`，并按该深度转换一次以确认结果里真的有
+  声库规则标出的 onsets。上表仅有的达标行（夹具的 `cmn`、`yue`）由它守住；**只有这两行有用例
+  支撑**，其余各行仍为「未实测」，该用例不改变它们的取值；
+- **「未实测」的含义**：本机没有这些语言的歌手包数据，无法判定声库侧是否提供 onset，既不能记为
+  达标，也不能记为无卡拍层。发布前必须对真实歌手包按域契约 §5.4 的检测方式（`maxDepth`）复核后再
+  改本表取值；届时若两方都提供不了规则资源，该语言**必须**登记为无卡拍层并写明宿主的实际行为
+  （域契约 §5.4），**不允许默默缺层**。
+
+核查命令（只读、可复跑；只列出声明 Onset 接口的模块）：
+
+```sh
+python -c "import json,pathlib as P;[print(p) for p in P.Path('build').rglob('inference.json') if json.loads(p.read_text(encoding='utf-8')).get('interface')=='org.openvpi.wolf.inference.Onset']"
+```
 
 ## 4. 版本兼容模型（规范性）
 
@@ -671,8 +731,8 @@ wolf 不为自身提供端口，而是直接把 `synthrt-main` 列为清单依�
 5. **CI**：`.github/workflows/ci.yml` 在 Linux（`x64-linux`）与 Windows（`x64-windows`）上以
    `--x-feature=onnx --x-feature=tests` 安装依赖，不启用 `lang-packages`，也不设置
    `WOLF_LANG_PACKAGES_SOURCE`，因此依赖数据的测试在 CI 中跳过。CI 另外运行 lint 单元测试、对
-   `packages/wolf-lang-zxx` 运行 `check-declarations.py`，并以 `.github/consumer` 检查安装后的
-   CMake 包。
+   `build/test-fixtures/wolf-lang-zxx`（由 CI 的 `Generate the test fixture packages` 步骤产出）运行
+   `check-declarations.py`，并以 `.github/consumer` 检查安装后的 CMake 包。
 
 > **边界**：端口只保证**包数据**就绪。真实包加载测试的另一项前提是 G2P、S2P、Onset 解释器。wolf
 > 现随附六个解释器插件（`chain`、`pinyin`、`s2p`、`onset`，以及条件构建的 `multig2p` 与 `lua`），
@@ -682,8 +742,8 @@ wolf 不为自身提供端口，而是直接把 `synthrt-main` 列为清单依�
 
 端口位于本仓（A29），因此同步是**单仓库内的一步**：
 
-1. 运行发布脚本 `make-lang-release.py`（`--converted`、`--extra packages/wolf-lang-zxx`、`--out`、
-   `--bundle-version`、`--verify`、`--port scripts/vcpkg-ports/wolf-lang-packages`）：按 §2 的切分
+1. 运行发布脚本 `make-lang-release.py`（`--converted`、`--extra build/test-fixtures/wolf-lang-zxx`、
+   `--out`、`--bundle-version`、`--verify`、`--port scripts/vcpkg-ports/wolf-lang-packages`）：按 §2 的切分
    打包，计算 SHA512，写出 `manifest.json`，并**就地更新**
    `scripts/vcpkg-ports/wolf-lang-packages/assets.cmake` 及该端口 `vcpkg.json` 的 `version-string`
    与 `features`；

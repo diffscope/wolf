@@ -364,6 +364,48 @@ onset，缺少歌手包部分时的正确行为是停在发音层。深度上限
 
 引用其他 Package 的模块时，导入方在 `desc.json` 的 `dependencies` 中声明对目标包的依赖。
 
+### 5.4 发布口径：随包发布的组合必须达到 onset 层
+
+§5.0 至 §5.3 规定**引擎能力**，本节规定**发布方**的要求，两者不冲突：要求约束组合应取何种形态，
+组合实际达到哪一层则由引擎如实报告。本节所称 onset 层（宿主侧亦称「卡拍层」）即绑定到
+`linguist/onset` 角色的那个推理解释器成员。
+
+> **随包发布的部署组合（语言包 + 声库）必须让每个声明语言达到 `Depth::Onsets`；两方都无法提供
+> 规则资源时，发布方必须把该语言显式登记为「无卡拍层（已知限制）」，不允许默默缺层。**
+
+- **生效的是歌手实际绑定到的那个 linguist**：宿主先按歌手的语言映射取该语言的 role，再取该 role
+  的**绑定目标**（`src/plugins/linguistproviders/wolf/WolfLinguistProvider.cpp:272-276`），层深由
+  **该目标自身**的 `linguist/s2p` 与 `linguist/onset` 导入决定（:293-296）。因此**「语言包或声库
+  任一方提供即可」不成立**：生效的只有**被绑定的那一个** linguist。声库因条目自带 `s2pFile`/`dict`
+  而**自建 linguist** 时（音节语言的词典与 onset 规则属于歌手包内容，见
+  [linguist-distribution.md](linguist-distribution.md) §3.2），被绑定的是声库自己的 linguist，
+  **语言包那个带 `linguist/onset` 的 linguist 不会被绑定**，它的 onset 成员对本次组合不生效，组合
+  因此仍停在音素层。本要求**不**要求语言包自带 `linguist/onset` 模块；§5.1 的基数、§5.3 的匹配与
+  §5.0 的降级产出均不因绑定关系改变；
+- **缺层必须登记，不允许默默缺层**：被绑定的 linguist 取不到卡拍层（语言包与声库都不提供规则资源）
+  时，发布方必须在发布清单中把该语言登记为**无卡拍层（已知限制）**，登记项必须写明宿主的实际行为：
+  音素按无起音处理，因此该音符不产生自己的 word、音素归入前一个词的 word、时长偏移的基准随之
+  改变（详述见下条「不达标的后果」）。登记是**发布动作**：不改变引擎行为，也不新增加载期校验。
+  逐语言的现状核对清单见 [linguist-distribution.md](linguist-distribution.md) §3.3；
+- **检测方式**：对每个声明语言查询 `WolfPipelineExtension::maxDepth` /
+  `LanguageStatus::maxDepth`（§5.0.1）。报 `Depth::Phonemes` 即该语言没有 onset 成员；报
+  `Depth::Pronunciation` 更浅，同样没有卡拍层。**`onsets` 的取值不能用作判据**：该成员缺席时
+  逐位输出 `false`（§5.0），与「有卡拍层而本音节无起音」不可区分。`hasSeparatePronunciationLayer`
+  回答的是另一个问题（§5.0.2），不能替代本检测；
+- **不达标的后果**：宿主看到的卡拍层与「有卡拍层而无起音」同形，编辑器侧据此折平；音素因此归属
+  到前一个词、该音符不产生 word，时长偏移的基准随之改变，结果是**词与音符的关联整体错位一个
+  音符**。该后果发生在宿主侧，源头是组合缺少 onset 成员。
+
+**这是发布方的要求，不是加载期或运行期的规则。** 引擎允许更浅的组合，更浅的组合是**合法的语言
+形态**：`Depth::Pronunciation` 是缺少歌手包部分时的正确行为（§5.0.1），`Depth::Phonemes` 与
+`Depth::Pronunciation` 两种形态各有回归用例（`src/tests/auto/Runtime/test_LinguistSession.cpp`
+的 `test_LinguistSession_ReportsHowDeepALanguageGoes` 与
+`test_LinguistSession_ReportsAPhonemeLayerAsTheDeepestLayer`）；达到 onset 层的形态则由同文件同路径的
+`test_LinguistSession_ReportsTheOnsetLayerAsTheDeepestLayer`（:716-758）守住：它在声库夹具组合上对
+该歌手声明的每个语言断言 `maxDepth == Depth::Onsets`。因此本要求**不**新增加载期校验，
+`check-declarations.py` 的判错范围也不因本节改变——其中与 role 有关的仍只有缺少 `linguist/g2p`
+与未知 role（§12），**不**要求 `linguist/onset`。
+
 ## 6. Import options
 
 **无。** 语言 Level 1 不定义 import `options` 词汇。

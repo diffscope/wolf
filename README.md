@@ -220,7 +220,8 @@ reports as skipped.
 
 CI (`.github/workflows/ci.yml`) builds with the `onnx` and `tests` features on Linux and Windows,
 and adds `lang-packages` on Linux so that the release the port pins is exercised. It runs the self
-tests of the declaration lint and the lint on `packages/wolf-lang-zxx`, runs CTest,
+tests of the declaration lint and the lint on `build/test-fixtures/wolf-lang-zxx` (the directory
+that `scripts/make-test-fixtures.py` above produced), runs CTest,
 and then installs wolf and builds `.github/consumer` against the installed package. The consumer
 check verifies the `wolf::wolf` target, `WOLF_PLUGINS_DIR` and the absence of Support headers.
 

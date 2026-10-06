@@ -325,6 +325,13 @@ def check_identity(declaration: dict, grammar: IdentityGrammar, where: str, erro
     roles = [item.get("role") for item in imports_of(declaration)]
     if ROLE_G2P not in roles:
         errors.append(f"{where}: a linguist must import a {ROLE_G2P} role")
+    # linguist/g2p is the only role whose absence the loader rejects, and this lint deliberately
+    # stops there: it does not require linguist/onset. A published deployment must reach the onset
+    # layer, but either the language package or the voicebank may supply that member, so requiring
+    # the role here would reject compositions that the contract declares valid, namely every one
+    # that leaves the member to the voicebank (domain contract §5.4). The loader accepts the same
+    # declarations, and the layer a composition reaches is read from its role set through maxDepth
+    # rather than enforced at load time (domain contract §5.0, §5.0.1).
     # A linguist binds only the three fixed roles. The loader ignores any other role, and the
     # composition is then shallower than the declaration suggests; a misspelt role such as
     # linguist/onsets is therefore an error instead of a warning.
