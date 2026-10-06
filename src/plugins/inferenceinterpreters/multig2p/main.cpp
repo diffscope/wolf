@@ -286,6 +286,19 @@ namespace wolf::multig2p {
                 }
                 result->bundle = bundle.take();
 
+                // The models are checked here, where the bundle is read, rather than when an
+                // executive opens them: a package whose models are missing is rejected by the load
+                // itself (spec 2.4:444), instead of loading and then failing word by word for
+                // every language that the bundle serves. The check reads and creates nothing, so
+                // it leaves no state for a rollback to undo (spec 2.4:446). Only the files are
+                // resolved: a session is a run-time resource, and an installation without an
+                // inference driver must keep loading, because the contract reports that case per
+                // word.
+                if (auto checked = Decoder::verifyModels(*result->bundle, result->directory);
+                    !checked) {
+                    return checked.takeError();
+                }
+
                 auto vocabulary = cache.acquire<Vocabulary>(
                     result->directory / "vocabulary.json", VOCABULARY_KIND, VARIANT,
                     std::function([](const fs::path &path)

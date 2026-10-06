@@ -223,6 +223,10 @@ namespace wolf {
         /// the singer route to modules that are not linguist contributions and no linguist
         /// provider was created in the load that brought the singer in, because the loader then
         /// has no validator for its language map. warm() and convert() report the same reason.
+        ///
+        /// A reason that comes from a recorded failure names the fault rather than restating its
+        /// text: it carries the kind of the error code and every message of the cause chain, which
+        /// are the parts that identify the layer that failed.
         LanguageStatus probe(const SingerRef &singer, std::string_view language) const;
 
         /// Creates the executive immediately and retains it, so that the next conversion loads no
@@ -233,6 +237,12 @@ namespace wolf {
         srt::Expected<void> warm(const SingerRef &singer, std::string_view language);
 
         /// Performs one conversion. Depth, per-word pinning and per-word output use the L4 types.
+        ///
+        /// A batch that fails as a whole, meaning that the executive could not run it at all, is
+        /// cached with its reason until the next refresh(), exactly as warm() caches a failure,
+        /// because such a failure is a property of the route rather than of the words. probe()
+        /// reports the route Unavailable afterwards. A per-word failure is a result of the
+        /// conversion and is not cached.
         ///
         /// A cancelled \a token is not an error, according to the stopping rule of
         /// LinguistExecutive. The result holds the words finished before the cancellation took

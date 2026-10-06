@@ -231,13 +231,30 @@ namespace wolf {
 三条规则：
 
 1. **`probe()` 不改变状态**。宿主界面每帧查询一次也不得触发加载；
-2. **失败与成功同样缓存**。lite 用 `failedS2pLanguages` 避免逐音符重试，这是必需的而非优化：
+2. **失败与成功同样缓存**，但只有**整条路由级**的失败进缓存：**执行体创建失败**（模型打不开、
+   词典读不到）与**执行体整批运行失败**（`convert()` 里 `start()` 返回错误，
+   `LinguistSession.cpp:861-871`）都让该 (歌手, 语言) 变 `Unavailable` 直到下一次 `refresh()`；
+   **逐词失败只是转换结果，不缓存**；**取消不算失败**，也不缓存（被取消的运行仍然返回结果，只把
+   任务状态置 `Canceled`，`include/wolf/Support/ExecutiveTask.h:52-71`）。lite 用
+   `failedS2pLanguages` 避免逐音符重试，这是必需的而非优化：
    对一个 500 音符的片段，一次失败会变成 500 次；
 3. **失败缓存的唯一失效点是 `refresh()`**。没有超时，也没有后台重试；何时需要重新检查由宿主
    决定（安装了新包、更改了搜索路径），会话不作推测。`release()` 只清除成功缓存，保留已缓存的
-   失败：释放资源不会修复一条错误的路由。
+   失败：释放资源不会修复一条错误的路由（`LinguistSession.cpp:697-699` 的实现注释即写明
+   "releasing resources does not repair a failed route"，该函数不改动失败缓存；清空它的唯一一处
+   是 `refresh()` 内的 `failed.clear()`，`:646`）。
+   **宿主的重试入口因此不是某个「清除失败」接口，而是重新扫描声库、让会话重建目录**：先让包经
+   加载事务 Commit（`refresh()` 只收录 `findLoadedPackage()` 已加载的包，`:417`），再调用
+   `refresh()`；该函数本身就是文档化的目录重建点，同时丢弃就绪与失败缓存
+   （`include/wolf/Session/LinguistSession.h:195-204`）。lite 的对应操作是**重扫声库**
+   （`SynthrtEngine::refreshVoicebanks()`）：该函数每次扫描后都调用会话的 `refresh()`，与包集合
+   是否变化无关（`SynthrtEngine.cpp:490-491`，经 `LanguageBridge.cpp:105-106` 透传），所以重扫
+   一次即完成重试。
 
-`Unavailable` 的 `reason` 直接取自失败点的诊断字符串，不重新措辞：加载器的诊断已经明确（如
+`Unavailable` 的 `reason` **以失败层自己的诊断为主体，但不只是它的文本**：宿主只拿得到字符串，
+拿不到错误对象，因此命中失败缓存时由 `describeFailure()` 渲染**错误码的 kind 与整条 cause 链**
+（`LinguistSession.cpp:236-252` 的辅助函数，`probe()` 在 `:744` 使用它），message 本身就是该 code
+的罐头文本时省略 kind，以免读成 "file not found: file not found"。加载器的诊断已经明确（如
 「找不到提供者」「词典根已被占用」「模型无法打开」），再包装一层只会增加排查成本。
 
 一个已加载、声明了 `languages` 却没有挂载 linguist pipeline 的歌手不进入目录（与没有 linguist
@@ -442,6 +459,7 @@ synthrt `singer` 类别的追加字段，写在声明根，类别校验其形状
 | `resolveLanguageRoute(id, lang)` | `probe(singer, language)` | 无副作用 |
 | `VoicebankSnapshot` 的语言部分 | `catalog()` | |
 | `readyLanguages` / `failedS2pLanguages` | 删除 | 由 §4 承担 |
+| 重扫声库（`PackageManager::refreshInstalledPackages()` → `SynthrtEngine::refreshVoicebanks()`） | `refresh()` | 该函数每次扫描后都调用会话的 `refresh()`，失败缓存随之清空；这是宿主侧唯一的重试入口（§4） |
 | SP / AP 分支 | 删除 | 由 §7 承担 |
 | `G2pConvertRunner` / `G2pInputAdapter` | 删除 | 会话直接接受词表 |
 | `normalizePronunciationCandidates` | 删除 | 该函数补偿的是旧栈 `DictStep` 把候选填成逐个音素的缺陷；refactor 分支已修复，wolf 中从未存在该缺陷 |

@@ -40,6 +40,15 @@ namespace wolf::multig2p {
             {"kv_cache_cross_v", "new_kv_cache_cross_v"},
         };
 
+        /// Logical names of the three models of a bundle, in the order that open() loads them. The
+        /// names belong to the resource format version of the bundle rather than to any
+        /// declaration, so they are defined beside the code that reads the models.
+        constexpr const char *LOGICAL[] = {
+            "encoder",
+            "decoder_step_init",
+            "decoder_step",
+        };
+
         using TensorPtr = std::shared_ptr<ds::ITensor>;
 
         srt::Expected<TensorPtr> int64Tensor(const std::vector<std::int64_t> &shape,
@@ -144,26 +153,54 @@ namespace wolf::multig2p {
 
     Decoder::~Decoder() = default;
 
+    srt::Expected<std::vector<ModelFile>>
+        Decoder::resolveModels(const Bundle &bundle, const std::filesystem::path &directory) {
+        std::vector<ModelFile> result;
+        constexpr auto MODEL_COUNT = sizeof(LOGICAL) / sizeof(LOGICAL[0]);
+        result.reserve(MODEL_COUNT);
+        for (const auto *name : LOGICAL) {
+            auto file = bundle.fileName(name);
+            if (!file) {
+                return file.takeError();
+            }
+            auto entry = ModelFile{name, directory / pathFromManifest(file.take())};
+            if (!std::filesystem::is_regular_file(entry.path)) {
+                return srt::Error(srt::Error::FileNotFound,
+                                  std::string("the bundle's ") + name +
+                                      " model is missing: " + stdc::path::to_utf8(entry.path));
+            }
+            result.push_back(std::move(entry));
+        }
+        return result;
+    }
+
+    srt::Expected<void> Decoder::verifyModels(const Bundle &bundle,
+                                              const std::filesystem::path &directory) {
+        if (auto models = resolveModels(bundle, directory); !models) {
+            return models.takeError();
+        }
+        return {};
+    }
+
     srt::Expected<std::unique_ptr<Decoder>> Decoder::open(ds::InferenceDriver &driver,
                                                           const Bundle &bundle,
                                                           const std::filesystem::path &directory) {
+        auto models = resolveModels(bundle, directory);
+        if (!models) {
+            return models.takeError();
+        }
         auto decoder = std::unique_ptr<Decoder>(new Decoder());
-        const std::pair<const char *, std::unique_ptr<ds::InferenceSession> Decoder::*> models[] = {
-            {"encoder", &Decoder::m_encoder},
-            {"decoder_step_init", &Decoder::m_stepInit},
-            {"decoder_step", &Decoder::m_step},
+        std::unique_ptr<ds::InferenceSession> Decoder::*members[] = {
+            &Decoder::m_encoder,
+            &Decoder::m_stepInit,
+            &Decoder::m_step,
         };
-        for (const auto &[logical, member] : models) {
-            auto name = bundle.fileName(logical);
-            if (!name) {
-                return name.takeError();
-            }
-            const auto path = directory / pathFromManifest(name.take());
-            if (!std::filesystem::is_regular_file(path)) {
-                return srt::Error(srt::Error::FileNotFound,
-                                  std::string("the bundle's ") + logical +
-                                      " model is missing: " + stdc::path::to_utf8(path));
-            }
+        const auto resolved = models.take();
+        // Each model has its own session slot, so the two lists have to stay aligned.
+        constexpr auto SLOT_COUNT = sizeof(members) / sizeof(members[0]);
+        static_assert(SLOT_COUNT == sizeof(LOGICAL) / sizeof(LOGICAL[0]));
+        for (std::size_t i = 0; i < SLOT_COUNT; ++i) {
+            const auto &[logical, path] = resolved[i];
             auto session = driver.createSession();
             if (!session) {
                 return srt::Error(srt::Error::FeatureNotSupported,
@@ -174,7 +211,7 @@ namespace wolf::multig2p {
                 return opened.takeError().withContext(std::string("cannot open the ") + logical +
                                                       " model");
             }
-            decoder.get()->*member = std::move(session);
+            decoder.get()->*members[i] = std::move(session);
         }
         return decoder;
     }

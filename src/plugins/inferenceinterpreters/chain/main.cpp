@@ -538,7 +538,20 @@ namespace wolf::chain {
                             runFormat(step, words);
                             break;
                         case StepKind::Model:
-                            runModel(step, words);
+                            // A model step that has words to convert and cannot obtain its backend
+                            // fails the batch instead of the single words, because a word-level
+                            // failure of this step could be rewritten into a success by a fallback
+                            // step further down, and the caller would receive no sign that the
+                            // backend never ran. A step whose batch holds no eligible word has
+                            // nothing to convert and reports no failure (see runModel).
+                            if (auto executed = runModel(step, words); !executed) {
+                                // A stop request outranks the failure: the contracts specify that a
+                                // stopped conversion returns the finished part instead of an error.
+                                if (stopRequested()) {
+                                    return collect(words);
+                                }
+                                return executed.takeError();
+                            }
                             break;
                         case StepKind::Fallback:
                             runFallback(step, words);
@@ -655,15 +668,30 @@ namespace wolf::chain {
                 return result;
             }
 
-            void runModel(const Step &step, std::vector<ChainWord> &words) {
+            /// Converts the eligible words with the backend of \a step.
+            ///
+            /// A backend that cannot be built is an error of the whole batch whenever the step has
+            /// work to do: no word can be converted without it, and a fallback step further down
+            /// the chain would rewrite such word-level failures into successes, which would hide
+            /// that the backend never ran. A batch without an eligible word gives the step nothing
+            /// to do, and a missing backend is then no failure at all: every word was settled by an
+            /// earlier step, no word depends on this backend, and the batch result is complete
+            /// without it. Failures of the words that a running backend reports stay word-level
+            /// failures.
+            srt::Expected<void> runModel(const Step &step, std::vector<ChainWord> &words) {
                 auto resolved = resolveBackend(step.role);
                 if (!resolved) {
-                    for (auto &word : words) {
-                        if (word.eligible()) {
-                            word.error = G2PApi::Error::ModelInferenceFailed;
-                        }
+                    // Whether the step has work to do decides whether the missing backend is a
+                    // failure. The predicate is ChainWord::eligible(), the one that the loop below
+                    // uses to select the words it sends, so the two cannot disagree about the work.
+                    const bool worked =
+                        std::any_of(words.begin(), words.end(),
+                                    [](const ChainWord &word) { return word.eligible(); });
+                    if (!worked) {
+                        return {};
                     }
-                    return;
+                    return resolved.takeError().withContext("the backend of the model step \"" +
+                                                            step.role + "\" could not be built");
                 }
                 auto *backend = resolved.take();
 
@@ -689,6 +717,7 @@ namespace wolf::chain {
                     flush();
                 }
                 flush();
+                return {};
             }
 
             static void convertRun(G2PApi::G2PExecutive *backend,

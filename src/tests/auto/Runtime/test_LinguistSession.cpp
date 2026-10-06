@@ -7,6 +7,7 @@
 
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
+#include <synthrt/Support/Error.h>
 
 #include <wolf/Linguist/LinguistContrib.h>
 #include <wolf/Session/LinguistSession.h>
@@ -429,6 +430,10 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HonoursACancelledToken) {
         BOOST_CHECK(word.phonemes.empty());
         BOOST_CHECK(word.onsets.empty());
     }
+    // A cancellation is not a failure of the route: this batch was dropped before it began, and
+    // the language must not be reported as broken afterwards.
+    BOOST_CHECK(session.probe(singer, "zxx").readiness != wolf::Readiness::Unavailable);
+
     // The session remains usable: a conversion without cancellation still works.
     BOOST_CHECK(session.convert(singer, "zxx", Line({"3"}, LinguistApi::Depth::Onsets)));
 }
@@ -755,6 +760,166 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ExplainsASingerWhoseLanguagesWereNotMo
     BOOST_CHECK(other.readiness == wolf::Readiness::Unavailable);
     BOOST_CHECK_MESSAGE(other.reason.find("does not declare cmn") != std::string::npos,
                         other.reason);
+}
+
+/// A conversion whose executive fails the whole batch is a property of the route rather than of
+/// the words: the failure is cached like a failure of executive creation, probe() reports the
+/// language Unavailable, and only refresh() clears the verdict.
+///
+/// Regression: the failure of executive->start() was returned to the caller and then forgotten, so
+/// probe() reported Cold and later conversions paid for a batch that cannot succeed. The
+/// miscounting g2p of the fixture is a fault that fails the batch as a whole.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_RemembersABatchFailureUntilRefresh) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto package = load(unit, "singer-miscount");
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    auto result = session.convert(singer, "nld", Line({"one", "two"}, LinguistApi::Depth::Onsets));
+    BOOST_REQUIRE_MESSAGE(!result, "the miscounting g2p should have failed the batch");
+    // The error carries the code and the text of the failing stage, which is the fault that the
+    // readiness query replays.
+    BOOST_CHECK(result.error().code() == srt::Error::InvalidFormat);
+    BOOST_CHECK_MESSAGE(result.error().message().find("g2p") != std::string::npos,
+                        result.error().message());
+
+    const auto status = session.probe(singer, "nld");
+    BOOST_CHECK(status.readiness == wolf::Readiness::Unavailable);
+    BOOST_CHECK_MESSAGE(status.reason.find("g2p") != std::string::npos, status.reason);
+
+    // A release frees the resources of the singer and does not repair a failed route, so the
+    // verdict survives it.
+    session.release(singer);
+    BOOST_CHECK(session.probe(singer, "nld").readiness == wolf::Readiness::Unavailable);
+
+    // A refresh is the release point of the failure cache: the language is unknown again rather
+    // than reported as broken.
+    session.refresh();
+    const auto rescued = session.probe(singer, "nld");
+    BOOST_CHECK_MESSAGE(rescued.readiness == wolf::Readiness::Cold, rescued.reason);
+    BOOST_CHECK(rescued.reason.empty());
+}
+
+/// A per-word failure is a result of the conversion and not a failed route: the batch ran, the
+/// words that no stage produced carry their own error, and the language must stay usable.
+///
+/// This is the counter-example to the case above: the same session path, with the failure reported
+/// per word by the chain instead of for the whole batch, must leave nothing in the failure cache.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPerWordFailureOutOfTheCache) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto package = load(unit, "singer-chain");
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    // The dictionary of the chain of this fixture covers "hello"; no step covers "unlisted" and
+    // that chain has no fallback step, so the word-level error is what the caller receives.
+    auto result =
+        session.convert(singer, "deu", Line({"hello", "unlisted"}, LinguistApi::Depth::Onsets));
+    BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 2u);
+    BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "hh ax l ow");
+    BOOST_CHECK((*result)->words[1].error == wolf::Api::G2P::L1::Error::PhonemeGenerationFailed);
+
+    // The batch ran to completion, so the executive is pooled again: the route is warm, not broken.
+    const auto status = session.probe(singer, "deu");
+    BOOST_CHECK_MESSAGE(status.readiness == wolf::Readiness::Ready, status.reason);
+    BOOST_CHECK(status.reason.empty());
+}
+
+/// A cancelled conversion is not a failed route either: the executive reports the cancellation
+/// through its state and returns the part of the batch that it finished, so the session caches
+/// nothing and keeps serving the language.
+///
+/// The runaway fixture is the only one whose batch runs long enough to be cancelled while it is
+/// running. It needs the scripted inference variants, and a build without them cannot load it, so
+/// the case skips instead of reporting a pass.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsACancelledConversionOutOfTheCache) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto opened =
+        unit.openPackage(wolf::test::fixtureRoot() / "singer-runaway", srt::SynthUnit::Load);
+    if (!opened) {
+        wolf::test::skip("the runaway fixture needs the scripted inference variants: " +
+                         opened.error().toString());
+    }
+    auto package = opened.take();
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    // The scripted stage is created only by a conversion that reaches the phoneme layer, so a batch
+    // that stops at the pronunciation layer would not tell whether this fixture can run at all.
+    auto runnable = session.convert(singer, "nld", Line({"ok"}, LinguistApi::Depth::Phonemes));
+    if (!runnable) {
+        wolf::test::skip("the runaway fixture cannot reach its scripted stage: " +
+                         runnable.error().toString());
+    }
+    BOOST_REQUIRE(session.probe(singer, "nld").readiness == wolf::Readiness::Ready);
+
+    wolf::CancelToken token;
+    std::thread canceller([&token] {
+        // Long enough for the scripted stage to be running, as the pipe-chain case assumes.
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        token.cancel();
+    });
+    const Line line({"loop"}, LinguistApi::Depth::Phonemes);
+    auto result = session.convert(singer, "nld", line, token);
+    canceller.join();
+
+    // A cancellation is a result rather than an error: the token is what distinguishes it from a
+    // conversion with empty output.
+    BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
+    BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
+    BOOST_CHECK(token.cancelled());
+
+    // The cancellation is not a failed route: the language is still as ready as it was before the
+    // cancelled batch ran.
+    const auto status = session.probe(singer, "nld");
+    BOOST_CHECK_MESSAGE(status.readiness == wolf::Readiness::Ready, status.reason);
+    BOOST_CHECK(status.reason.empty());
+
+    // The language remains usable: the cancelled executive is not lent again, but the session
+    // builds another one instead of reporting a broken route.
+    BOOST_CHECK(session.convert(singer, "nld", Line({"x"}, LinguistApi::Depth::Phonemes)));
+}
+
+/// A cached failure is replayed with the kind of its error code and with the whole text of the
+/// error, not with the message alone.
+///
+/// Regression: the reason used to be the message of the cached error, so a host received "the g2p
+/// stage returned 1 entries for 2 inputs" without the code that says what kind of fault it is. The
+/// kind is the canned text of the code, which synthrt fixes, and the case compares against that
+/// text as a prefix rather than against a substring that every message happens to contain.
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ReplaysACachedFailureWithItsCodeKind) {
+    srt::SynthUnit unit;
+    configure(unit);
+    auto package = load(unit, "singer-miscount");
+
+    wolf::LinguistSession session(unit);
+    const auto singer = refOf(package, "s");
+
+    auto result = session.convert(singer, "nld", Line({"one", "two"}, LinguistApi::Depth::Onsets));
+    BOOST_REQUIRE_MESSAGE(!result, "the miscounting g2p should have failed the batch");
+    const auto message = result.error().message();
+
+    const auto status = session.probe(singer, "nld");
+    BOOST_REQUIRE_MESSAGE(status.readiness == wolf::Readiness::Unavailable, status.reason);
+
+    // The kind of the code, read from the code itself, followed by the text of the failure. The
+    // message of this error says nothing about the kind, so only the replay can supply it.
+    const auto kind = srt::Error(srt::Error::InvalidFormat).code().message();
+    BOOST_REQUIRE_MESSAGE(!kind.empty(), "the code of the failure should have a canned text");
+    const auto prefix = kind + ": ";
+    BOOST_CHECK_MESSAGE(status.reason.compare(0, prefix.size(), prefix) == 0, status.reason);
+    BOOST_CHECK_MESSAGE(status.reason.find(message) != std::string::npos, status.reason);
+    // The kind is not repeated: a message that already is the canned text of its code is replayed
+    // without the prefix, so that a failure recorded without text does not read as "file not
+    // found: file not found".
+    BOOST_CHECK_MESSAGE(status.reason.find(kind + ": " + kind) == std::string::npos, status.reason);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

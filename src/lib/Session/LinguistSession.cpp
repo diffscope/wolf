@@ -233,6 +233,24 @@ namespace wolf {
 
         using SlotPtr = std::shared_ptr<Slot>;
 
+        /// Renders a cached failure for a host.
+        ///
+        /// The cache keeps the error object rather than its text, because the code and the cause
+        /// chain identify the layer that failed. A host receives no access to that object, so the
+        /// replay keeps what the code and the chain carry: the kind of the code, and the message of
+        /// every level of the chain. The kind is left out when the message already is the canned
+        /// text of the code, so that a failure recorded without text does not read as
+        /// "file not found: file not found".
+        std::string describeFailure(const srt::Error &error) {
+            std::string reason;
+            const auto kind = error.code().message();
+            if (!kind.empty() && kind != error.message()) {
+                reason = kind + ": ";
+            }
+            reason += error.toString();
+            return reason;
+        }
+
     }
 
     class LinguistSession::Impl {
@@ -457,14 +475,19 @@ namespace wolf {
         }
 
         /// Records a failure and returns the lease. The caller \b must \b not hold the lock.
+        ///
+        /// \a executive is passed on to giveBack() rather than destroyed by the caller: an
+        /// executive must be released before the slot that owns its pipeline, and only a caller
+        /// that holds one has to hand it in.
         void recordFailure(const SlotPtr &slot, const std::string &language,
                            const std::pair<SingerKey, std::string> &cacheKey,
-                           const srt::Error &error) {
+                           const srt::Error &error,
+                           std::unique_ptr<LinguistApi::LinguistExecutive> executive = nullptr) {
             {
                 std::lock_guard<std::mutex> guard(mutex);
                 failed.emplace(cacheKey, error);
             }
-            giveBack(slot, language, nullptr, false);
+            giveBack(slot, language, std::move(executive), false);
         }
 
         /// Returns an executive to its slot. A slot retired by a refresh accepts no executive. The
@@ -504,10 +527,16 @@ namespace wolf {
             released.reset();
         }
 
-        /// One lent executive, with the slot from which it was taken.
+        /// One lent executive, with the slot from which it was taken and the key under which its
+        /// result is recorded.
+        ///
+        /// The key travels with the lease because a failure found during the conversion must be
+        /// cached exactly as one found while acquiring the lease. Recomputing the key at that point
+        /// would repeat the lookup of acquire() and could resolve another entry after a refresh.
         struct Lease {
             SlotPtr slot;
             std::unique_ptr<LinguistApi::LinguistExecutive> executive;
+            std::pair<SingerKey, std::string> cacheKey;
         };
 
         /// Acquires an executive. warm() and convert() share this single acquisition path.
@@ -555,7 +584,7 @@ namespace wolf {
 
                 if (auto pooled = takeIdle(slot, language)) {
                     warmed.insert(cacheKey);
-                    return Lease{slot, std::move(pooled)};
+                    return Lease{slot, std::move(pooled), cacheKey};
                 }
                 // takeIdle reserved the lease although it returned no executive, so the slot
                 // survives the creation below even if a refresh occurs during it.
@@ -576,7 +605,7 @@ namespace wolf {
                     warmed.insert(cacheKey);
                 }
             }
-            return Lease{slot, built.take()};
+            return Lease{slot, built.take(), cacheKey};
         }
 
         /// Returns the marker set that applies to one singer. The caller holds the lock.
@@ -707,11 +736,12 @@ namespace wolf {
         LanguageStatus status;
         m_impl->describeCoverage(key, *found, status);
 
-        // The reason is repeated verbatim from the failing layer. That layer has already
-        // described the fault, and rewording it here would add no information.
+        // The reason comes from the failing layer, which has already described the fault, and it
+        // carries the kind of the code and the cause chain as well as the text: the code and the
+        // chain identify the layer, and a host has no other way to reach them.
         if (const auto failure = m_impl->failed.find(cacheKey); failure != m_impl->failed.end()) {
             status.readiness = Readiness::Unavailable;
-            status.reason = failure->second.message();
+            status.reason = describeFailure(failure->second);
             return status;
         }
         // This is the only coverage decision that the session makes: a complete inventory of
@@ -767,6 +797,7 @@ namespace wolf {
             return leased.takeError();
         }
         const auto slot = leased->slot;
+        const auto cacheKey = leased->cacheKey;
         auto executive = std::move(leased->executive);
 
         // Reserved markers are intercepted before dispatch, and the session therefore produces
@@ -828,18 +859,43 @@ namespace wolf {
         const bool reusable = !token.cancelled();
 
         if (!converted) {
-            m_impl->giveBack(slot, std::string(language), std::move(executive), false);
-            return converted.takeError();
+            // The stopping rule wins over a failure that raced with it: a cancelled token is not an
+            // error (see LinguistSession.h), so the caller receives the words the session resolved
+            // itself and no failure is recorded. Recording one would fault the route for a stop
+            // that the host asked for, and the next unstopped conversion would report the fault
+            // again if it is real.
+            if (token.cancelled()) {
+                m_impl->giveBack(slot, std::string(language), std::move(executive), false);
+                return result;
+            }
+            // A batch that did not run at all is a property of the route rather than of the words:
+            // the executive failed as a whole, so a later conversion is not expected to succeed
+            // where this one did not. The failure is cached the way warm() caches one, and probe()
+            // reports the route Unavailable until the next refresh(). A per-word failure is a
+            // result of the conversion instead, and is never cached.
+            auto error = converted.takeError();
+            m_impl->recordFailure(slot, std::string(language), cacheKey, error,
+                                 std::move(executive));
+            return error;
         }
         // A batch with a different word count would assign every later word to the wrong
-        // position, and it is therefore rejected.
+        // position, and it is therefore rejected. A stopped conversion may legitimately return
+        // fewer words, so the count is only a fault when the run was not stopped.
         if ((*converted)->words.size() != positions.size()) {
-            m_impl->giveBack(slot, std::string(language), std::move(executive), false);
-            // The executive is not reused, because a module that returns a wrong count once is
-            // likely to repeat the error.
-            return srt::Error(srt::Error::InvalidFormat,
-                              "the conversion returned a different number of words than it was "
-                              "given");
+            if (token.cancelled()) {
+                m_impl->giveBack(slot, std::string(language), std::move(executive), false);
+                return result;
+            }
+            // A module that returns a wrong count is a fault of the route rather than of the words,
+            // so it is remembered like any other failure of the whole batch. The executive is not
+            // reused either, because a module that returned a wrong count once is likely to repeat
+            // the error.
+            const auto error =
+                srt::Error(srt::Error::InvalidFormat,
+                           "the conversion returned a different number of words than it was given");
+            m_impl->recordFailure(slot, std::string(language), cacheKey, error,
+                                 std::move(executive));
+            return error;
         }
         for (std::size_t slotIndex = 0; slotIndex < positions.size(); ++slotIndex) {
             result->words[positions[slotIndex]] = std::move((*converted)->words[slotIndex]);
