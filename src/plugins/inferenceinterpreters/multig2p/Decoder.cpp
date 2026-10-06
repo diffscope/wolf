@@ -190,17 +190,32 @@ namespace wolf::multig2p {
             return models.takeError();
         }
         auto decoder = std::unique_ptr<Decoder>(new Decoder());
-        std::unique_ptr<ds::InferenceSession> Decoder::*members[] = {
-            &Decoder::m_encoder,
-            &Decoder::m_stepInit,
-            &Decoder::m_step,
-        };
         const auto resolved = models.take();
-        // Each model has its own session slot, so the two lists have to stay aligned.
-        constexpr auto SLOT_COUNT = sizeof(members) / sizeof(members[0]);
-        static_assert(SLOT_COUNT == sizeof(LOGICAL) / sizeof(LOGICAL[0]));
-        for (std::size_t i = 0; i < SLOT_COUNT; ++i) {
-            const auto &[logical, path] = resolved[i];
+
+        // A model is loaded into the slot that its logical name selects, rather than into the slot
+        // at the same position. The two lists used to be aligned by position, where reordering
+        // LOGICAL silently swapped two models: nothing in the compiler or in the tests compared a
+        // name with the slot that received it. The guard below reports a name that has no slot,
+        // which is what an edit that extends LOGICAL without extending this lookup hits.
+        const auto slotFor = [&decoder](const std::string &logical) {
+            if (logical == "encoder") {
+                return &decoder->m_encoder;
+            }
+            if (logical == "decoder_step_init") {
+                return &decoder->m_stepInit;
+            }
+            if (logical == "decoder_step") {
+                return &decoder->m_step;
+            }
+            return static_cast<std::unique_ptr<ds::InferenceSession> *>(nullptr);
+        };
+
+        for (const auto &[logical, path] : resolved) {
+            auto *slot = slotFor(logical);
+            if (slot == nullptr) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "no session slot holds the model " + logical);
+            }
             auto session = driver.createSession();
             if (!session) {
                 return srt::Error(srt::Error::FeatureNotSupported,
@@ -211,7 +226,7 @@ namespace wolf::multig2p {
                 return opened.takeError().withContext(std::string("cannot open the ") + logical +
                                                       " model");
             }
-            decoder.get()->*members[i] = std::move(session);
+            *slot = std::move(session);
         }
         return decoder;
     }
