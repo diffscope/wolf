@@ -1,17 +1,16 @@
 #include "PinyinEngines.h"
 
 #include <cstddef>
-#include <mutex>
+#include <cstdint>
 #include <system_error>
+#include <string>
 #include <utility>
 
-#include <cpp-pinyin/G2pglobal.h>
-#include <cpp-pinyin/Jyutping.h>
-#include <cpp-pinyin/Pinyin.h>
+#include <cpp-pinyin2/core/Engine.h>
+#include <cpp-pinyin2/core/Types.h>
+#include <cpp-pinyin2/ext/Registry.h>
 
 #include <stdcorelib/path.h>
-
-#include <wolf/Support/ManifestValues.h>
 
 namespace fs = std::filesystem;
 
@@ -22,62 +21,97 @@ namespace wolf::pinyin {
         constexpr char MANDARIN[] = "mandarin";
         constexpr char CANTONESE[] = "cantonese";
 
-        /// Converts one upstream batch into the result type of this plugin.
+        /// The registry of the built-in dialects, which the 2.x library keeps in the caller.
         ///
-        /// The upstream library reports a failed character by keeping the character itself as the
-        /// reading and setting its error flag. Returning that reading would contradict the
-        /// contract, under which a word with an error has no defined pronunciation. An unconverted
-        /// character is therefore returned empty, and the fallback of the chain handles it.
-        ///
-        /// \return One entry per upstream item, in order.
-        std::vector<CharacterResult> collect(const Pinyin::PinyinResVector &converted) {
-            std::vector<CharacterResult> results;
-            results.reserve(converted.size());
-            for (const auto &item : converted) {
-                CharacterResult result;
-                if (!item.error) {
-                    result.pronunciation = item.pinyin;
-                    result.candidates = item.candidates;
+        /// A function-local static, so that the engines opened against it outlive every static that
+        /// could still call into them during shutdown. `Registry` is neither copyable nor movable.
+        cpp_pinyin::v2::Registry &registry() {
+            static cpp_pinyin::v2::Registry instance;
+            return instance;
+        }
+
+        /// Returns the number of UTF-16 code units of \a text, counting one per code point and two
+        /// for every code point above U+FFFF. The 2.x library refuses a whole batch when one element
+        /// is not exactly one code unit, and a 4-byte UTF-8 sequence is two of them.
+        std::size_t utf16CodeUnits(std::string_view text) {
+            std::size_t units = 0;
+            for (const char byte : text) {
+                const auto lead = static_cast<unsigned char>(byte);
+                // Count only the bytes that start a sequence; continuation bytes are skipped.
+                if ((lead & 0xC0) != 0x80) {
+                    units += lead >= 0xF0 ? 2 : 1;
+                }
+            }
+            return units;
+        }
+
+        /// One cpp-pinyin engine plus the dialect it was opened for.
+        class ConvertibleEngine final : public Engine {
+        public:
+            ConvertibleEngine(cpp_pinyin::v2::Engine engine, bool mandarin)
+                : m_engine(std::move(engine)), m_mandarin(mandarin) {
+            }
+
+            std::vector<CharacterResult>
+                convert(const std::vector<std::string> &characters) const override {
+                std::vector<CharacterResult> results(characters.size());
+
+                // The library answers the whole batch with one error when any element is not
+                // exactly one UTF-16 code unit. Characters outside the Basic Multilingual Plane
+                // (CJK extension B names, emoji) are two units, so they are held back here and
+                // answered as unconverted, which lets the chain fall back for that character
+                // alone instead of losing the run.
+                std::vector<std::string> convertible;
+                std::vector<std::size_t> positions;
+                convertible.reserve(characters.size());
+                positions.reserve(characters.size());
+                for (std::size_t i = 0; i < characters.size(); ++i) {
+                    if (utf16CodeUnits(characters[i]) == 1) {
+                        convertible.push_back(characters[i]);
+                        positions.push_back(i);
+                    }
+                }
+                if (convertible.empty()) {
+                    return results;
+                }
+
+                cpp_pinyin::v2::EngineConfig config;
+                config.style = m_mandarin ? cpp_pinyin::v2::Style(cpp_pinyin::v2::MandarinStyle::NORMAL)
+                                          : cpp_pinyin::v2::Style(cpp_pinyin::v2::CantoneseStyle::NORMAL);
+
+                auto queried = m_engine.query(convertible, config);
+                if (!queried) {
+                    // A batch-level failure (the engine is not ready, the dictionaries changed under
+                    // it) is reported as "nothing converted" so that the chain falls back. The
+                    // alternative -- failing the whole word -- would turn one bad character into a
+                    // failed conversion of the line.
+                    return results;
+                }
+                const auto &rows = queried.value();
+                if (rows.size() != convertible.size()) {
+                    // The library documents one row per element. A different count cannot be mapped
+                    // back onto the input, so the run is left unconverted rather than misaligned.
+                    return results;
+                }
+
+                for (std::size_t i = 0; i < rows.size(); ++i) {
+                    const auto &row = rows[i];
+                    if (row.failure_kind != cpp_pinyin::v2::Code::Ok) {
+                        continue;
+                    }
+                    auto &result = results[positions[i]];
+                    result.pronunciation = row.rendered;
+                    result.candidates = row.candidates;
                     if (result.candidates.empty() && !result.pronunciation.empty()) {
                         result.candidates.push_back(result.pronunciation);
                     }
                 }
-                results.push_back(std::move(result));
-            }
-            return results;
-        }
-
-        /// Both engines convert without tone marks, as the DiffSinger phoneme sets require.
-        class MandarinEngine : public Engine {
-        public:
-            bool initialized() const {
-                return m_engine.initialized();
-            }
-
-            std::vector<CharacterResult>
-                convert(const std::vector<std::string> &characters) const override {
-                return collect(m_engine.hanziToPinyin(characters, Pinyin::ManTone::NORMAL,
-                                                      Pinyin::Default, true, false, false));
+                return results;
             }
 
         private:
-            Pinyin::Pinyin m_engine;
-        };
-
-        class CantoneseEngine : public Engine {
-        public:
-            bool initialized() const {
-                return m_engine.initialized();
-            }
-
-            std::vector<CharacterResult>
-                convert(const std::vector<std::string> &characters) const override {
-                return collect(m_engine.hanziToPinyin(characters, Pinyin::CanTone::NORMAL,
-                                                      Pinyin::Default, true));
-            }
-
-        private:
-            Pinyin::Jyutping m_engine;
+            cpp_pinyin::v2::Engine m_engine;
+            bool m_mandarin;
         };
 
     }
@@ -86,96 +120,21 @@ namespace wolf::pinyin {
 
     Engine::~Engine() = default;
 
-    /// Arbiter state shared by the registry and every live reservation.
-    class RootState {
-    public:
-        std::mutex mutex;
-        fs::path root;
-
-        /// Number of live reservations on \c root. The root is cleared when this count reaches
-        /// zero, so a failed load or an unload releases the claim instead of holding it
-        /// permanently.
-        std::size_t claims = 0;
-
-        /// Whether \c root has been assigned to the process-global path of cpp-pinyin.
-        ///
-        /// The root is published exactly once per claim generation. Writing it again while another
-        /// thread is inside an engine constructor would be a data race on that global even if the
-        /// value were identical, because assigning a std::filesystem::path is not atomic.
-        bool published = false;
-    };
-
-    RootReservation::RootReservation(std::shared_ptr<RootState> state)
-        : m_state(std::move(state)) {
-    }
-
-    RootReservation::~RootReservation() {
-        if (!m_state) {
-            return;
-        }
-        std::lock_guard<std::mutex> guard(m_state->mutex);
-        // Guards against a reset() that has already cleared the claims while this object exists.
-        if (m_state->claims > 0 && --m_state->claims == 0) {
-            m_state->root.clear();
-            m_state->published = false;
-        }
-    }
-
-    RootReservation::RootReservation(RootReservation &&other) noexcept = default;
-
-    RootReservation &RootReservation::operator=(RootReservation &&other) noexcept {
-        if (this != &other) {
-            RootReservation released(std::move(*this));
-            m_state = std::move(other.m_state);
-        }
-        return *this;
-    }
-
-    bool RootReservation::held() const noexcept {
-        return static_cast<bool>(m_state);
-    }
-
-    PinyinEngineRegistry::PinyinEngineRegistry() : _impl(std::make_shared<RootState>()) {
-    }
-
-    PinyinEngineRegistry::~PinyinEngineRegistry() = default;
-
-    PinyinEngineRegistry &PinyinEngineRegistry::instance() {
-        static PinyinEngineRegistry registry;
-        return registry;
-    }
-
     bool PinyinEngineRegistry::isKnownRef(std::string_view ref) {
         return ref == MANDARIN || ref == CANTONESE;
     }
 
-    srt::Expected<RootReservation> PinyinEngineRegistry::reserveRoot(const fs::path &root) {
-        std::lock_guard<std::mutex> guard(_impl->mutex);
-        if (_impl->claims == 0) {
-            _impl->root = root;
-            _impl->claims = 1;
-            _impl->published = false;
-            return RootReservation(_impl);
+    srt::Expected<std::unique_ptr<Engine>>
+        PinyinEngineRegistry::createEngine(const fs::path &root, std::string_view ref) {
+        if (!isKnownRef(ref)) {
+            return srt::Error(srt::Error::FeatureNotSupported,
+                              "unknown pinyin engine: " + std::string(ref));
         }
-        if (_impl->root == root) {
-            ++_impl->claims;
-            return RootReservation(_impl);
-        }
-        return srt::Error(srt::Error::FeatureNotSupported,
-                          "a pinyin dictionary root is already in use by this process: " +
-                              stdc::path::to_utf8(_impl->root) +
-                              "; only one root may be loaded at a time, and this module "
-                              "specifies " +
-                              stdc::path::to_utf8(root));
-    }
 
-    srt::Expected<std::unique_ptr<Engine>> PinyinEngineRegistry::createEngine(const fs::path &root,
-                                                                             std::string_view ref) {
-        // The upstream library loops over the dictionary files without checking that they exist,
-        // so a missing directory causes the constructor to loop indefinitely instead of returning.
-        // The directory is therefore checked before construction. This check does not access
-        // shared state, so it runs outside the lock.
-        const auto directory = root / pathFromManifest(ref);
+        // The dialect directory is checked before the library is called so that the diagnostic names
+        // the directory the declaration asked for; the library reports the files it could not read,
+        // which is a level lower than the author needs.
+        const auto directory = root / std::string(ref);
         std::error_code ec;
         if (!fs::is_directory(directory, ec)) {
             return srt::Error(srt::Error::FileNotFound,
@@ -188,54 +147,17 @@ namespace wolf::pinyin {
                                   stdc::path::to_utf8(directory));
         }
 
-        // The lock covers only the publication of the process-global path of cpp-pinyin, once per
-        // claim generation. The path cannot be written again while an engine is being built:
-        // building an engine requires a live claim, and the root is cleared and republished only
-        // after the last claim has been released.
-        {
-            std::lock_guard<std::mutex> guard(_impl->mutex);
-            if (_impl->root != root) {
-                return srt::Error(srt::Error::FeatureNotSupported,
-                                  "the pinyin dictionary root changed after it was reserved");
+        auto opened = cpp_pinyin::v2::Engine::open(registry(), root, ref);
+        if (!opened) {
+            const auto &error = opened.error();
+            if (error.code == cpp_pinyin::v2::Code::NotReady) {
+                return srt::Error(srt::Error::FeatureNotSupported, error.detail);
             }
-            if (!_impl->published) {
-                Pinyin::setDictionaryPath(root);
-                _impl->published = true;
-            }
+            return srt::Error(srt::Error::InvalidFormat, error.detail);
         }
 
-        // Construction runs outside the lock, so two languages of one voicebank initialize in
-        // parallel instead of sequentially. This property has been verified against the upstream
-        // sources: ChineseG2pPrivate::init() reads the global path once and writes only
-        // per-instance members, and every other static in that library is `static const`, which
-        // C++ initializes exactly once in its function-local form.
-        if (ref == MANDARIN) {
-            auto engine = std::make_unique<MandarinEngine>();
-            if (!engine->initialized()) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "the mandarin dictionary could not be read from " +
-                                      stdc::path::to_utf8(directory));
-            }
-            return std::unique_ptr<Engine>(std::move(engine));
-        }
-        if (ref == CANTONESE) {
-            auto engine = std::make_unique<CantoneseEngine>();
-            if (!engine->initialized()) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "the cantonese dictionary could not be read from " +
-                                      stdc::path::to_utf8(directory));
-            }
-            return std::unique_ptr<Engine>(std::move(engine));
-        }
-        return srt::Error(srt::Error::FeatureNotSupported,
-                          "unknown pinyin engine: " + std::string(ref));
-    }
-
-    void PinyinEngineRegistry::reset() {
-        std::lock_guard<std::mutex> guard(_impl->mutex);
-        _impl->root.clear();
-        _impl->claims = 0;
-        _impl->published = false;
+        return std::unique_ptr<Engine>(
+            new ConvertibleEngine(std::move(opened).value(), ref == MANDARIN));
     }
 
 }

@@ -894,6 +894,10 @@ namespace wolf::chain {
                                 const srt::InferenceRuntimeOptions &runtimeOptions) override {
                 const auto *configuration =
                     static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the chain module was imported without its configuration");
+                }
                 const auto &binding =
                     static_cast<const G2PApi::G2PRuntimeOptions &>(runtimeOptions).binding;
                 return std::unique_ptr<srt::InferenceExecutive>(
@@ -910,7 +914,8 @@ namespace wolf::chain {
             if (interfaceName != G2PApi::API_INTERFACE || level != G2PApi::API_LEVEL ||
                 variant != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported chain contract or variant");
+                                  "unsupported chain contract: " + std::string(interfaceName) +
+                                      "/" + std::to_string(level) + "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

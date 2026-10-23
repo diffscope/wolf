@@ -152,6 +152,10 @@ namespace wolf::onset {
                 createInference(srt::InferenceSpec &spec, const srt::ContribImportOptions &,
                                 const srt::InferenceRuntimeOptions &) override {
                 auto configuration = static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the onset module was imported without its configuration");
+                }
                 return std::unique_ptr<srt::InferenceExecutive>(
                     new Executive(spec, configuration->table));
             }
@@ -165,7 +169,9 @@ namespace wolf::onset {
             create(std::string_view interfaceName, int level, std::string_view variant) override {
             if (interfaceName != OnsetApi::API_INTERFACE || level != OnsetApi::API_LEVEL ||
                 variant != RULE) {
-                return srt::Error(srt::Error::InvalidArgument, "unsupported onset contract");
+                return srt::Error(srt::Error::InvalidArgument,
+                                  "unsupported onset contract: " + std::string(interfaceName) +
+                                      "/" + std::to_string(level) + "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

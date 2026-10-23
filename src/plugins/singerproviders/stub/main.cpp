@@ -55,7 +55,10 @@ namespace wolf::stub {
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
             if (interfaceName != INTERFACE || level != LEVEL || variant != VARIANT) {
-                return srt::Error(srt::Error::InvalidArgument, "unsupported stub singer contract");
+                return srt::Error(srt::Error::InvalidArgument,
+                                  "unsupported stub singer contract: " +
+                                      std::string(interfaceName) + "/" + std::to_string(level) +
+                                      "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(
                 new StubSingerProvider(std::string(interfaceName), std::string(variant), level));

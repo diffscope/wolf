@@ -93,9 +93,11 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_ServesBothLanguagesAtOnce) {
 
 /// The two languages of one voicebank must warm concurrently, not sequentially.
 ///
-/// Regression: the arbiter lock must not cover engine construction, so the engines of one process
-/// build in parallel; it covers only the publication of the global dictionary path. Under
-/// ThreadSanitizer this case also checks the upstream constructor for data races.
+/// The 1.x arbiter held a lock around the publication of the process-global dictionary path, and
+/// this case pinned that the lock did not cover engine construction. The 2.x library has neither
+/// the global path nor the lock, but the property still holds: two `Engine::open` calls for one
+/// root must not serialize, and under ThreadSanitizer this case still checks the upstream
+/// constructor for data races.
 BOOST_AUTO_TEST_CASE(test_PinyinBackend_BuildsEnginesConcurrently) {
     srt::SynthUnit unit;
     configure(unit);
@@ -245,13 +247,12 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_FallsBackThroughTheChain) {
     BOOST_CHECK_EQUAL(words[1].pronunciation, "zhong");
 }
 
-/// A second dictionary root cannot silently displace the first.
+/// Two packages that ship different dictionary roots coexist.
 ///
-/// The engine resolves its dictionaries through a process-global variable read by its
-/// constructor. With two roots in one process, the root loaded last takes effect and the other
-/// root converts nothing. The arbiter converts that condition into a load failure that names both
-/// roots.
-BOOST_AUTO_TEST_CASE(test_PinyinBackend_RefusesASecondDictionaryRoot) {
+/// The 1.x library kept one dictionary root in a process-global variable, so a second root had to
+/// be rejected by an arbiter. The 2.x library takes the root as an argument to `Engine::open`, so
+/// both roots are simply loaded; this test pins that the second load no longer fails.
+BOOST_AUTO_TEST_CASE(test_PinyinBackend_ServesTwoDictionaryRoots) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -263,20 +264,18 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_RefusesASecondDictionaryRoot) {
 
     auto second = unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine-rival",
                                    srt::SynthUnit::Load);
-    BOOST_REQUIRE_MESSAGE(!second, "a second dictionary root should have been rejected");
-    const auto message = second.error().toString();
-    BOOST_CHECK_MESSAGE(message.find("already in use") != std::string::npos,
-                        "the diagnostic should say what the clash is: " + message);
-    BOOST_CHECK_MESSAGE(message.find("pinyin-engine-rival") != std::string::npos,
-                        "the diagnostic should name the rejected root: " + message);
+    if (!second) {
+        BOOST_FAIL("a second dictionary root must load: " + second.error().toString());
+    }
+    BOOST_CHECK(second->contribution("inference", "pinyin") != nullptr);
 }
 
-/// A load that fails after the pinyin module has claimed the root must release the root.
+/// A failed load must not leave state behind that stops the next load.
 ///
-/// Regression: a failed load must release the root; the claim must not outlive its transaction.
-///
-/// Both loads deliberately share one SynthUnit. Destroying a unit unloads its interpreter plugins
-/// and therefore the arbiter singleton, so two units would hide the leak under test.
+/// The rollback fixture fails on a second, broken module after the pinyin module was configured.
+/// The 1.x arbiter had to release the process-wide root here; the 2.x library has no such root, so
+/// what this test pins now is the weaker but still useful property that the failed transaction does
+/// not poison the unit.
 BOOST_AUTO_TEST_CASE(test_PinyinBackend_ReturnsTheRootWhenTheLoadFails) {
     srt::SynthUnit unit;
     configure(unit);
@@ -284,41 +283,14 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_ReturnsTheRootWhenTheLoadFails) {
     auto broken =
         unit.openPackage(wolf::test::fixtureRoot() / "pinyin-rollback", srt::SynthUnit::Load);
     BOOST_REQUIRE_MESSAGE(!broken, "the rollback fixture must fail to load");
-    // The load must fail for a reason other than the claim itself; otherwise the test proves
-    // nothing. The pinyin module must have taken the claim before the other module failed.
     const auto message = broken.error().toString();
     BOOST_REQUIRE_MESSAGE(message.find("thisKeyDoesNotExist") != std::string::npos,
-                          "the fixture should fail on its broken module, not on the root: " +
-                              message);
+                          "the fixture should fail on its broken module: " + message);
 
-    // No module that claimed a root remains loaded, so a different root must be available.
     auto other =
         unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine", srt::SynthUnit::Load);
     if (!other) {
-        BOOST_FAIL("the failed load left the dictionary root reserved: " +
-                   other.error().toString());
-    }
-}
-
-/// An unload must also release the root, for the same reason: the claim lasts exactly as long as
-/// the module instance that took it.
-BOOST_AUTO_TEST_CASE(test_PinyinBackend_ReturnsTheRootWhenUnloaded) {
-    srt::SynthUnit unit;
-    configure(unit);
-
-    {
-        auto first = unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine",
-                                      srt::SynthUnit::Load);
-        if (!first) {
-            BOOST_FAIL("the engine package should have loaded: " + first.error().toString());
-        }
-    }
-    // The handle was the only owner, so the package is unloaded at this point.
-
-    auto rival = unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine-rival",
-                                  srt::SynthUnit::Load);
-    if (!rival) {
-        BOOST_FAIL("unloading the first root should have freed it: " + rival.error().toString());
+        BOOST_FAIL("the failed load left the unit unusable: " + other.error().toString());
     }
 }
 

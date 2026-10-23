@@ -41,15 +41,30 @@ namespace wolf {
         /// denote interchangeable notations.
         const std::string &scheme() const;
 
+        /// Returns the default lyric a new note receives in this language, or an empty string when
+        /// the module declares none.
+        ///
+        /// The value belongs to the module declaration, so it is authored by whoever writes the
+        /// linguist: a language package that ships the linguist of a language states the default
+        /// for that language, and a voicebank that writes its own linguist states its own. The
+        /// field is optional, is not a matching key, and an absent value leaves the choice to the
+        /// consumer.
+        ///
+        /// The value is a lyric in scheme(), so whether it can be pronounced depends on the model
+        /// phoneme table of the voicebank that uses the module. This class therefore reports the
+        /// value and never checks it against a model.
+        const std::string &defaultLyric() const;
+
     private:
         LinguistSpec(const srt::ContribCreateContext &context, std::string language,
-                     std::string scheme);
+                     std::string scheme, std::string defaultLyric);
 
         srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
             createExecutiveFactory(srt::ContribImportBinding &binding) const;
 
         std::string m_language;
         std::string m_scheme;
+        std::string m_defaultLyric;
 
         friend class LinguistCategory;
     };

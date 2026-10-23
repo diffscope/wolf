@@ -1,0 +1,7 @@
+{
+    "interface": "org.openvpi.wolf.test.Singer",
+    "level": 1,
+    "variant": "stub",
+    "name": "Pinned Floor Fixture",
+    "languages": {}
+}

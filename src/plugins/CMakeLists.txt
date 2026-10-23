@@ -22,7 +22,8 @@ function(wolf_add_interpreter_plugin _target)
     cmake_parse_arguments(FUNC "NO_INSTALL;NO_MANIFEST" "" "LINKS_PRIVATE" ${ARGN})
     get_filename_component(_name "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 
-    file(GLOB_RECURSE _src "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+    file(GLOB_RECURSE _src CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
     set(_install_option)
     if(FUNC_NO_INSTALL)

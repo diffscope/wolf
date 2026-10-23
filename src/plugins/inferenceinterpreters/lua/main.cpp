@@ -282,6 +282,10 @@ namespace wolf::lua {
                                 const srt::InferenceRuntimeOptions &) override {
                 const auto *configuration =
                     static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the scripted module was imported without its configuration");
+                }
                 auto sandbox = Sandbox::create(configuration->source, configuration->chunkName);
                 if (!sandbox) {
                     return sandbox.takeError();
@@ -331,6 +335,10 @@ namespace wolf::lua {
                                 const srt::InferenceRuntimeOptions &) override {
                 const auto *configuration =
                     static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the scripted module was imported without its configuration");
+                }
                 auto sandbox = Sandbox::create(configuration->source, configuration->chunkName);
                 if (!sandbox) {
                     return sandbox.takeError();

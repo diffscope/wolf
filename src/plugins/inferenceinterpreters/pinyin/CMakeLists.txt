@@ -3,6 +3,6 @@ project(wolfpinyin
     LANGUAGES CXX
 )
 
-find_package(cpp-pinyin CONFIG REQUIRED)
+find_package(cpp-pinyin2 CONFIG REQUIRED)
 
-wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE cpp-pinyin::cpp-pinyin)
+wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE cpp-pinyin2::cpp-pinyin2)

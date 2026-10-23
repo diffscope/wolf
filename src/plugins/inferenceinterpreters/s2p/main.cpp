@@ -236,6 +236,10 @@ namespace wolf::s2p {
                 createInference(srt::InferenceSpec &spec, const srt::ContribImportOptions &,
                                 const srt::InferenceRuntimeOptions &) override {
                 auto configuration = static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the S2P module was imported without its configuration");
+                }
                 return std::unique_ptr<srt::InferenceExecutive>(
                     new Executive(spec, configuration->table));
             }
@@ -251,7 +255,9 @@ namespace wolf::s2p {
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
             if (interfaceName != S2PApi::API_INTERFACE || level != S2PApi::API_LEVEL) {
-                return srt::Error(srt::Error::InvalidArgument, "unsupported S2P contract");
+                return srt::Error(srt::Error::InvalidArgument,
+                                  "unsupported S2P contract: " + std::string(interfaceName) + "/" +
+                                      std::to_string(level) + "/" + std::string(variant));
             }
             if (variant != DIRECT && variant != DICT && variant != MAPPING) {
                 return srt::Error(srt::Error::InvalidArgument,

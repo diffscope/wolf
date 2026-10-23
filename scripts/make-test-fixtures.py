@@ -30,7 +30,7 @@ PACKAGES = {
         'desc.json': '{\n    "$version": "1.0",\n    "id": "wolf/lang-zxx",\n    "version": "1.0.0.0",\n    "compatVersion": "1.0.0.0",\n    "runtimeLevel": 1,\n    "vendor": "wolf",\n    "copyright": "Copyright (C) wolf",\n    "description": "Passthrough language for text that carries no linguistic content.",\n    "contributions": {\n        "linguist": [\n            { "id": "zxx-passthrough", "path": "./linguists/zxx-passthrough/linguist.json" }\n        ],\n        "inference": [\n            { "id": "zxx-g2p", "path": "./inferences/zxx-g2p/inference.json" },\n            { "id": "zxx-s2p", "path": "./inferences/zxx-s2p/inference.json" }\n        ]\n    }\n}\n',
         'inferences/zxx-g2p/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.G2P",\n    "level": 1,\n    "variant": "pipe-chain",\n    "name": "Passthrough G2P",\n    "exports": {\n        "languages": [\n            { "language": "zxx", "scheme": "passthrough" }\n        ]\n    },\n    "configuration": {\n        "formatVersion": 1,\n        "steps": [\n            {\n                "step": "verify",\n                "params": {\n                    "entries": [\n                        { "type": "regex", "value": ["(\\\\p{N})", "(\\\\p{P})", "([.]+)"], "mode": "copy" }\n                    ]\n                }\n            },\n            {\n                "step": "fallback",\n                "params": { "useOriginal": true }\n            }\n        ]\n    }\n}\n',
         'inferences/zxx-s2p/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.S2P",\n    "level": 1,\n    "variant": "direct",\n    "name": "Passthrough S2P",\n    "exports": {\n        "languages": [\n            { "language": "zxx", "scheme": "passthrough" }\n        ]\n    },\n    "configuration": {}\n}\n',
-        'linguists/zxx-passthrough/linguist.json': '{\n    "interface": "org.openvpi.wolf.linguist.WolfLinguist",\n    "level": 1,\n    "variant": "wolf",\n    "name": {\n        "_": "Passthrough",\n        "zh-CN": "直通"\n    },\n    "language": "zxx",\n    "scheme": "passthrough",\n    "exports": {\n        "phonemes": [],\n        "openSet": true\n    },\n    "configuration": {},\n    "imports": [\n        { "role": "linguist/g2p", "ref": ":inference/zxx-g2p" },\n        { "role": "linguist/s2p", "ref": ":inference/zxx-s2p" }\n    ]\n}\n',
+        'linguists/zxx-passthrough/linguist.json': '{\n    "interface": "org.openvpi.wolf.linguist.WolfLinguist",\n    "level": 1,\n    "variant": "wolf",\n    "name": {\n        "_": "Passthrough",\n        "zh-CN": "直通"\n    },\n    "language": "zxx",\n    "scheme": "passthrough",\n    "defaultLyric": " la ",\n    "exports": {\n        "phonemes": [],\n        "openSet": true\n    },\n    "configuration": {},\n    "imports": [\n        { "role": "linguist/g2p", "ref": ":inference/zxx-g2p" },\n        { "role": "linguist/s2p", "ref": ":inference/zxx-s2p" }\n    ]\n}\n',
     },
 
     'bad-language': {
@@ -63,7 +63,7 @@ PACKAGES = {
         'inferences/nofallback/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.G2P",\n    "level": 1,\n    "variant": "pipe-chain",\n    "name": "Chain G2P without a fallback",\n    "exports": {\n        "languages": [ { "language": "deu", "scheme": "ds" } ]\n    },\n    "configuration": {\n        "formatVersion": 1,\n        "steps": [\n            {\n                "step": "verify",\n                "params": {\n                    "entries": [\n                        { "type": "regex", "value": ["([A-Za-z]+)"], "mode": "convert" },\n                        { "type": "array", "value": ["-"], "mode": "copy" }\n                    ]\n                }\n            },\n            { "step": "dict",   "params": { "file": "./dict.txt" } },\n            { "step": "format", "params": { "operations": ["lowercase"] } },\n            { "step": "dict",   "params": { "file": "./dict.txt" } },\n            { "step": "dict",   "params": { "file": "./dict.txt" }, "enabled": false }\n        ]\n    }\n}\n',
         'inferences/s2p-deu/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.S2P",\n    "level": 1,\n    "variant": "direct",\n    "name": "German S2P",\n    "exports": {\n        "languages": [\n            {\n                "language": "deu",\n                "scheme": "ds"\n            }\n        ]\n    },\n    "configuration": {}\n}\n',
         'inferences/s2p/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.S2P",\n    "level": 1,\n    "variant": "direct",\n    "name": "Chain S2P",\n    "exports": {\n        "languages": [ { "language": "eng", "scheme": "arpabet" } ]\n    },\n    "configuration": {}\n}\n',
-        'linguists/deu/linguist.json': '{\n    "interface": "org.openvpi.wolf.linguist.WolfLinguist",\n    "level": 1,\n    "variant": "wolf",\n    "name": "Chain German",\n    "language": "deu",\n    "scheme": "ds",\n    "exports": {\n        "phonemes": []\n    },\n    "configuration": {},\n    "imports": [\n        {\n            "role": "linguist/g2p",\n            "ref": ":inference/nofallback"\n        },\n        {\n            "role": "linguist/s2p",\n            "ref": ":inference/s2p-deu"\n        }\n    ]\n}\n',
+        'linguists/deu/linguist.json': '{\n    "interface": "org.openvpi.wolf.linguist.WolfLinguist",\n    "level": 1,\n    "variant": "wolf",\n    "name": "Chain German",\n    "language": "deu",\n    "scheme": "ds",\n    "defaultLyric": 7,\n    "exports": {\n        "phonemes": []\n    },\n    "configuration": {},\n    "imports": [\n        {\n            "role": "linguist/g2p",\n            "ref": ":inference/nofallback"\n        },\n        {\n            "role": "linguist/s2p",\n            "ref": ":inference/s2p-deu"\n        }\n    ]\n}\n',
         'linguists/eng/linguist.json': '{\n    "interface": "org.openvpi.wolf.linguist.WolfLinguist",\n    "level": 1,\n    "variant": "wolf",\n    "name": "Chain English",\n    "language": "eng",\n    "scheme": "arpabet",\n    "exports": { "phonemes": [] },\n    "configuration": {},\n    "imports": [\n        { "role": "linguist/g2p", "ref": ":inference/g2p" },\n        { "role": "linguist/s2p", "ref": ":inference/s2p" }\n    ]\n}\n',
     },
     'lang-cmn': {
@@ -138,9 +138,12 @@ PACKAGES = {
     },
     'pinyin-engine': {
         'desc.json': '{\n    "$version": "1.0",\n    "id": "wolf/test-pinyin-engine",\n    "version": "1.0.0.0",\n    "runtimeLevel": 1,\n    "contributions": {\n        "inference": [ { "id": "pinyin", "path": "./inferences/pinyin/inference.json" } ]\n    }\n}\n',
-        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '',
-        'inferences/pinyin/dict/cantonese/phrases_map.txt': '',
-        'inferences/pinyin/dict/cantonese/trans_word.txt': '',
+        # cpp-pinyin 2.x refuses to open a dialect whose tables are missing or empty (1.x
+        # tolerated empty files and silently converted nothing), so every fixture that ships a
+        # cantonese root carries the three required tables with content.
+        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '中意:zung1,ji3\n',
+        'inferences/pinyin/dict/cantonese/phrases_map.txt': '意:22\n',
+        'inferences/pinyin/dict/cantonese/trans_word.txt': '國:国\n',
         'inferences/pinyin/dict/cantonese/user_dict.txt': '',
         'inferences/pinyin/dict/cantonese/word.txt': '中:zung1\n国:gwok3\n',
         'inferences/pinyin/dict/mandarin/phrases_dict.txt': '银行:yín,háng\n',
@@ -152,9 +155,12 @@ PACKAGES = {
     },
     'pinyin-engine-rival': {
         'desc.json': '{\n    "$version": "1.0",\n    "id": "wolf/test-pinyin-engine-rival",\n    "version": "1.0.0.0",\n    "runtimeLevel": 1,\n    "contributions": {\n        "inference": [ { "id": "pinyin", "path": "./inferences/pinyin/inference.json" } ]\n    }\n}\n',
-        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '',
-        'inferences/pinyin/dict/cantonese/phrases_map.txt': '',
-        'inferences/pinyin/dict/cantonese/trans_word.txt': '',
+        # cpp-pinyin 2.x refuses to open a dialect whose tables are missing or empty (1.x
+        # tolerated empty files and silently converted nothing), so every fixture that ships a
+        # cantonese root carries the three required tables with content.
+        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '中意:zung1,ji3\n',
+        'inferences/pinyin/dict/cantonese/phrases_map.txt': '意:22\n',
+        'inferences/pinyin/dict/cantonese/trans_word.txt': '國:国\n',
         'inferences/pinyin/dict/cantonese/user_dict.txt': '',
         'inferences/pinyin/dict/cantonese/word.txt': '中:zung1\n国:gwok3\n',
         'inferences/pinyin/dict/mandarin/phrases_dict.txt': '银行:yín,háng\n',
@@ -167,9 +173,12 @@ PACKAGES = {
     'pinyin-rollback': {
         'desc.json': '{\n    "$version": "1.0",\n    "id": "wolf/test-pinyin-rollback",\n    "version": "1.0.0.0",\n    "runtimeLevel": 1,\n    "contributions": {\n        "inference": [\n            { "id": "pinyin", "path": "./inferences/pinyin/inference.json" },\n            { "id": "broken", "path": "./inferences/broken/inference.json" }\n        ]\n    }\n}\n',
         'inferences/broken/inference.json': '{\n    "interface": "org.openvpi.wolf.inference.G2P",\n    "level": 1,\n    "variant": "pipe-chain",\n    "name": "Fails after the pinyin module has claimed the dictionary root",\n    "configuration": {\n        "formatVersion": 1,\n        "steps": [ { "step": "fallback" } ],\n        "thisKeyDoesNotExist": 1\n    }\n}\n',
-        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '',
-        'inferences/pinyin/dict/cantonese/phrases_map.txt': '',
-        'inferences/pinyin/dict/cantonese/trans_word.txt': '',
+        # cpp-pinyin 2.x refuses to open a dialect whose tables are missing or empty (1.x
+        # tolerated empty files and silently converted nothing), so every fixture that ships a
+        # cantonese root carries the three required tables with content.
+        'inferences/pinyin/dict/cantonese/phrases_dict.txt': '中意:zung1,ji3\n',
+        'inferences/pinyin/dict/cantonese/phrases_map.txt': '意:22\n',
+        'inferences/pinyin/dict/cantonese/trans_word.txt': '國:国\n',
         'inferences/pinyin/dict/cantonese/user_dict.txt': '',
         'inferences/pinyin/dict/cantonese/word.txt': '中:zung1\n国:gwok3\n',
         'inferences/pinyin/dict/mandarin/phrases_dict.txt': '银行:yín,háng\n',

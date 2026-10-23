@@ -167,6 +167,22 @@ def main():
         # version written here: the packaging revision changes, and a hardcoded version stops
         # resolving when it does.
         required = json.loads((package / "desc.json").read_text(encoding="utf-8"))["compatVersion"]
+        # This fixture follows the floor by construction, so it can never show what happens to a
+        # voicebank that named an older one. scripts/fixtures/voicebank-pinned is that other side
+        # and is never regenerated, so a floor that moved past the published snapshot is reported
+        # here, where whoever changes a package will see it, rather than only when the snapshot
+        # check fails later.
+        _pinned = Path(__file__).resolve().parent / "fixtures" / "voicebank-pinned" / "desc.json"
+        if _pinned.is_file():
+            for _entry in json.loads(_pinned.read_text(encoding="utf-8")).get("dependencies", []):
+                # spec["package"] is the directory name; the snapshot carries the package id, which
+                # separates its segments with a slash.
+                if _entry.get("id", "").replace("/", "-") != spec["package"]:
+                    continue
+                if tuple(map(int, required.split("."))) > tuple(map(int, _entry["version"].split("."))):
+                    print(f"warning: {spec['package']} declares the floor {required}, past the "
+                          f"{_entry['version']} named by scripts/fixtures/voicebank-pinned; either "
+                          f"keep the floor or update the pinned snapshot", file=sys.stderr)
 
         s2p_dir = root / "inferences" / f"s2p-{language}"
         s2p_dir.mkdir(parents=True)

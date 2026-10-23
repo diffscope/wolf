@@ -59,7 +59,8 @@ namespace wolf {
             };
             // Fields that this category adds to the root, parsed before an interpreter is
             // selected.
-            static const std::set<std::string_view> category = {"language", "scheme"};
+            static const std::set<std::string_view> category = {"language", "scheme",
+                                                                "defaultLyric"};
 
             for (const auto &item : declaration) {
                 if (framework.count(item.first) != 0 || category.count(item.first) != 0) {
@@ -88,11 +89,49 @@ namespace wolf {
             return value;
         }
 
+        /// Returns \a value without leading and trailing space.
+        std::string trimmed(std::string_view value) {
+            const auto isSpace = [](char character) {
+                return character == ' ' || character == '\t' || character == '\r' ||
+                       character == '\n';
+            };
+            while (!value.empty() && isSpace(value.front())) {
+                value.remove_prefix(1);
+            }
+            while (!value.empty() && isSpace(value.back())) {
+                value.remove_suffix(1);
+            }
+            return std::string(value);
+        }
+
+        /// Reads the optional default lyric of a linguist declaration.
+        ///
+        /// The field is optional and carries no matching semantics, so a value this build cannot
+        /// use is reported and ignored instead of failing the load. A package that declares the
+        /// field, in whatever form, therefore keeps loading, and consumers fall back to their own
+        /// default. The value is stored trimmed, and one that is empty after trimming counts as
+        /// absent, because a lyric that only holds space is not a lyric.
+        std::string readDefaultLyric(const srt::JsonObject &declaration,
+                                     const std::filesystem::path *path) {
+            const auto it = declaration.find("defaultLyric");
+            if (it == declaration.end() || it->second.isNull()) {
+                return {};
+            }
+            if (!it->second.isString()) {
+                logCategory().srtWarning(
+                    "linguist declaration %1 has a non-string defaultLyric; the field is ignored",
+                    path ? stdc::path::to_utf8(*path) : std::string("<unknown>"));
+                return {};
+            }
+            return trimmed(it->second.toString());
+        }
+
     }
 
     LinguistSpec::LinguistSpec(const srt::ContribCreateContext &context, std::string language,
-                               std::string scheme)
-        : ContribSpec(context), m_language(std::move(language)), m_scheme(std::move(scheme)) {
+                               std::string scheme, std::string defaultLyric)
+        : ContribSpec(context), m_language(std::move(language)), m_scheme(std::move(scheme)),
+          m_defaultLyric(std::move(defaultLyric)) {
     }
 
     LinguistSpec::~LinguistSpec() = default;
@@ -103,6 +142,10 @@ namespace wolf {
 
     const std::string &LinguistSpec::scheme() const {
         return m_scheme;
+    }
+
+    const std::string &LinguistSpec::defaultLyric() const {
+        return m_defaultLyric;
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
@@ -151,8 +194,9 @@ namespace wolf {
         // The contribution ID convention <language>-<scheme>[-<qualifier>] is a packaging lint
         // rule, not a load condition. The loader never reads the ID, and enforcing the convention
         // would only remove the naming freedom that the upper specification grants each Package.
+        const auto defaultLyric = readDefaultLyric(declaration, context.declarationPath());
         return std::unique_ptr<srt::ContribSpec>(
-            new LinguistSpec(context, language.take(), scheme.take()));
+            new LinguistSpec(context, language.take(), scheme.take(), defaultLyric));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>

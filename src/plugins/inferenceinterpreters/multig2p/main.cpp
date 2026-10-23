@@ -344,6 +344,10 @@ namespace wolf::multig2p {
                                 const srt::InferenceRuntimeOptions &runtimeOptions) override {
                 const auto *configuration =
                     static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the multig2p module was imported without its configuration");
+                }
                 const auto &binding =
                     static_cast<const G2PApi::G2PRuntimeOptions &>(runtimeOptions).binding;
 
@@ -394,7 +398,8 @@ namespace wolf::multig2p {
             if (interfaceName != G2PApi::API_INTERFACE || level != G2PApi::API_LEVEL ||
                 variant != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported multig2p contract or variant");
+                                  "unsupported multig2p contract: " + std::string(interfaceName) +
+                                      "/" + std::to_string(level) + "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

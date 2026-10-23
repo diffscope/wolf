@@ -145,6 +145,32 @@ def validate(value, schema: dict, schemas: Schemas, where: str, errors: list) ->
                 errors.append(f"{where}: unknown key {name}")
 
 
+# The acoustic contract declares the variance and transition parameters that the host has to draw
+# and hand to the model as inputs. The model states in its own configuration which parameters it
+# consumes. A parameter that is declared but not consumed is invisible at load time: the module
+# loads, the host draws the curve, and the tensor is never written, so the control silently does
+# nothing. This lint has no schema for the dsinfer contracts yet, so the one invariant a schema
+# would have expressed is checked directly.
+ACOUSTIC_INTERFACE = "org.openvpi.dsinfer.inference.Acoustic"
+
+
+def check_acoustic_controls(declaration: dict, where: str, warnings: list) -> None:
+    """Reports host-drawn parameters that the model does not consume."""
+    exports = declaration.get("exports", {})
+    consumed = declaration.get("configuration", {}).get("parameters")
+    if not isinstance(consumed, list):
+        return
+    for field in ("varianceControls", "transitionControls"):
+        declared = exports.get(field)
+        if not isinstance(declared, list):
+            continue
+        for name in declared:
+            if name not in consumed:
+                warnings.append(
+                    f"{where}: exports.{field} names {name!r}, but configuration.parameters does "
+                    f"not list it, so the host can draw the curve while the model never reads it")
+
+
 # The schema pair of each contract, keyed by (interface, level). A declaration whose contract is
 # not listed is not validated against a schema.
 CONTRACTS = {
@@ -461,6 +487,14 @@ def check_desc(desc: dict, where: str, errors: list) -> None:
         if parse_version(desc.get(field)) is None:
             errors.append(f"{where}: {field} {desc.get(field)!r} must be one to four dot "
                           f"separated decimal numbers without leading zeros")
+    # A floor above the version describes an empty interval: no consumer could ever name a version
+    # that the package both is and is compatible with. The loader rejects such a manifest outright,
+    # so the lint reports it rather than letting a package reach a release.
+    version = parse_version(desc.get("version"))
+    floor = parse_version(desc.get("compatVersion", desc.get("version", "")))
+    if version is not None and floor is not None and floor > version:
+        errors.append(f"{where}: compatVersion {desc.get('compatVersion')} is greater than version "
+                      f"{desc.get('version')}, which describes no compatible version at all")
     for dependency in desc.get("dependencies", []):
         if not isinstance(dependency, dict):
             errors.append(f"{where}: a dependency must be an object")
@@ -653,10 +687,64 @@ def check_dependencies(packages: list, errors: list, warnings: list) -> None:
                     f"that later revisions still satisfy")
 
 
+def model_phoneme_tables(directory: Path) -> list:
+    """Returns the raw key set of every phoneme table in the package.
+
+    A table stores a phoneme either prefixed with its language (`cmn/AP`) or bare (`AP`). The
+    distinction matters: a bare key is a claim that the phoneme carries no language, so the
+    matched-per-language rule below can only use it when every table makes that claim.
+    """
+    tables = []
+    for table in sorted(directory.glob("inferences/*/phonemes.json")):
+        document = load_json(table)
+        if isinstance(document, dict):
+            tables.append(set(document))
+    return tables
+
+
+def check_phoneme_coverage(desc: dict, directory: Path, warnings: list) -> None:
+    """Reports declared phonemes that no model of the package can consume.
+
+    A linguist states the inventory it can produce. If a model cannot consume an entry, the failure
+    surfaces at run time as a phoneme the chain emits and the model rejects, or as a silent gap in
+    the rendering. The check is skipped for a linguist that declares `openSet`, because such an
+    inventory is incomplete by design and the specification says so.
+
+    A declared phoneme is consumable when some table carries it under the language of the declaring
+    linguist, or when every table carries it bare, which is how a table states that the phoneme is
+    language independent. Matching against the union of all tables instead would let an entry of one
+    language vouch for a declaration made in another, which is how a real gap stayed hidden.
+    """
+    tables = model_phoneme_tables(directory)
+    if not tables:
+        return
+    for entry in desc.get("contributions", {}).get(LINGUIST_CATEGORY, []):
+        declaration = load_json((directory / entry["path"]).resolve())
+        exports = declaration.get("exports", {})
+        if exports.get("openSet"):
+            continue
+        declared = exports.get("phonemes")
+        if not isinstance(declared, list):
+            continue
+        language = declaration.get("language")
+        for phoneme in declared:
+            if not isinstance(phoneme, str):
+                continue
+            if language and any(f"{language}/{phoneme}" in table for table in tables):
+                continue
+            if all(phoneme in table for table in tables):
+                continue
+            warnings.append(
+                f"{desc['id']}:{entry['id']}: exports.phonemes declares {phoneme!r}, which no "
+                f"phonemes.json of this package consumes for language {language!r}, so the chain "
+                f"can emit a phoneme that no model can consume")
+
+
 def check_package(directory: Path, schemas: Schemas, grammar: IdentityGrammar,
                   packages: PackageSet, errors: list, warnings: list) -> int:
     desc = load_json(directory / "desc.json")
     check_desc(desc, str(desc.get("id", directory.name)), errors)
+    check_phoneme_coverage(desc, directory, warnings)
     checked = 0
     for entry in desc.get("contributions", {}).get(SINGER_CATEGORY, []):
         path = (directory / entry["path"]).resolve()
@@ -675,6 +763,8 @@ def check_package(directory: Path, schemas: Schemas, grammar: IdentityGrammar,
             key = (declaration.get("interface"), declaration.get("level"))
             prefix = CONTRACTS.get(key)
             where = f"{desc['id']}:{entry['id']}"
+            if key == (ACOUSTIC_INTERFACE, 1):
+                check_acoustic_controls(declaration, f"{where} acoustic", warnings)
             if prefix is None:
                 # The loader interprets such a declaration through the provider registered for its
                 # triple, and this lint has no schema for it. The declaration is reported instead of

@@ -221,9 +221,10 @@ Phonetic-Suite-Multi（19 MB，含 ONNX 权重）是 9 个语言包共用的 seq
 字节。拆包的理由是**一个进程只能有一个词典根**：引擎经进程全局状态解析词典，两个词典根会相互冲突
 （变体文档 §6.1 的实测依据）。拆包使单一词典根成为结构上的事实，而不依赖使用约定。
 
-**版本跟随引擎**：包内词典在打包时取自本仓所链接的 cpp-pinyin 端口（`share/cpp-pinyin/dict`）。
-包版本的前三位取该端口版本（现为 `1.0.2`），第四位为打包修订号（§4.1.1，当前发布为 `1.0.2.4`）；
-端口的 REF 记入 `converted.json`。词典与读取它的引擎是同一件工件，不应分别编号。
+**版本跟随引擎**：包内词典在打包时取自本仓所链接的 cpp-pinyin2 端口（`share/cpp-pinyin2/dict`）。
+当前发布把全部 15 个包一次性重置为 `1.0.0.0`（`compatVersion` 同值，见 A82），引擎 REF 记入
+`converted.json` 的 `cppPinyinRef`，因此版本号不再表示引擎版本，可追溯性由该字段承担。词典与读取它的
+引擎是同一件工件，不应分别编号。
 
 > 存量包中的两份词典**与上游 `res/dict` 字节相同**（唯一差异是 `mandarin/trans_word.txt` 少一行
 > `吒:咤`）。该实测结果是将其判定为引擎载荷而非语言内容的直接依据。
@@ -338,7 +339,7 @@ BSD-2-Clause 声明在改编时被删除。
 python3 scripts/convert-g2p-packages.py \
     --synthrt ../synthrt \
     --out build/lang-packages \
-    --cpp-pinyin-dict build/vcpkg_installed/<triplet>/share/cpp-pinyin/dict
+    --cpp-pinyin-dict build/vcpkg_installed/<triplet>/share/cpp-pinyin2/dict
 ```
 
 两个来源的 REF 都写入 `converted.json`（`sourceRef`、`cppPinyinRef`）。
@@ -551,7 +552,7 @@ python -c "import json,pathlib as P;[print(p) for p in P.Path('build').rglob('in
 ```json
 { "bundleVersion": "0.1.2.0",
   "packages": [
-    { "id": "wolf/lang-cmn", "file": "wolf-lang-cmn-1.0.1.4.zip", "sha512": "…",
+    { "id": "wolf/lang-cmn", "file": "wolf-lang-cmn-1.0.0.0.zip", "sha512": "…",
       "version": "1.0.1.4", "compatVersion": "1.0.1.0", "directory": "wolf-lang-cmn",
       "size": …, "breaking": false } ] }
 ```
@@ -561,15 +562,15 @@ python -c "import json,pathlib as P;[print(p) for p in P.Path('build').rglob('in
 
 ### 5.1 当前发布
 
-当前发布为 `lang-v0.1.2.0`（`assets.cmake` 中的 `WOLF_LANG_PACKAGES_BUNDLE_VERSION`），含 15 个归档：
+当前发布为 `lang-v1.0.0.0`（`assets.cmake` 中的 `WOLF_LANG_PACKAGES_BUNDLE_VERSION`），含 15 个归档。本次发布把全部包一次性重置为 `1.0.0.0`（`compatVersion` 同值，见 A82），此前的 `lang-v0.1.2.0` 与 `lang-v0.1.0.0` 已撤回：
 
 | 包 | 版本 | 归档 |
 | :-- | :-- | :-- |
-| `wolf/g2p-multi` | 1.0.0.4 | `wolf-g2p-multi-1.0.0.4.zip` |
-| `wolf/g2p-pinyin` | 1.0.2.4 | `wolf-g2p-pinyin-1.0.2.4.zip` |
-| `wolf/lang-cmn`、`wolf/lang-yue` | 1.0.1.4 | `wolf-lang-cmn-1.0.1.4.zip`、`wolf-lang-yue-1.0.1.4.zip` |
-| `wolf/lang-deu`、`eng`、`fil`、`fra`、`ita`、`kor`、`por`、`rus`、`spa` | 1.0.0.4 | `wolf-lang-<iso>-1.0.0.4.zip` |
-| `wolf/lang-jpn` | 0.0.1.4 | `wolf-lang-jpn-0.0.1.4.zip` |
+| `wolf/g2p-multi` | 1.0.0.0 | `wolf-g2p-multi-1.0.0.0.zip` |
+| `wolf/g2p-pinyin` | 1.0.0.0 | `wolf-g2p-pinyin-1.0.0.0.zip` |
+| `wolf/lang-cmn`、`wolf/lang-yue` | 1.0.0.0 | `wolf-lang-cmn-1.0.0.0.zip`、`wolf-lang-yue-1.0.0.0.zip` |
+| `wolf/lang-deu`、`eng`、`fil`、`fra`、`ita`、`kor`、`por`、`rus`、`spa` | 1.0.0.0 | `wolf-lang-<iso>-1.0.0.0.zip` |
+| `wolf/lang-jpn` | 1.0.0.0 | `wolf-lang-jpn-1.0.0.0.zip` |
 | `wolf/lang-zxx` | 1.0.0.0 | `wolf-lang-zxx-1.0.0.0.zip` |
 
 套件列表（`WOLF_LANG_PACKAGES_SUITES`）为
@@ -791,7 +792,7 @@ wolf 仓库自 2026-09-28 起公开，release 资产可匿名下载，端口可�
 lib/libsynthrt-wolf.so                                  # 注册 linguist 类别
 lib/plugins/wolf/linguistproviders/wolf/                # WolfLinguistProvider
 lib/plugins/wolf/inferenceinterpreters/{chain,onset,s2p}/       # 无额外依赖
-lib/plugins/wolf/inferenceinterpreters/pinyin/          # 需要 libcpp-pinyin
+lib/plugins/wolf/inferenceinterpreters/pinyin/          # 需要 libcpp-pinyin2
 lib/plugins/wolf/inferenceinterpreters/lua/             # 需要 libluajit
 lib/plugins/wolf/inferenceinterpreters/multig2p/        # 需要 dsinfer 与 ONNX 驱动
 ```
@@ -806,7 +807,7 @@ lib/plugins/wolf/inferenceinterpreters/multig2p/        # 需要 dsinfer 与 ONN
 | 插件 | wolf 之外的依赖 | 缺失后果 |
 | :-- | :-- | :-- |
 | `chain` `onset` `s2p` | 无 | —— |
-| `pinyin` | `libcpp-pinyin` | 插件无法加载，`algo-pinyin` 无提供者，`wolf/g2p-pinyin` 在 Probe 阶段失败，**cmn 与 yue 均不可用** |
+| `pinyin` | `libcpp-pinyin2` | 插件无法加载，`algo-pinyin` 无提供者，`wolf/g2p-pinyin` 在 Probe 阶段失败，**cmn 与 yue 均不可用** |
 | `lua` | `libluajit-5.1` | `lua` 变体无提供者（当前无生产资源使用该变体，实际无影响） |
 | `multig2p` | `libsynthrt-dsinfer` | `multig2p-onnx` 无提供者，**九个 `pipe-chain` 语言包均不可用** |
 | `libsynthrt-wolf` | `libre2`、`libblake3` | wolf 本身无法加载 |
@@ -842,7 +843,7 @@ Package，提供者缺失报告 `FeatureNotSupported`，即找不到提供者（
 
 cpp-pinyin 端口的 `usage` 建议把 `dict/` 复制到可执行文件所在目录。**该建议不适用于 wolf**：词典是
 `wolf/g2p-pinyin` 包的内容，由 `configuration.dictRoot` 相对模块声明目录定位（变体文档 §6.2），
-运行期不读取 `share/cpp-pinyin/dict`。
+运行期不读取 `share/cpp-pinyin2/dict`。
 
 端口提供的词典只在**打包期**由 `scripts/convert-g2p-packages.py` 读取一次，用于生成包（A30）。按
 上游 usage 另外复制一份到 bin 目录不会出错，但没有作用。

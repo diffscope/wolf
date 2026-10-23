@@ -200,4 +200,37 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_LanguageMapIsRefusedOnOtherCategories
     BOOST_CHECK(!languages);
 }
 
+BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsDefaultLyric) {
+    srt::SynthUnit unit;
+    auto handle = openData(unit, packagePath("wolf-lang-zxx"));
+    requireOpened(handle, "wolf/lang-zxx");
+
+    auto *spec = handle->contribution(wolf::LINGUIST_CATEGORY, "zxx-passthrough");
+    BOOST_REQUIRE(spec != nullptr);
+    auto *linguist = spec->as<wolf::LinguistSpec>();
+    BOOST_REQUIRE(linguist != nullptr);
+
+    // The declaration writes the value with surrounding space, so this also covers the trim. The
+    // value is read in DataOnly mode, without any interpreter, like the identity fields.
+    BOOST_CHECK_EQUAL(linguist->defaultLyric(), "la");
+}
+
+BOOST_AUTO_TEST_CASE(test_LinguistIdentity_IgnoresMalformedDefaultLyric) {
+    srt::SynthUnit unit;
+    auto handle = openData(unit, fixturePath("lang-chain"));
+    requireOpened(handle, "lang-chain");
+
+    auto *spec = handle->contribution(wolf::LINGUIST_CATEGORY, "deu");
+    BOOST_REQUIRE(spec != nullptr);
+    auto *linguist = spec->as<wolf::LinguistSpec>();
+    BOOST_REQUIRE(linguist != nullptr);
+
+    // The declaration writes a number. The field is optional and carries no matching semantics, so
+    // a value this build cannot use is reported and ignored rather than failing the load, which is
+    // what keeps a package that declares a future form of the field loading in this build.
+    BOOST_CHECK(linguist->defaultLyric().empty());
+    BOOST_CHECK_EQUAL(linguist->language(), "deu");
+    BOOST_CHECK_EQUAL(linguist->scheme(), "ds");
+}
+
 BOOST_AUTO_TEST_SUITE_END()

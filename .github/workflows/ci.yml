@@ -88,8 +88,19 @@ jobs:
 
       - name: Lint the shipped package
         # The fixtures include deliberately broken packages, so the lint runs on the package that
-        # ships with the repository, which the step above generated with them.
-        run: python3 scripts/check-declarations.py build/test-fixtures/wolf-lang-zxx
+        # ships with the repository, which the step above generated with them. The pinned voicebank
+        # snapshot is added because it names the versions that were published, and a snapshot that
+        # no longer resolves is exactly the failure this job exists to catch.
+        run: python3 scripts/check-declarations.py build/test-fixtures/wolf-lang-zxx scripts/fixtures/voicebank-pinned
+
+      - name: Lint the release against the pinned snapshot
+        # Only the Linux job installs the release, and the compatibility-floor rule is checked only
+        # when the snapshot and the packages it names are given together: a dependency whose target
+        # is absent from the same run is skipped rather than checked.
+        if: runner.os == 'Linux'
+        run: |
+          python3 scripts/check-declarations.py scripts/fixtures/voicebank-pinned \
+            build/vcpkg_installed/"$VCPKG_DEFAULT_TRIPLET"/share/wolf/packages/*
 
       - name: Check the release pins against their copies
         # The port verifies the pinned SHA512 against the archives it downloads. This step

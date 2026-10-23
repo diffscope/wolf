@@ -1,0 +1,38 @@
+{
+    "$version": "1.0",
+    "id": "wolf/voicebank-pinned",
+    "version": "1.0.0.0",
+    "runtimeLevel": 1,
+    "vendor": "wolf",
+    "description": "A snapshot of the dependency versions that published voicebanks name. Hand written, never regenerated.",
+    "contributions": {
+        "singer": [
+            {
+                "id": "zh",
+                "path": "./singers/zh/singer.json"
+            }
+        ]
+    },
+    "dependencies": [
+        {
+            "id": "wolf/g2p-multi",
+            "version": "1.0.0.0"
+        },
+        {
+            "id": "wolf/lang-cmn",
+            "version": "1.0.0.0"
+        },
+        {
+            "id": "wolf/lang-eng",
+            "version": "1.0.0.0"
+        },
+        {
+            "id": "wolf/lang-jpn",
+            "version": "1.0.0.0"
+        },
+        {
+            "id": "wolf/lang-yue",
+            "version": "1.0.0.0"
+        }
+    ]
+}

@@ -59,11 +59,6 @@ namespace wolf::pinyin {
 
             fs::path dictRoot;
             std::vector<MappedLanguage> languageMap;
-
-            /// Claim on the process-wide dictionary root, released together with this
-            /// configuration. Holding the claim here ties it to the load transaction: a load that
-            /// fails after createConfiguration destroys this object, which releases the root.
-            RootReservation reservation;
         };
 
         class Executive
@@ -305,15 +300,9 @@ namespace wolf::pinyin {
                                           stdc::path::to_utf8(result->dictRoot));
                 }
 
-                // The root is claimed here rather than when an executive is created, because a
-                // conflict between two roots is a property of the packages and must be reported by
-                // the load that contains them. The configuration holds the claim so that the claim
-                // lasts exactly as long as this module instance.
-                auto reserved = PinyinEngineRegistry::instance().reserveRoot(result->dictRoot);
-                if (!reserved) {
-                    return reserved.takeError();
-                }
-                result->reservation = reserved.take();
+                // The 2.x library takes the dictionary root as an argument to Engine::open, so
+                // there is no process-wide root to claim here. Two packages that ship different
+                // roots coexist, which the 1.x arbiter could not allow.
                 return std::unique_ptr<srt::ContribConfiguration>(std::move(result));
             }
 
@@ -333,12 +322,16 @@ namespace wolf::pinyin {
                                 const srt::InferenceRuntimeOptions &runtimeOptions) override {
                 const auto *configuration =
                     static_cast<const Configuration *>(spec.configuration());
+                if (configuration == nullptr) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "the pinyin module was imported without its configuration");
+                }
                 const auto &binding =
                     static_cast<const G2PApi::G2PRuntimeOptions &>(runtimeOptions).binding;
                 for (const auto &entry : configuration->languageMap) {
                     if (entry.pair == binding) {
-                        auto engine = PinyinEngineRegistry::instance().createEngine(
-                            configuration->dictRoot, entry.ref);
+                        auto engine = PinyinEngineRegistry::createEngine(configuration->dictRoot,
+                                                                         entry.ref);
                         if (!engine) {
                             return engine.takeError();
                         }
@@ -361,7 +354,8 @@ namespace wolf::pinyin {
             if (interfaceName != G2PApi::API_INTERFACE || level != G2PApi::API_LEVEL ||
                 variant != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported pinyin contract or variant");
+                                  "unsupported pinyin contract: " + std::string(interfaceName) +
+                                      "/" + std::to_string(level) + "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

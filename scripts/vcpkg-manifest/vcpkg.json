@@ -2,7 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
     "dependencies": [
         "blake3",
-        "cpp-pinyin",
+        "cpp-pinyin2",
         "luajit",
         "qmsetup",
         "re2",

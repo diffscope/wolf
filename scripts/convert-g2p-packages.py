@@ -127,9 +127,13 @@ PINYIN_REF = "wolf/g2p-pinyin:inference/pinyin"
 # The first three components identify the source resource, and the fourth identifies this packaging
 # of it.
 #
-# Increment it whenever the conversion emits different output for unchanged input. Otherwise two
-# different packages would carry the same version, and a consumer targeting that version would
-# receive whichever package it downloaded.
+# Increment it whenever the conversion emits different output for unchanged input, where "output"
+# covers both the shape of a declaration and what the chain produces for the same lyric. The second
+# half of that rule is what keeps a silent change in readings from shipping under a version that a
+# consumer already depends on: the compatibility promise names the declaration surfaces only, so a
+# changed reading is compatible by the letter of the specification and would otherwise go unnoticed.
+# Otherwise two different packages would carry the same version, and a consumer targeting that
+# version would receive whichever package it downloaded.
 # Revision 2 adds `openSet` to the emitted declarations (C1). An added optional field with a
 # default does not break consumers, so the compatibility floor is unchanged.
 # Revision 3 lowers the compatVersion of the language packages to the revision 0 floor, which the
@@ -142,7 +146,25 @@ PINYIN_REF = "wolf/g2p-pinyin:inference/pinyin"
 # step without a diagnostic. The added rows are derived rather than authored: no reading from the
 # source changes, and a table without kana is emitted unchanged. An added optional reading does not
 # break consumers, so the compatibility floor is unchanged.
-PACKAGING_REVISION = 4
+# Revision 5 moves the shared engine package from `cpp-pinyin` 1.x to `cpp-pinyin2` 2.x. The
+# dictionary tree changed shape (each language gained `dialect.json` and `format.txt`) and the word
+# tables are no longer byte-identical, so the readings of a lyric can differ. The engine version
+# already moves the first three components to 2.0.0; this revision records the change in the
+# pipeline rather than leaving the fourth component to say nothing happened.
+PACKAGING_REVISION = 5
+
+
+# The version that every package carries in the release that resets the numbering. This is a
+# one-off baseline rather than a new rule: after this release the fourth component advances as
+# usual, so a later rebuild of the same source resource becomes 1.0.0.1 and the compatibility floor
+# states a real interval again. Every package carries the same value because the release re-issues
+# all of them at once, which is also why `compatVersion` equals it: the interval is a single point
+# until the next release widens it from the bottom.
+#
+# This supersedes the arrangement in which `wolf/g2p-pinyin` took its version from the engine port.
+# The engine is still recorded, as `cppPinyinRef` in `converted.json`, so a dictionary can still be
+# traced back to the engine that produced it even though the version no longer says so.
+RELEASE_BASELINE = "1.0.0.0"
 
 
 def four_part(version: str, revision: int = None) -> str:
@@ -348,13 +370,19 @@ def add_katakana_aliases(data: bytes) -> tuple[bytes, int]:
 
 
 def pinyin_engine_version(repo_root: Path) -> tuple[str, str]:
-    """Returns the version and the REF of the cpp-pinyin port that this repository builds against.
+    """Returns the version and the REF of the cpp-pinyin engine that this repository builds against.
 
     The backend package carries the dictionary of that build, so its version follows the port
     version instead of being chosen independently: a dictionary and the engine that reads it form a
     single artefact.
+
+    The port is `cpp-pinyin2`, the 2.x line, because that is the engine this repository links. The
+    1.x port lives in the shared overlay and is still referenced by that overlay's own `synthrt`
+    port, so it is deliberately not used here: reading it would label a 2.x dictionary tree with a
+    1.0.2 version, which is the same-identity-different-content defect this function exists to
+    avoid.
     """
-    port = repo_root / "scripts" / "vcpkg" / "ports" / "cpp-pinyin"
+    port = repo_root / "scripts" / "vcpkg-ports" / "cpp-pinyin2"
     version = json.loads((port / "vcpkg.json").read_text())["version"]
     ref = ""
     for line in (port / "portfile.cmake").read_text().splitlines():
@@ -372,8 +400,8 @@ def write_pinyin_package(dict_source: Path, out_root: Path, repo_root: Path) -> 
     The legacy copies were byte-identical to the engine's resource except for one stale line, which
     shows that this tree is engine payload and was never language content.
     """
-    engine_version, engine_ref = pinyin_engine_version(repo_root)
-    version = four_part(engine_version)
+    _, engine_ref = pinyin_engine_version(repo_root)
+    version = RELEASE_BASELINE
     directory = out_root / PINYIN_ID.replace("/", "-")
     if directory.exists():
         shutil.rmtree(directory)
@@ -413,7 +441,7 @@ def write_pinyin_package(dict_source: Path, out_root: Path, repo_root: Path) -> 
         "version": version,
         # A backend is a dependency target, so it declares a compatible interval rather than a
         # single version.
-        "compatVersion": compat_floor(engine_version),
+        "compatVersion": RELEASE_BASELINE,
         "runtimeLevel": 1,
         "vendor": "wolf",
         "copyright": "Copyright (C) wolf",
@@ -596,7 +624,7 @@ def convert_suite(repo: Path, suite: str, out_root: Path, pinyin_floor: str,
                   multi_floor: str) -> dict:
     package_id, display = PACKAGES[suite]
     legacy = json.loads(git_show(repo, f"{SOURCE_SUBDIR}/{suite}/package.json"))
-    version = four_part(legacy["version"])
+    version = RELEASE_BASELINE
 
     directory = out_root / package_id.replace("/", "-")
     if directory.exists():
@@ -717,7 +745,7 @@ def convert_suite(repo: Path, suite: str, out_root: Path, pinyin_floor: str,
         "version": version,
         # Every package declares a compatible interval rather than its current version. See
         # compat_floor.
-        "compatVersion": compat_floor(legacy["version"]),
+        "compatVersion": RELEASE_BASELINE,
         "runtimeLevel": 1,
         "vendor": legacy.get("vendor", "wolf"),
         "copyright": legacy.get("copyright", "Copyright (C) wolf"),
@@ -747,8 +775,8 @@ def main() -> int:
                         help="path to a synthrt checkout that contains SOURCE_REF")
     parser.add_argument("--out", required=True, type=Path, help="output directory (untracked)")
     parser.add_argument("--cpp-pinyin-dict", required=True, type=Path,
-                        help="the installed cpp-pinyin dictionary tree, containing mandarin/ and "
-                             "cantonese/ (vcpkg: share/cpp-pinyin/dict)")
+                        help="the installed cpp-pinyin2 dictionary tree, containing mandarin/ and "
+                             "cantonese/ (vcpkg: share/cpp-pinyin2/dict)")
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent

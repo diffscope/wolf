@@ -15,7 +15,9 @@ namespace wolf {
             if (interfaceName != LinguistApi::API_INTERFACE || level != LinguistApi::API_LEVEL ||
                 variant != LinguistApi::API_VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported linguist interpreter contract");
+                                  "unsupported linguist interpreter contract: " +
+                                      std::string(interfaceName) + "/" + std::to_string(level) +
+                                      "/" + std::string(variant));
             }
             return std::unique_ptr<srt::ContribInterpreter>(new WolfLinguistProvider());
         }

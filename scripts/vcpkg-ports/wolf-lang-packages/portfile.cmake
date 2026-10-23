@@ -74,4 +74,7 @@ foreach(_license IN LISTS _licenses)
     file(READ "${_license}" _text)
     string(APPEND _copyright "\n---- ${_where} ----\n${_text}\n")
 endforeach()
-file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/copyright" ${_copyright})
+# The variable is quoted because an unquoted expansion is split at semicolons, and file(WRITE)
+# concatenates the parts: a licence text containing one would be written with the semicolon removed
+# and the surrounding words joined.
+file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/copyright" "${_copyright}")

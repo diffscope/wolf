@@ -26,7 +26,23 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parent.parent
 DEFAULT_PORT = REPOSITORY / "scripts/vcpkg-ports/wolf-lang-packages"
-DEFAULT_MANIFEST = REPOSITORY / "build/lang-packages/dist/manifest.json"
+
+
+def newest_manifest() -> Path:
+    """Returns the newest release manifest under build/, or the historical location.
+
+    The manifest used to be pinned to one path. A run against a manifest left over from an earlier
+    release then reported failures that had nothing to do with the pins: the archives were fine and
+    the manifest was simply stale. Each release writes its own `build/lang-archives-<bundle>/`
+    directory, so the most recently written one is the release that was generated last.
+    """
+    candidates = list(REPOSITORY.glob("build/lang-archives-*/manifest.json"))
+    if candidates:
+        return max(candidates, key=lambda path: path.stat().st_mtime)
+    return REPOSITORY / "build/lang-packages/dist/manifest.json"
+
+
+DEFAULT_MANIFEST = newest_manifest()
 
 BUNDLE_VERSION = re.compile(r'set\(WOLF_LANG_PACKAGES_BUNDLE_VERSION "([^"]+)"\)')
 SUITES = re.compile(r'set\(WOLF_LANG_PACKAGES_SUITES "([^"]+)"\)')
