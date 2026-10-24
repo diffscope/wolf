@@ -416,7 +416,7 @@ namespace wolf::chain {
                 // Every registered validator receives every contribution in the transaction, so
                 // the interface, level and variant must match before the configuration is cast to
                 // the type of this plugin.
-                if (spec.interface() != G2PApi::API_INTERFACE ||
+                if (spec.interfaceId() != G2PApi::API_INTERFACE ||
                     spec.level() != G2PApi::API_LEVEL || spec.variant() != VARIANT) {
                     return {};
                 }
@@ -440,11 +440,11 @@ namespace wolf::chain {
                                           "the import for role " + step.role + " is not bound");
                     }
                     const auto &target = import->binding()->target();
-                    if (target.interface() != G2PApi::API_INTERFACE ||
+                    if (target.interfaceId() != G2PApi::API_INTERFACE ||
                         target.level() != G2PApi::API_LEVEL) {
                         return srt::Error(srt::Error::InvalidFormat,
                                           "the model step role " + step.role +
-                                              " is bound to " + target.interface() +
+                                              " is bound to " + target.interfaceId() +
                                               ", which is not the G2P contract");
                     }
                 }

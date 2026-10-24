@@ -45,7 +45,7 @@ namespace wolf {
 
             srt::Expected<std::unique_ptr<srt::ContribExecutive>>
                 create(const srt::ContribRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interface() != LinguistApi::API_INTERFACE ||
+                if (runtimeOptions.interfaceId() != LinguistApi::API_INTERFACE ||
                     runtimeOptions.variant() != LinguistApi::API_VARIANT ||
                     runtimeOptions.level() != LinguistApi::API_LEVEL) {
                     return srt::Error(
@@ -78,7 +78,7 @@ namespace wolf {
             }
             const auto &target = item.binding()->target();
             return target.locator().category() == LINGUIST_CATEGORY &&
-                   target.interface() == LinguistApi::API_INTERFACE &&
+                   target.interfaceId() == LinguistApi::API_INTERFACE &&
                    target.variant() == LinguistApi::API_VARIANT &&
                    target.level() == LinguistApi::API_LEVEL;
         }
@@ -105,7 +105,7 @@ namespace wolf {
                                   "singer language " + entry.language +
                                       " names an import that is not a linguist contribution");
             }
-            if (target.interface() != LinguistApi::API_INTERFACE ||
+            if (target.interfaceId() != LinguistApi::API_INTERFACE ||
                 target.variant() != LinguistApi::API_VARIANT ||
                 target.level() != LinguistApi::API_LEVEL) {
                 return srt::Error(srt::Error::InvalidFormat,
@@ -165,7 +165,7 @@ namespace wolf {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "linguist import has no prepared binding");
             }
-            if (item.binding()->target().interface() != expectedInterface) {
+            if (item.binding()->target().interfaceId() != expectedInterface) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "linguist import role targets an incompatible interface");
             }
@@ -359,7 +359,7 @@ namespace wolf {
 
             srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
                 createPipeline(const srt::SingerPipelineRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interface() != LinguistApi::API_INTERFACE ||
+                if (runtimeOptions.interfaceId() != LinguistApi::API_INTERFACE ||
                     runtimeOptions.variant() != LinguistApi::API_VARIANT ||
                     runtimeOptions.level() != LinguistApi::API_LEVEL) {
                     return srt::Error(
@@ -433,7 +433,7 @@ namespace wolf {
         if (auto checked = requireNoImportOptions(manifestOptions, "linguist"); !checked) {
             return checked.takeError();
         }
-        if (target.interface() != LinguistApi::API_INTERFACE ||
+        if (target.interfaceId() != LinguistApi::API_INTERFACE ||
             target.variant() != LinguistApi::API_VARIANT ||
             target.level() != LinguistApi::API_LEVEL) {
             return srt::Error(srt::Error::InvalidArgument,
