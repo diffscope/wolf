@@ -29,4 +29,7 @@ set(WOLF_POST_CONFIGURE_COMMANDS _wolf_common_configure_target)
 # Include Build Helpers
 # ----------------------------------
 qm_import(private/BuildSystem)
-qm_setup_build_repo_helpers()
+
+# The helpers and their variables keep the prefix wolf rather than the project name, because a
+# CMake command name cannot contain the hyphen of synthrt-wolf.
+qm_setup_build_repo_helpers(wolf)

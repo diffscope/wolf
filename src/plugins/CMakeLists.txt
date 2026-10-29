@@ -34,7 +34,7 @@ function(wolf_add_interpreter_plugin _target)
         ${_install_option}
         SOURCES ${_src}
         FEATURES cxx_std_17
-        LINKS wolf
+        LINKS synthrt-wolf
         LINKS_PRIVATE wolfsupport ${FUNC_LINKS_PRIVATE}
         INCLUDE_PRIVATE *
     )

@@ -18,41 +18,41 @@ endmacro()
 
 # The stateless helpers are not exported from libwolf; their tests link the static library that
 # contains them, as the plugins do.
-wolf_add_test(Support/test_ManifestValues.cpp wolf wolfsupport)
-wolf_add_test(Support/test_Utf8.cpp wolf wolfsupport)
-wolf_add_test(Support/test_Verifier.cpp wolf wolfsupport)
-wolf_add_test(Support/test_ExecutiveTask.cpp wolf wolfsupport)
-wolf_add_test(Support/test_ResourceCache.cpp wolf)
+wolf_add_test(Support/test_ManifestValues.cpp synthrt-wolf wolfsupport)
+wolf_add_test(Support/test_Utf8.cpp synthrt-wolf wolfsupport)
+wolf_add_test(Support/test_Verifier.cpp synthrt-wolf wolfsupport)
+wolf_add_test(Support/test_ExecutiveTask.cpp synthrt-wolf wolfsupport)
+wolf_add_test(Support/test_ResourceCache.cpp synthrt-wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache
     # declares as a friend.
     target_include_directories(test_ResourceCache PRIVATE "${WOLF_SOURCE_DIR}/src/lib/Support")
 endif()
 
-wolf_add_test(Linguist/test_LinguistContrib.cpp wolf)
-wolf_add_test(Linguist/test_LinguistIdentity.cpp wolf)
-wolf_add_test(Linguist/test_LinguistLoad.cpp wolf)
-wolf_add_test(Linguist/test_LinguistProvider.cpp wolf)
+wolf_add_test(Linguist/test_LinguistContrib.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistIdentity.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistLoad.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistProvider.cpp synthrt-wolf)
 
-wolf_add_test(Inference/test_OnsetRules.cpp wolf)
-wolf_add_test(Inference/test_S2PVariants.cpp wolf)
-wolf_add_test(Inference/test_PipeChain.cpp wolf)
-wolf_add_test(Inference/test_PinyinBackend.cpp wolf)
+wolf_add_test(Inference/test_OnsetRules.cpp synthrt-wolf)
+wolf_add_test(Inference/test_S2PVariants.cpp synthrt-wolf)
+wolf_add_test(Inference/test_PipeChain.cpp synthrt-wolf)
+wolf_add_test(Inference/test_PinyinBackend.cpp synthrt-wolf)
 # Each of these tests requires the library that its variants embed and is built only if that
 # library is available.
 if(WOLF_HAS_LUAJIT)
-    wolf_add_test(Inference/test_LuaVariants.cpp wolf)
+    wolf_add_test(Inference/test_LuaVariants.cpp synthrt-wolf)
 endif()
 if(WOLF_HAS_DSINFER)
-    wolf_add_test(Inference/test_MultiG2P.cpp wolf dsinfer::dsinfer)
-    wolf_add_test(Inference/test_MultiG2PMaxLen.cpp wolf dsinfer::dsinfer)
+    wolf_add_test(Inference/test_MultiG2P.cpp synthrt-wolf synthrt::dsinfer)
+    wolf_add_test(Inference/test_MultiG2PMaxLen.cpp synthrt-wolf synthrt::dsinfer)
 endif()
 
-wolf_add_test(Runtime/test_LinguistRuntime.cpp wolf)
-wolf_add_test(Runtime/test_LinguistSession.cpp wolf)
+wolf_add_test(Runtime/test_LinguistRuntime.cpp synthrt-wolf)
+wolf_add_test(Runtime/test_LinguistSession.cpp synthrt-wolf)
 
-wolf_add_test(EndToEnd/test_ConvertedPackages.cpp wolf)
-wolf_add_test(EndToEnd/test_HostFlow.cpp wolf)
+wolf_add_test(EndToEnd/test_ConvertedPackages.cpp synthrt-wolf)
+wolf_add_test(EndToEnd/test_HostFlow.cpp synthrt-wolf)
 
 # The tests load the library under test, synthrt, its stdcorelib dependencies and, if present,
 # dsinfer and ONNX Runtime at run time. Windows resolves these libraries through PATH; the ELF and
@@ -66,13 +66,13 @@ wolf_add_test(EndToEnd/test_HostFlow.cpp wolf)
 # executable directory and the directories that the host registered, but not PATH. A deployment
 # places the libraries that a plugin requires beside the executable or registers their directory.
 set(_wolf_test_runtime_dirs
-    "$<TARGET_FILE_DIR:wolf>"
+    "$<TARGET_FILE_DIR:synthrt-wolf>"
     "$<TARGET_FILE_DIR:synthrt::synthrt>"
     "$<TARGET_FILE_DIR:stdcorelib::plugin>"
     "$<TARGET_FILE_DIR:stdcorelib::stdcorelib>"
 )
 if(WOLF_HAS_DSINFER)
-    list(APPEND _wolf_test_runtime_dirs "$<TARGET_FILE_DIR:dsinfer::dsinfer>")
+    list(APPEND _wolf_test_runtime_dirs "$<TARGET_FILE_DIR:synthrt::dsinfer>")
 endif()
 if(WOLF_ONNXRUNTIME_DIR)
     list(APPEND _wolf_test_runtime_dirs "${WOLF_ONNXRUNTIME_DIR}")

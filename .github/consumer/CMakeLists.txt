@@ -12,17 +12,17 @@ project(wolf_package_consumer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(wolf CONFIG REQUIRED)
+find_package(synthrt-wolf CONFIG REQUIRED)
 
-if(NOT TARGET wolf::wolf)
-    message(FATAL_ERROR "the wolf package defines no wolf::wolf target")
+if(NOT TARGET synthrt::wolf)
+    message(FATAL_ERROR "the synthrt-wolf package defines no synthrt::wolf target")
 endif()
 
 # The plugin tree is a path rather than a target. No target links against it, so no other check
 # detects its absence. A host passes one directory per category to SynthUnit::setPluginPaths, which
 # requires the package to export the location of those directories.
 if(NOT DEFINED WOLF_PLUGINS_DIR)
-    message(FATAL_ERROR "the wolf package exports no WOLF_PLUGINS_DIR")
+    message(FATAL_ERROR "the synthrt-wolf package exports no WOLF_PLUGINS_DIR")
 endif()
 # The package must provide one directory for each category in which the library ships plugins. Every
 # library that adds inference contracts also uses the inferenceinterpreters category, so a host
@@ -43,7 +43,7 @@ endif()
 # (WOLF_INTERNAL_EXPORT) serve only the plugins built with wolf and carry no API or ABI guarantee. A
 # Support header in the package would expose exactly that surface to a host, so its absence is
 # checked here.
-get_target_property(_wolf_include_dirs wolf::wolf INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(_wolf_include_dirs synthrt::wolf INTERFACE_INCLUDE_DIRECTORIES)
 foreach(_dir IN LISTS _wolf_include_dirs)
     if(EXISTS "${_dir}/wolf/Support")
         message(FATAL_ERROR "the wolf package installs wolf/Support under ${_dir}")
@@ -51,4 +51,4 @@ foreach(_dir IN LISTS _wolf_include_dirs)
 endforeach()
 
 add_executable(wolf_package_consumer main.cpp)
-target_link_libraries(wolf_package_consumer PRIVATE wolf::wolf)
+target_link_libraries(wolf_package_consumer PRIVATE synthrt::wolf)

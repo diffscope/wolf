@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.19)
 # 0.2.0.0 makes the pronunciation layer a reported property of a composition: the pipeline extension
 # gained the pure virtual function hasSeparatePronunciationLayer, and the public value types
 # LanguageStatus and LanguageEntry each gained one field.
-project(wolf
+project(synthrt-wolf
     VERSION 0.2.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
@@ -55,6 +55,7 @@ endif()
 # ----------------------------------
 set(WOLF_VERSION ${PROJECT_VERSION})
 set(WOLF_INSTALL_NAME ${PROJECT_NAME})
+set(WOLF_INSTALL_NAMESPACE synthrt)
 set(WOLF_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------
@@ -85,10 +86,10 @@ option(WOLF_DISABLE_DSINFER "Build without dsinfer even if it is installed" OFF)
 option(WOLF_DISABLE_LUAJIT "Build without LuaJIT even if it is installed" OFF)
 
 if(NOT WOLF_DISABLE_DSINFER)
-    find_package(dsinfer CONFIG QUIET)
+    find_package(synthrt-dsinfer CONFIG QUIET)
 endif()
 
-if(TARGET dsinfer::dsinfer)
+if(TARGET synthrt::dsinfer)
     set(WOLF_HAS_DSINFER ON)
     # The ONNX driver ships as a plugin under lib/plugins beside the library, not as a link
     # target. The dsinfer package specifies the location of that tree in DSINFER_PLUGINS_DIR. For
@@ -102,7 +103,7 @@ if(TARGET dsinfer::dsinfer)
     if(DEFINED DSINFER_PLUGINS_DIR AND IS_DIRECTORY "${DSINFER_PLUGINS_DIR}")
         set(_wolf_dsinfer_plugins "${DSINFER_PLUGINS_DIR}")
     else()
-        set(_wolf_dsinfer_prefix "${dsinfer_DIR}")
+        set(_wolf_dsinfer_prefix "${synthrt-dsinfer_DIR}")
         foreach(_step RANGE 3)
             get_filename_component(_wolf_dsinfer_prefix "${_wolf_dsinfer_prefix}" DIRECTORY)
             if(IS_DIRECTORY "${_wolf_dsinfer_prefix}/lib/plugins/dsinfer")
@@ -124,7 +125,7 @@ if(TARGET dsinfer::dsinfer)
         message(WARNING "dsinfer was found, but its plugin tree was not; the model-backed tests "
                         "will be skipped because no driver is available")
     endif()
-    message(STATUS "dsinfer: ${dsinfer_DIR}")
+    message(STATUS "dsinfer: ${synthrt-dsinfer_DIR}")
 else()
     set(WOLF_HAS_DSINFER OFF)
     if(WOLF_DISABLE_DSINFER)

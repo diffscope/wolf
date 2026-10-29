@@ -3,4 +3,4 @@ project(wolfmultig2p
     LANGUAGES CXX
 )
 
-wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE dsinfer::dsinfer)
+wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE synthrt::dsinfer)
