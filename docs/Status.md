@@ -88,7 +88,7 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
   `inferenceinterpreters` 或 `linguistproviders`，构建树布局相同；`WOLF_PLUGINS_DIR` 与
   `WOLF_PLUGINS_DIR_DEBUG` 的语义见 [linguist-runtime.md](linguist-runtime.md) §1.1，安装的插件
   清单见 [linguist-distribution.md](linguist-distribution.md) §7.1。
-  CMake 包的版本兼容性为 `ExactVersion`。
+  CMake 包的版本兼容性为 `AnyNewerVersion`。
 - **公开头与 Support**：安装的公开头为 `Api/`、`Linguist/`、`Session/` 与根头
   `wolf/wolf_global.h`。`wolf/Support` 的头文件不安装：无状态帮助函数编入静态库
   `wolfsupport`（隐藏可见性，libwolf 与每个插件私有链接，

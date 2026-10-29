@@ -100,9 +100,10 @@ only on the installed headers and on synthrt.
 **A host must be rebuilt whenever the version of wolf changes.** The version is raised in the same
 commit as every ABI-breaking change, so a changed version number indicates that a rebuild is
 required.
-The installed CMake package is written with `ExactVersion` compatibility, so `find_package(wolf)`
-with a version accepts only that exact version. `wolf::LinguistSession` and `wolf::CancelToken` are
-the two public types held behind a pimpl, and their layouts are therefore stable across versions.
+The installed CMake package is written with `AnyNewerVersion` compatibility, so `find_package(wolf)`
+with a version also accepts a newer version and does not detect that a rebuild is required.
+`wolf::LinguistSession` and `wolf::CancelToken` are the two public types held behind a pimpl, and
+their layouts are therefore stable across versions.
 
 ## Requirements
 

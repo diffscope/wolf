@@ -58,12 +58,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME wolf)
 # blake3 and re2 are private: neither appears in a public header (blake3 only in
 # Support/ResourceCache.cpp, re2 only in Support/Verifier.cpp, which is compiled into the static
 # wolfsupport library), so neither belongs in the exported link interface.
-# synthrt-wolfConfig.cmake.in declares only find_dependency(synthrt), and an exported link interface
-# must not name a target that the config does not import; otherwise find_package(synthrt-wolf)
-# fails at generate time with "but the target was not found" for every consumer that has not found
-# that target itself. The tests link the build-tree target and do not use the installed config, so
-# the check below keeps such a target out of the interface.
-set(_wolf_exported_targets synthrt::synthrt)  # keep in sync with src/synthrt-wolfConfig.cmake.in
+# synthrt-wolf-config.cmake.in declares only find_dependency(synthrt), and an exported link
+# interface must not name a target that the config does not import; otherwise
+# find_package(synthrt-wolf) fails at generate time with "but the target was not found" for every
+# consumer that has not found that target itself. The tests link the build-tree target and do not
+# use the installed config, so the check below keeps such a target out of the interface.
+set(_wolf_exported_targets synthrt::synthrt)  # keep in sync with src/synthrt-wolf-config.cmake.in
 get_target_property(_wolf_interface_links ${PROJECT_NAME} INTERFACE_LINK_LIBRARIES)
 
 foreach(_link IN LISTS _wolf_interface_links)
@@ -74,7 +74,7 @@ foreach(_link IN LISTS _wolf_interface_links)
         continue()
     endif()
     message(FATAL_ERROR
-        "the link interface of wolf contains '${_link}', but src/synthrt-wolfConfig.cmake.in "
+        "the link interface of wolf contains '${_link}', but src/synthrt-wolf-config.cmake.in "
         "does not import that target. Move the dependency to LINKS_PRIVATE if it appears in no "
         "public header, or add a find_dependency() call for it to the config template and add it "
         "to _wolf_exported_targets in src/lib/CMakeLists.txt.")
