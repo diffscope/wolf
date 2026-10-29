@@ -8,7 +8,7 @@
 
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
-#include <synthrt/Support/JSON.h>
+#include <synthrt/Support/Json.h>
 
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>

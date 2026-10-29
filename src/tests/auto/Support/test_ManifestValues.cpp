@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include <synthrt/Support/JSON.h>
+#include <synthrt/Support/Json.h>
 
 #include <wolf/Support/ManifestValues.h>
 
