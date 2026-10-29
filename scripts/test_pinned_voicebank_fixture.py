@@ -47,7 +47,7 @@ def installed_packages():
         if not base.is_dir():
             raise AssertionError(f"{PACKAGES_ENV}={root} is not a directory")
     else:
-        base = next(iter(sorted((REPO_ROOT / "build" / "vcpkg_installed").glob(
+        base = next(iter(sorted((REPO_ROOT / "deps" / "vcpkg" / "installed").glob(
             "*/share/wolf/packages"))), None)
         if base is None:
             return None

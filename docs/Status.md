@@ -73,9 +73,11 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 
 ## 构建与安装
 
-- **依赖来源**：全部依赖经 vcpkg 安装，清单为 `scripts/vcpkg-manifest/vcpkg.json`。端口按序从两个
-  overlay 解析：本仓的 `scripts/vcpkg-ports/`（`synthrt-main`、`wolf-lang-packages`）优先于共享
-  子模块 `scripts/vcpkg/ports`。`synthrt-main` 固定 synthrt 的 `onnxruntime-builds-uptake` 分支。
+- **依赖来源**：全部依赖经 vcpkg 安装，清单为 `scripts/vcpkg-manifest/vcpkg.json`。vcpkg 与 overlay
+  由 `scripts/vcpkg-workspace.cmake` 按 `scripts/vcpkg-sources.json` 检出到 `deps/`，依赖安装在
+  `deps/vcpkg/installed`。端口按序从两个 overlay 解析：本仓的 `scripts/vcpkg-ports/`
+  （`synthrt-main`、`wolf-lang-packages`）优先于共享的 `stdware/vcpkg-overlay`。`synthrt-main` 固定
+  synthrt 的 `onnxruntime-builds-uptake` 分支。
 - **清单特性**：`onnx`（经 `synthrt-main[onnx]` 构建 dsinfer 与 ONNX 驱动）、`lang-packages`
   （经 `wolf-lang-packages` 端口安装已发布的语言包）、`tests`（Boost.Test）。
 - **缓存变量**：`WOLF_LANG_PACKAGES_SOURCE` 指定解包后的语言包目录，非空时取代端口安装树；

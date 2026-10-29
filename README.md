@@ -106,16 +106,12 @@ the two public types held behind a pimpl, and their layouts are therefore stable
 
 ## Requirements
 
-CMake 3.19 or later, and a checkout of the vcpkg overlay submodule:
-
-```sh
-git submodule update --init
-```
+CMake 3.19 or later, and Git, with which vcpkg and its overlays are checked out.
 
 Every dependency, including synthrt, is installed through vcpkg from the manifest in
-`scripts/vcpkg-manifest`. Ports resolve through two overlays in order: `scripts/vcpkg-ports` in
-this repository, which holds the `synthrt-main` and `wolf-lang-packages` ports, and then the shared
-`scripts/vcpkg` submodule.
+`scripts/vcpkg-manifest`. Ports resolve through two overlays in order: `scripts/vcpkg-ports` in this
+repository, which holds the `synthrt-main` and `wolf-lang-packages` ports, and then the shared
+overlay that `scripts/vcpkg-sources.json` specifies.
 
 + [synthrt](https://github.com/diffscope/synthrt), through the in-repo `synthrt-main` port. The
   port pins a commit on the synthrt branch `onnxruntime-builds-uptake`, which is based on the
@@ -151,15 +147,28 @@ package that requires the model backend fails to load in it.
 
 ### VCPKG Packages
 
-```sh
-git clone https://github.com/microsoft/vcpkg.git
-cd vcpkg
-bootstrap-vcpkg.bat          # or ./bootstrap-vcpkg.sh
+The dependencies are installed with
+[vcpkg-workspace.cmake](https://github.com/stdware/dev-scripts/blob/main/docs/about-scripts/vcpkg-workspace.md),
+downloaded into `scripts/`. The script checks out vcpkg and the overlays that
+`scripts/vcpkg-sources.json` specifies into `deps/`, and installs the dependencies there. Run the
+following commands from the repository root.
 
-vcpkg install --x-manifest-root=../scripts/vcpkg-manifest --x-install-root=./installed
+```sh
+curl -fsSL -o scripts/vcpkg-workspace.cmake https://raw.githubusercontent.com/stdware/dev-scripts/main/scripts/vcpkg-workspace.cmake
+cmake -P scripts/vcpkg-workspace.cmake install -- --x-feature=tests
 ```
 
-The manifest defines three optional features:
+On Windows, the script is downloaded in PowerShell or in cmd with
+
+```bat
+powershell -Command "Invoke-WebRequest -OutFile scripts/vcpkg-workspace.cmake https://raw.githubusercontent.com/stdware/dev-scripts/main/scripts/vcpkg-workspace.cmake"
+```
+
+`cmake -P scripts/vcpkg-workspace.cmake help` lists the other commands. `--dry-run` prints the
+commands without running them. `scripts/vcpkg-sources.local.json` takes precedence over
+`scripts/vcpkg-sources.json`, for example to use a local overlay.
+
+The manifest defines three optional features, each passed after `--` as `--x-feature=<name>`:
 
 | Feature | Effect |
 | :-- | :-- |
@@ -167,17 +176,18 @@ The manifest defines three optional features:
 | `lang-packages` | Installs the default suites of the published language packages (`cmn`, `jpn`, `yue`, `zxx` and the backends they require) through the `wolf-lang-packages` port, for use by the tests. |
 | `tests` | Adds Boost.Test. |
 
-> The pin of the overlay submodule must match the pin that synthrt uses. Two revisions of
-> `stdcorelib-plugin` share the version string `0.1.0.0#1` but fetch different upstream refs, and
-> they name the CMake helper differently (`stdc_add_plugin_metadata` and
-> `stdc_add_plugin_manifest`). A mismatched pin therefore fails at configure time.
+> The overlay must be the same revision that synthrt uses, which both repositories obtain by
+> tracking the branch `main` of the shared overlay. Two revisions of `stdcorelib-plugin` share the
+> version string `0.1.0.0#1` but fetch different upstream refs, and they name the CMake helper
+> differently (`stdc_add_plugin_metadata` and `stdc_add_plugin_manifest`). A revision other than the
+> one synthrt used therefore fails at configure time.
 
 ### Build
 
 ```sh
 cmake -B build -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake \
-    -DVCPKG_INSTALLED_DIR=<install root passed above> \
+    -DCMAKE_TOOLCHAIN_FILE=deps/vcpkg/scripts/buildsystems/vcpkg.cmake \
+    -DVCPKG_INSTALLED_DIR=deps/vcpkg/installed \
     -DVCPKG_MANIFEST_MODE=OFF \
     -DCMAKE_INSTALL_PREFIX=<dir> \
     -DCMAKE_BUILD_TYPE=Release

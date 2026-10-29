@@ -339,7 +339,7 @@ BSD-2-Clause 声明在改编时被删除。
 python3 scripts/convert-g2p-packages.py \
     --synthrt ../synthrt \
     --out build/lang-packages \
-    --cpp-pinyin-dict build/vcpkg_installed/<triplet>/share/cpp-pinyin2/dict
+    --cpp-pinyin-dict deps/vcpkg/installed/<triplet>/share/cpp-pinyin2/dict
 ```
 
 两个来源的 REF 都写入 `converted.json`（`sourceRef`、`cppPinyinRef`）。
@@ -578,14 +578,18 @@ python -c "import json,pathlib as P;[print(p) for p in P.Path('build').rglob('in
 
 ## 6. vcpkg 端口拓扑
 
-wolf 沿用 lite 的既有接线方式：两个仓库经 `.gitmodules` 共用 **`stdware/vcpkg-overlay`** 子模块
-（wolf 中位于 `scripts/vcpkg`），`vcpkg-configuration.overlay-ports` 指向 `../vcpkg/ports`。
+wolf 与 synthrt 共用 **`stdware/vcpkg-overlay`**。该 overlay 不再是子模块：
+`scripts/vcpkg-workspace.cmake` 按 `scripts/vcpkg-sources.json` 把 vcpkg 与各 overlay 检出到
+`deps/`，并把依赖安装到 `deps/vcpkg/installed`。
 
-wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-ports/`。清单
-`scripts/vcpkg-manifest/vcpkg.json` 中的 `overlay-ports` 为有序的两项，本仓 overlay 优先：
+wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-ports/`。它在 sources 中声明为本地路
+径 overlay，排在共享 overlay 之前，因此优先解析：
 
 ```json
-"overlay-ports": [ "../vcpkg-ports", "../vcpkg/ports" ]
+"overlays": [
+    { "name": "wolf-ports", "path": "vcpkg-ports", "ports": "." },
+    { "repository": "../../stdware/vcpkg-overlay.git", "ref": "main" }
+]
 ```
 
 清单定义三个 feature：`onnx`（启用 `synthrt-main[onnx]`）、`lang-packages`（依赖
@@ -602,10 +606,10 @@ wolf；`wolf-lang-packages` 的 `assets.cmake` 每次 release 重新生成，端
 
 **lite 所需的端口由 lite 仓库自己的 vcpkg 配置提供**，本方案不产出供 lite 使用的 `wolf` 端口。
 
-> **子模块须先检出**：wolf 固定了 `stdware/vcpkg-overlay` 的一个修订，接线前须执行
-> `git submodule update --init`。该修订**必须与所依赖的 synthrt 一致**：两个修订的
-> `stdcorelib-plugin` 版本号同为 `0.1.0.0#1`，却拉取不同的上游 REF，其公开函数从
-> `stdc_add_plugin_metadata` 改名为 `stdc_add_plugin_manifest`；修订不一致会导致 wolf 配置失败。
+> **overlay 修订须与 synthrt 一致**：两个修订的 `stdcorelib-plugin` 版本号同为 `0.1.0.0#1`，却拉取不
+> 同的上游 REF，其公开函数从 `stdc_add_plugin_metadata` 改名为 `stdc_add_plugin_manifest`，修订不一
+> 致会导致 wolf 配置失败。wolf 与 synthrt 的 sources 都把共享 overlay 的 `ref` 写作分支 `main`，两边
+> 因此总是取到同一个修订，不再需要人工对齐子模块指针。
 
 ### 6.1 `synthrt-main` 端口
 
@@ -637,9 +641,9 @@ wolf；`wolf-lang-packages` 的 `assets.cmake` 每次 release 重新生成，端
 
 #### 6.1.1 feature `onnx`：ORT 载荷由端口提供
 
-`onnxruntime-builds` 端口**已在共享 overlay 中**（wolf 的 `scripts/vcpkg` 子模块，与 lite 为同一
-仓库），无需另建。其缺省 flavor 符合需要：Windows 使用 DirectML NuGet 包，其他平台使用 GitHub 的
-CPU 包；`cuda12` 是可选 feature，**不启用**。
+`onnxruntime-builds` 端口**已在共享 overlay 中**（`stdware/vcpkg-overlay`，与 lite 为同一仓库），无
+需另建。其缺省 flavor 符合需要：Windows 使用 DirectML NuGet 包，其他平台使用 GitHub 的 CPU 包；
+`cuda12` 是可选 feature，**不启用**。
 
 两条 synthrt 线的 ORT 接线曾经不同，现已一致：
 
