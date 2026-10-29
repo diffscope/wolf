@@ -241,7 +241,7 @@ namespace {
                     note.candidates = word.candidates;
                     note.phonemes = word.phonemes;
                     note.onsets = word.onsets;
-                    note.converted = word.error == wolf::Api::G2P::L1::Error::None;
+                    note.converted = word.error == wolf::Api::G2p::L1::Error::None;
                 }
             }
         }
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_FollowsAnEditedPronunciation) {
 /// the voicebank; otherwise an ordinary word converts to a reading and then to no phonemes. The
 /// sample covers the retroflex initials, the compound finals and the ü finals, which are the
 /// syllables most prone to split-rule errors.
-BOOST_AUTO_TEST_CASE(test_HostFlow_CoversTheSyllablesTheG2PProduces) {
+BOOST_AUTO_TEST_CASE(test_HostFlow_CoversTheSyllablesTheG2pProduces) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -491,7 +491,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_TheSameLineThroughTheSession) {
     BOOST_CHECK_EQUAL((*pronunciations)->words[0].pronunciation, "wo");
     BOOST_CHECK_EQUAL((*pronunciations)->words[1].pronunciation, "chang");
     BOOST_CHECK_EQUAL((*pronunciations)->words[2].pronunciation, "SP");
-    BOOST_CHECK((*pronunciations)->words[2].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK((*pronunciations)->words[2].mode == wolf::Api::G2p::L1::Mode::Copy);
 
     // The conversion warmed the language, so stage B loads nothing.
     BOOST_CHECK(session.probe(singer, "cmn").readiness == wolf::Readiness::Ready);

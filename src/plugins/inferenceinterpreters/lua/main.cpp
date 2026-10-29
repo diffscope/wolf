@@ -11,7 +11,7 @@
 #include <stdcorelib/path.h>
 
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Support/ContractValues.h>
 #include <wolf/Support/ExecutiveBase.h>
 #include <wolf/Support/ManifestValues.h>
@@ -19,7 +19,7 @@
 #include "LuaSandbox.h"
 
 namespace fs = std::filesystem;
-namespace S2PApi = wolf::Api::S2P::L1;
+namespace S2pApi = wolf::Api::S2p::L1;
 namespace OnsetApi = wolf::Api::Onset::L1;
 
 namespace wolf::lua {
@@ -50,10 +50,10 @@ namespace wolf::lua {
         /// The configuration holds the text rather than a running interpreter, because an
         /// interpreter state cannot be shared. Each executive compiles its own interpreter from
         /// this text.
-        class S2PConfiguration : public srt::ContribConfiguration {
+        class S2pConfiguration : public srt::ContribConfiguration {
         public:
-            S2PConfiguration()
-                : ContribConfiguration(S2PApi::API_INTERFACE, VARIANT, S2PApi::API_LEVEL) {
+            S2pConfiguration()
+                : ContribConfiguration(S2pApi::API_INTERFACE, VARIANT, S2pApi::API_LEVEL) {
             }
 
             std::string source;
@@ -131,27 +131,27 @@ namespace wolf::lua {
             return result;
         }
 
-        class S2PExecutive
-            : public ExecutiveBase<S2PApi::S2PExecutive, S2PApi::S2PStartInput, S2PApi::S2PResult> {
+        class S2pExecutive
+            : public ExecutiveBase<S2pApi::S2pExecutive, S2pApi::S2pStartInput, S2pApi::S2pResult> {
         public:
-            S2PExecutive(srt::InferenceSpec &spec, std::unique_ptr<Sandbox> sandbox)
+            S2pExecutive(srt::InferenceSpec &spec, std::unique_ptr<Sandbox> sandbox)
                 : ExecutiveBase(spec), m_sandbox(std::move(sandbox)) {
             }
 
-            ~S2PExecutive() {
+            ~S2pExecutive() {
                 finish();
             }
 
-            srt::Expected<void> initialize(const S2PApi::S2PInitArgs &) override {
+            srt::Expected<void> initialize(const S2pApi::S2pInitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const S2PApi::S2PStartInput &input) override {
+            Batch runBatch(const S2pApi::S2pStartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<S2PApi::S2PResult>();
+                auto result = std::make_unique<S2pApi::S2pResult>();
                 result->phonemes.reserve(input.pronunciations.size());
                 for (const auto &pronunciation : input.pronunciations) {
                     if (stopRequested()) {
@@ -240,9 +240,9 @@ namespace wolf::lua {
             std::unique_ptr<Sandbox> m_sandbox;
         };
 
-        class S2PInterpreter : public srt::InferenceInterpreter {
+        class S2pInterpreter : public srt::InferenceInterpreter {
         public:
-            using Configuration = S2PConfiguration;
+            using Configuration = S2pConfiguration;
 
             srt::Expected<std::unique_ptr<srt::ContribExports>>
                 createExports(const srt::ContribSpec &spec) const override {
@@ -250,7 +250,7 @@ namespace wolf::lua {
                 if (!read) {
                     return read.takeError();
                 }
-                auto result = std::make_unique<S2PApi::S2PExports>(VARIANT);
+                auto result = std::make_unique<S2pApi::S2pExports>(VARIANT);
                 result->languages = std::move(read->languages);
                 result->phonemes = std::move(read->strings);
                 result->openSet = read->openSet;
@@ -274,7 +274,7 @@ namespace wolf::lua {
                     return checked.takeError();
                 }
                 return std::unique_ptr<srt::ContribImportOptions>(
-                    new S2PApi::S2PImportOptions(VARIANT));
+                    new S2pApi::S2pImportOptions(VARIANT));
             }
 
             srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -291,7 +291,7 @@ namespace wolf::lua {
                     return sandbox.takeError();
                 }
                 return std::unique_ptr<srt::InferenceExecutive>(
-                    new S2PExecutive(spec, sandbox.take()));
+                    new S2pExecutive(spec, sandbox.take()));
             }
         };
 
@@ -358,8 +358,8 @@ namespace wolf::lua {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported variant: " + std::string(variant));
             }
-            if (interfaceName == S2PApi::API_INTERFACE && level == S2PApi::API_LEVEL) {
-                return std::unique_ptr<srt::ContribInterpreter>(new S2PInterpreter());
+            if (interfaceName == S2pApi::API_INTERFACE && level == S2pApi::API_LEVEL) {
+                return std::unique_ptr<srt::ContribInterpreter>(new S2pInterpreter());
             }
             if (interfaceName == OnsetApi::API_INTERFACE && level == OnsetApi::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(new OnsetInterpreter());

@@ -152,8 +152,8 @@ public:
 ```
 SingerSpec ──extension──▶ WolfPipelineExecutive
                               └─ createChild(languages[tag]) ─▶ LinguistExecutive
-                                     ├─ createChild("linguist/g2p")   ─▶ G2PExecutive    ┐
-                                     ├─ createChild("linguist/s2p")   ─▶ S2PExecutive    ├ srt::InferenceExecutive
+                                     ├─ createChild("linguist/g2p")   ─▶ G2pExecutive    ┐
+                                     ├─ createChild("linguist/s2p")   ─▶ S2pExecutive    ├ srt::InferenceExecutive
                                      └─ createChild("linguist/onset") ─▶ OnsetExecutive  ┘
 ```
 
@@ -174,7 +174,7 @@ spec 的 `variant()`，不得硬编码，见链推理契约 §6.3。
 
 ```cpp
 const auto &target = spec().findImport("linguist/g2p")->binding()->target();
-Api::G2P::L1::G2PRuntimeOptions options(target.variant());
+Api::G2p::L1::G2pRuntimeOptions options(target.variant());
 options.binding = { spec().language(), spec().scheme() };
 auto child = createChild("linguist/g2p", options);
 ```

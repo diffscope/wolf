@@ -170,7 +170,7 @@ bundle 与词表、`readStringSet` 的路径形式全部经 `openForReading`；`
 语料证据。**本条不适用于规则文件**：onset 的空 `rules` 是合法语义（「无任何匹配时输出全
 `false`」，§3.3），实现有意不对其判空（只对 `phonemeTypes` 判空）。
 
-**[规范性] R10 同一世代内字段数双向严格**：缺列与多列均拒绝。样板为 `S2PTables.cpp` 的
+**[规范性] R10 同一世代内字段数双向严格**：缺列与多列均拒绝。样板为 `S2pTables.cpp` 的
 `twoColumns`。[现状：已对齐：chain 与 s2p 均拒绝多列与缺列，且四条消息一致（`missing tab
 separator` / `multiple tab separators` / `empty first column` / `empty second column`）；chain
 把首个制表符之后的全部内容归入发音，经 `splitPronunciation` 后会产出含制表符的音素名]
@@ -179,7 +179,7 @@ separator` / `multiple tab separators` / `empty first column` / `empty second co
 注释行；**不得**对键列做隐式 trim（空白属于数据，需要拒绝时显式拒绝）。
 
 **[规范性] R12 读取完整性**：读取循环结束后检查 `file.bad()`（以 `rdbuf()` 整体读取的写法同样须在
-读取后检查）。样板为 `S2PTables.cpp` 中两个表读取函数末尾的检查。[现状：chain、s2p、onset **均已
+读取后检查）。样板为 `S2pTables.cpp` 中两个表读取函数末尾的检查。[现状：chain、s2p、onset **均已
 检查**]
 
 **[规范性] R13 JSON 读取收敛到单一实现**：帮助函数放在库侧并带上下文参数，以保留各处既有的诊断
@@ -214,7 +214,7 @@ separator` / `multiple tab separators` / `empty first column` / `empty second co
 
 ## 6. 线程、取消与生命周期
 
-**[规范性] R19 取消时返回与输入等长的结果并逐词标注**（契约 `G2PApiL1.h` 规定失败词保留位置）。
+**[规范性] R19 取消时返回与输入等长的结果并逐词标注**（契约 `G2pApiL1.h` 规定失败词保留位置）。
 [现状：pinyin 的 `runBatch` 在 `stopRequested()` 为真时返回空的 words；multig2p 先对结果执行
 `resize`；两者不一致]
 
@@ -260,7 +260,7 @@ Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](linguist
    `chain/main.cpp` 的 `create()`；偏差样本为 `lua/main.cpp` 的 `create()`，其先单独判定变体）。
 2. 同一插件的多个变体：**共用参数化的 Configuration**（正例为 `stub/StubExecutives.cpp` 的
    `StubConfiguration`、`singerproviders/stub/main.cpp` 的 `Configuration`；反例为 `lua/main.cpp`
-   的 `S2PConfiguration` 与 `OnsetConfiguration` 两份同形类）。
+   的 `S2pConfiguration` 与 `OnsetConfiguration` 两份同形类）。
 3. 修改 **TSV 表语法**：提升 kind 世代常量（R5）。
 4. 修改**家族配置文件格式**：按 R3 判定是否必填，并同步 schema 段与实现。
 5. 增加 **role 或层级**：role 名与 Depth 阶梯集中为单一常量定义，并更新 validator 与相关检查。
@@ -292,5 +292,5 @@ Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](linguist
 | :-- | :-- | :-- |
 | P1 | ~~`lua` 与 wolf linguist 的 `configuration` 既无 `formatVersion`，规范中也无豁免条款~~ | **已定案（2026-09-21，用户裁定）：写明豁免**，见 §3 的 R2 表与豁免说明；不设必填，理由是新增必填键会导致既有分发产物加载失败 |
 | P2 | ~~`level` 的固定判定是否改为集合判定、manifest 是否改为生成~~ | **已定案（2026-09-21，用户裁定）：分批采纳**。manifest 生成先实施（先例见 R24 的 `stub`），`level` 集合判定在实际引入 L2/L3 时实施 |
-| P3 | ~~R7 错误码与 R9/R10 的严格化会改变对外可观察的行为~~ | **已实施（2026-09-21）**：三处 `fileError` 的两个分支、chain/s2p 的缺列、多列与空列检查、chain 空表的 `holds no entries` 均已实现（`ChainTables.cpp`、`S2PTables.cpp`、`OnsetRules.cpp`）；§4 中 R7/R9/R10 的 `[现状]` 段与代码一致 |
+| P3 | ~~R7 错误码与 R9/R10 的严格化会改变对外可观察的行为~~ | **已实施（2026-09-21）**：三处 `fileError` 的两个分支、chain/s2p 的缺列、多列与空列检查、chain 空表的 `holds no entries` 均已实现（`ChainTables.cpp`、`S2pTables.cpp`、`OnsetRules.cpp`）；§4 中 R7/R9/R10 的 `[现状]` 段与代码一致 |
 | P4 | R13 的收敛落点与帮助函数签名 | 待定 |

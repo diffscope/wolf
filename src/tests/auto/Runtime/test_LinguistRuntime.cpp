@@ -142,8 +142,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistRuntime_ConvertsThroughTheChain) {
     BOOST_REQUIRE_EQUAL((*result)->words.size(), 3u);
 
     const auto &digits = (*result)->words[0];
-    BOOST_CHECK(digits.mode == wolf::Api::G2P::L1::Mode::Copy);
-    BOOST_CHECK(digits.error == wolf::Api::G2P::L1::Error::None);
+    BOOST_CHECK(digits.mode == wolf::Api::G2p::L1::Mode::Copy);
+    BOOST_CHECK(digits.error == wolf::Api::G2p::L1::Error::None);
     BOOST_CHECK_EQUAL(digits.pronunciation, "123");
     BOOST_REQUIRE_EQUAL(digits.phonemes.size(), 1u);
     BOOST_CHECK_EQUAL(digits.phonemes[0], "123");

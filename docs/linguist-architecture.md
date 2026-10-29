@@ -51,7 +51,7 @@ synthrt 锚点一律带树内前缀（`synthrt/` 或 `dsinfer/`），两棵树�
 
 | # | 约束 | 后果 |
 | :-- | :-- | :-- |
-| C1 | `RuntimeOptions` 三元组必须等于**目标 spec** 三元组 | `G2PRuntimeOptions` 必须由构造参数接收目标变体；不得沿用 dsinfer 单变体契约的硬编码写法（`synthrt/lib/SVS/InferenceContrib.cpp:25-30`） |
+| C1 | `RuntimeOptions` 三元组必须等于**目标 spec** 三元组 | `G2pRuntimeOptions` 必须由构造参数接收目标变体；不得沿用 dsinfer 单变体契约的硬编码写法（`synthrt/lib/SVS/InferenceContrib.cpp:25-30`） |
 | C2 | `srt::InferenceExecutive` 是单任务面（`state()/stop()/waitForFinished()`，`quit()/wait()` private-final） | 并发通过创建多个执行体实现，而非在一个执行体上运行多个任务；**资源缓存因此是架构必需件而非优化**（`InferenceExecutive.h:39-50`；缓存的键、归属与生命周期见 [linguist-resource-cache.md](linguist-resource-cache.md)） |
 | C3 | validator 仅来自**已加载**解释器 | 必须始终成立的规则不能只放在 Ready-2；依赖闭包内无 linguist 贡献时，wolf 的校验不会执行（`ContribPluginFactory.cpp:128-131`） |
 

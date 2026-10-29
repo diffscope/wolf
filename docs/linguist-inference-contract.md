@@ -127,7 +127,7 @@ Onset 不涉及注音体系，不声明本键。
 
 **无。** Level 1 不定义 import `options` 词汇。
 
-语言选定不经 import options，而由组合 provider 在创建执行体时经 `G2PRuntimeOptions` 注入
+语言选定不经 import options，而由组合 provider 在创建执行体时经 `G2pRuntimeOptions` 注入
 `(language, scheme)`。语言声明已经给出其二元组，清单因此无需重复。
 
 ### 3.3 Configuration
@@ -146,7 +146,7 @@ Onset 不涉及注音体系，不声明本键。
 调用形状、本节词汇表与定界约定不变，即不构成 Level 递增的事由。一旦该能力需要导入方或宿主
 可见（如声明「按句输入词可提高效果」），或改变输入单元的语义，即按 spec 2.4:744-753 处理。
 
-**执行体绑定单一二元组**：一个 G2P 执行体由创建时的 `G2PRuntimeOptions` 绑定到一个
+**执行体绑定单一二元组**：一个 G2P 执行体由创建时的 `G2pRuntimeOptions` 绑定到一个
 `(language, scheme)`，在其生命周期内不变。因此 Level 1 的运行时 IO **不携带语言参数**，也
 不存在运行时语言与绑定值不一致的判定分支。宿主需要多个语言时应创建多个执行体。
 
@@ -346,13 +346,13 @@ namespace wolf::Api::Common::L1 {
 
 | 类 | 基类 | 承载 |
 | :-- | :-- | :-- |
-| `G2PExports` | `srt::ContribExports` | §3.1 |
-| `G2PImportOptions` | `srt::ContribImportOptions` | 空（§3.2） |
-| `G2PRuntimeOptions` | `srt::InferenceRuntimeOptions` | 绑定 `(language, scheme)` |
-| `G2PInitArgs` | `srt::InferenceInitArgs` | 与变体无关的初始化参数 |
-| `G2PStartInput` | `srt::TaskStartInput` | 一批 `lyric` |
-| `G2PResult` | `srt::TaskResult` | 一批逐词输出（§3.4.3） |
-| `G2PExecutive` | `srt::InferenceExecutive` | `initialize` / `start` / `startAsync` |
+| `G2pExports` | `srt::ContribExports` | §3.1 |
+| `G2pImportOptions` | `srt::ContribImportOptions` | 空（§3.2） |
+| `G2pRuntimeOptions` | `srt::InferenceRuntimeOptions` | 绑定 `(language, scheme)` |
+| `G2pInitArgs` | `srt::InferenceInitArgs` | 与变体无关的初始化参数 |
+| `G2pStartInput` | `srt::TaskStartInput` | 一批 `lyric` |
+| `G2pResult` | `srt::TaskResult` | 一批逐词输出（§3.4.3） |
+| `G2pExecutive` | `srt::InferenceExecutive` | `initialize` / `start` / `startAsync` |
 
 `Exports`、`ImportOptions` 与 `RuntimeOptions` 三类的构造函数均以变体名为参数，原因见 §6.3。
 S2P 与 G2P 的 `RuntimeOptions` 携带 `binding`；Onset 不涉及注音体系，其 `RuntimeOptions`
@@ -373,10 +373,10 @@ G2P / S2P / Onset 都是**多变体契约**，因此其 `RuntimeOptions` 类**�
 契约那样硬编码 `API_VARIANT`：
 
 ```cpp
-class G2PRuntimeOptions : public srt::InferenceRuntimeOptions {
+class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
 public:
     // 变体由调用方按目标 spec 的 variant() 传入，不得硬编码。
-    explicit G2PRuntimeOptions(std::string variant)
+    explicit G2pRuntimeOptions(std::string variant)
         : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {}
 
     Common::L1::LanguageScheme binding;   // 该执行体绑定的二元组

@@ -13,7 +13,7 @@
 
 #include <wolf/Api/Inferences/Common/1/CommonApiL1.h>
 
-namespace wolf::Api::S2P::L1 {
+namespace wolf::Api::S2p::L1 {
 
     /// Identifies the phonological symbol to phoneme inference contract.
     inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.inference.S2P";
@@ -24,7 +24,7 @@ namespace wolf::Api::S2P::L1 {
     /// The variant whose output holds the symbols of its input.
     ///
     /// A pronunciation is already a space delimited sequence of pronunciation units (see
-    /// S2PStartInput), and this variant copies every unit, so the layer it produces is the
+    /// S2pStartInput), and this variant copies every unit, so the layer it produces is the
     /// pronunciation layer rather than a layer of its own. The identity is a property of the
     /// symbols and not of the text: a run of spaces collapses into one unit and the spaces around
     /// the units are dropped, so the two layers hold the same units rather than the same string.
@@ -61,9 +61,9 @@ namespace wolf::Api::S2P::L1 {
     }
 
     /// Input and output declaration of one S2P module.
-    class S2PExports : public srt::ContribExports {
+    class S2pExports : public srt::ContribExports {
     public:
-        explicit S2PExports(std::string variant)
+        explicit S2pExports(std::string variant)
             : ContribExports(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
 
@@ -81,26 +81,26 @@ namespace wolf::Api::S2P::L1 {
         bool openSet = false;
     };
 
-    class S2PImportOptions : public srt::ContribImportOptions {
+    class S2pImportOptions : public srt::ContribImportOptions {
     public:
-        explicit S2PImportOptions(std::string variant)
+        explicit S2pImportOptions(std::string variant)
             : ContribImportOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
     };
 
-    class S2PRuntimeOptions : public srt::InferenceRuntimeOptions {
+    class S2pRuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
-        explicit S2PRuntimeOptions(std::string variant)
+        explicit S2pRuntimeOptions(std::string variant)
             : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
 
-        /// See G2P::L1::G2PRuntimeOptions::binding: the pair bound for the whole lifetime.
+        /// See G2p::L1::G2pRuntimeOptions::binding: the pair bound for the whole lifetime.
         Common::L1::LanguageScheme binding;
     };
 
-    class S2PInitArgs : public srt::InferenceInitArgs {
+    class S2pInitArgs : public srt::InferenceInitArgs {
     public:
-        S2PInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
+        S2pInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
         }
     };
 
@@ -109,9 +109,9 @@ namespace wolf::Api::S2P::L1 {
     /// A space is the reserved delimiter of the pronunciation layer. A string that contains a
     /// space is a space delimited sequence and is converted segment by segment. A string without
     /// a space is a single pronunciation unit.
-    class S2PStartInput : public srt::TaskStartInput {
+    class S2pStartInput : public srt::TaskStartInput {
     public:
-        S2PStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        S2pStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
         }
 
         std::vector<std::string> pronunciations;
@@ -122,23 +122,23 @@ namespace wolf::Api::S2P::L1 {
     /// Level 1 has no per unit error channel. An input without any match yields an empty
     /// sequence, which is not a failure. A batch that cannot proceed fails through the Expected
     /// returned by start().
-    class S2PResult : public srt::TaskResult {
+    class S2pResult : public srt::TaskResult {
     public:
-        S2PResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        S2pResult() : TaskResult(API_INTERFACE, API_LEVEL) {
         }
 
         std::vector<std::vector<std::string>> phonemes;
     };
 
-    class S2PExecutive : public srt::InferenceExecutive {
+    class S2pExecutive : public srt::InferenceExecutive {
     public:
-        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<S2PResult>> result)>;
+        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<S2pResult>> result)>;
 
-        virtual srt::Expected<void> initialize(const S2PInitArgs &args) = 0;
+        virtual srt::Expected<void> initialize(const S2pInitArgs &args) = 0;
 
-        virtual srt::Expected<std::unique_ptr<S2PResult>> start(const S2PStartInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<S2pResult>> start(const S2pStartInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const S2PStartInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const S2pStartInput> input,
                                                AsyncCallback callback) = 0;
 
     protected:

@@ -200,7 +200,7 @@ cmake --build build --target install
 
 `-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build`
 runs them. A build without LuaJIT omits `test_LuaVariants`, and a build without dsinfer omits
-`test_MultiG2P` and `test_MultiG2PMaxLen` (the registration conditions are the single source of
+`test_MultiG2p` and `test_MultiG2pMaxLen` (the registration conditions are the single source of
 truth for the list: `src/tests/auto/CMakeLists.txt`; the number of binaries and cases is measured in
 one place, the verification table of [docs/Status.md](docs/Status.md)).
 

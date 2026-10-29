@@ -15,7 +15,7 @@
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 
 #define BOOST_TEST_MAIN
@@ -24,7 +24,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 namespace OnnxApi = ds::Api::Onnx;
 
 /// Exercises the decode limit of the shared backend, which no other test covers: every other case
@@ -210,25 +210,25 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2PApi::G2PImportOptions importOptions(spec->variant());
-        G2PApi::G2PRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
         runtimeOptions.binding = {LANGUAGE, SCHEME};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
             BOOST_FAIL("the executive should have been created: " + executive.error().toString());
         }
 
-        G2PApi::G2PStartInput input;
+        G2pApi::G2pStartInput input;
         input.lyrics = {lyric};
-        auto result = static_cast<G2PApi::G2PExecutive *>(executive->get())->start(input);
+        auto result = static_cast<G2pApi::G2pExecutive *>(executive->get())->start(input);
         if (!result) {
             BOOST_FAIL("the conversion should have run: " + result.error().toString());
         }
         BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
         const auto &word = (*result)->words.front();
-        BOOST_CHECK_MESSAGE(word.error == G2PApi::Error::None,
+        BOOST_CHECK_MESSAGE(word.error == G2pApi::Error::None,
                             "the backend should have produced a reading");
-        BOOST_CHECK(word.mode == G2PApi::Mode::Convert);
+        BOOST_CHECK(word.mode == G2pApi::Mode::Convert);
         return word.pronunciation;
     }
 
@@ -244,10 +244,10 @@ namespace {
 
 BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
-BOOST_AUTO_TEST_SUITE(test_MultiG2PMaxLen)
+BOOST_AUTO_TEST_SUITE(test_MultiG2pMaxLen)
 
 /// A declaration may lower the number of decode steps, and the reading of a word must follow it.
-BOOST_AUTO_TEST_CASE(test_MultiG2PMaxLen_CapsTheDecodedSymbolCount) {
+BOOST_AUTO_TEST_CASE(test_MultiG2pMaxLen_CapsTheDecodedSymbolCount) {
     const auto capped = copiedBackend("capped");
     setMaxLen(capped, std::to_string(LIMIT));
 
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2PMaxLen_CapsTheDecodedSymbolCount) {
 /// The limit is checked where the declaration is interpreted, so a value that is not a positive
 /// integer that fits an int makes the load fail instead of being narrowed to a limit that no
 /// declaration asked for.
-BOOST_AUTO_TEST_CASE(test_MultiG2PMaxLen_RejectsAValueOutsideAPositiveInt) {
+BOOST_AUTO_TEST_CASE(test_MultiG2pMaxLen_RejectsAValueOutsideAPositiveInt) {
     const auto patched = copiedBackend("rejected");
     constexpr char EXPECTED[] = "maxLen must be a positive integer that fits an int";
 

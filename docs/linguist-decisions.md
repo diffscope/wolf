@@ -1353,7 +1353,7 @@ locator，该 locator 属于语言包，无法从歌手包 `resolve()`。为 `Wo
 
 **已用 ThreadSanitizer 验证，而非推演**：8 个线程对同一歌手同一语言各转换 60 轮、转换过程中
 执行 200 次 `refresh()`、转换过程中执行 2000 次 `probe()`，TSan 下无报告。全套测试中只有
-`test_MultiG2P` 报告 race，其调用栈位于 `libonnxruntime.so` 内部（主线程分配、ORT 工作线程释放），
+`test_MultiG2p` 报告 race，其调用栈位于 `libonnxruntime.so` 内部（主线程分配、ORT 工作线程释放），
 wolf 的帧只是调用方，属于未插桩库的已知误报。
 
 ---
@@ -1771,7 +1771,7 @@ port），独立构建时是测试自身。库与插件都不负责部署。
 
 **验证**：synthrt 三种配置（缺端口 + 默认、缺端口 + dsinfer + tests、有端口 + dsinfer + tests）
 分别为配置构建通过 / 15 例通过 / 16 例通过，且驱动测试打印 `Initialized ONNX Runtime 1.24.4`；wolf
-两种构建 17 / 15 全部通过。新增 `test_MultiG2P_RunsOnARuntimeTheHostDeployed`：把 ORT 部署到宿主
+两种构建 17 / 15 全部通过。新增 `test_MultiG2p_RunsOnARuntimeTheHostDeployed`：把 ORT 部署到宿主
 自选目录（`/tmp` 下，既非端口目录也非插件所在目录）后运行全链，并断言驱动**确实**从该目录加载；
 把期望值换成端口目录时该用例立即失败，因此该断言有效。
 
@@ -1798,7 +1798,7 @@ A70 讲的是包的区间）；但**库 ABI 版本必须同批抬升**——公�
 
 **判据只读 variant 的理由**：该查询必须与 `maxDepth` 同源、不创建对象，而 `dict` / `mapping` 的表与
 `lua` 脚本要到 Acquire 期才由插件读入，声明期不可见。`direct` 的语义由接口定义
-（`S2PApiL1.h` 的 `VARIANT_DIRECT` 与 `variantKeepsSymbols()`），是唯一可静态断言的恒等变体。
+（`S2pApiL1.h` 的 `VARIANT_DIRECT` 与 `variantKeepsSymbols()`），是唯一可静态断言的恒等变体。
 
 **内容级例外的处理**（"内容推导优先、不可推导由作者声明"的落地）：
 
@@ -1879,7 +1879,7 @@ A70 讲的是包的区间）；但**库 ABI 版本必须同批抬升**——公�
 | Q5 | DiffSinger 歌手 `configuration` 仍强制要求 `dict` 路径（`dsinfer/plugins/singerproviders/diffsinger/DiffSingerProvider.cpp:171-185`），属旧 G2P 栈遗留 | 语言域迁移完成后应退役，不在本轮范围内 |
 | Q6 | A11 的上游合并时点 | **已落地**于 synthrt 分支 `onnxruntime-builds-uptake`（A26 补记），端口固定在该分支上；并入 synthrt main 有待上游 |
 | Q7 | `srt::ITask::startAsync` 的 `finish()` 在**释放互斥量之后**才调用 `notify_all()`，等待方因此可能在通知进行中析构条件变量。TSan 在 `test_LinguistRuntime` 中报告一处，但整条调用栈都位于未插桩的 `libsynthrt.so` 内，与既有的 `libonnxruntime.so` 报告同类；按 `shared_ptr` 引用计数推演存在合法的 happens-before 关系，因此**倾向于判定为误报**。定论需要一个插桩的 synthrt 构建 | 上游，待定论 |
-| Q8 | S2P 层形状的内容级例外（`dict`/`mapping` 表逐行恒等、`lua` 脚本恒等）：运行期按变体名判定，前两者由 `check-declarations.py` 报警，`lua` 一律按独立层。变体清单在 C++（`S2PApiL1.h` 的 `variantKeepsSymbols()`）、Python lint 与变体文档 §5.0.2 三处各有一份，新增读表变体时**须三处同改**，无脚本交叉校验 | **已定，可复议**（A81）。若将来出现此类声明，再评估新增显式声明字段（需动两份 schema 与 `ContractValues` 白名单） |
+| Q8 | S2P 层形状的内容级例外（`dict`/`mapping` 表逐行恒等、`lua` 脚本恒等）：运行期按变体名判定，前两者由 `check-declarations.py` 报警，`lua` 一律按独立层。变体清单在 C++（`S2pApiL1.h` 的 `variantKeepsSymbols()`）、Python lint 与变体文档 §5.0.2 三处各有一份，新增读表变体时**须三处同改**，无脚本交叉校验 | **已定，可复议**（A81）。若将来出现此类声明，再评估新增显式声明字段（需动两份 schema 与 `ContractValues` 白名单） |
 
 ---
 

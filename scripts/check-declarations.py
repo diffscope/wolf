@@ -233,7 +233,7 @@ def unbounded_chain(declaration: dict) -> bool:
 
 # The S2P variants whose table this lint reads. Both rewrite the symbols of a pronunciation through
 # the table, which is why the host reports a separate pronunciation layer for them; see
-# variantKeepsSymbols() in include/wolf/Api/Inferences/S2P/1/S2PApiL1.h. That header holds the
+# variantKeepsSymbols() in include/wolf/Api/Inferences/S2p/1/S2pApiL1.h. That header holds the
 # authoritative list, and the variants guide states the same table in §5.0.2; a new table-reading
 # variant must be added in all three places.
 TABLE_VARIANTS = ("dict", "mapping")
@@ -248,7 +248,7 @@ REWRITES = "rewrites"          # At least one usable row rewrites a symbol.
 def units_bytes(value: bytes) -> list:
     """Splits a pronunciation into its symbols, the way the loader does.
 
-    This mirrors splitPronunciation() in src/plugins/inferenceinterpreters/s2p/S2PTables.cpp: the
+    This mirrors splitPronunciation() in src/plugins/inferenceinterpreters/s2p/S2pTables.cpp: the
     separator is the ASCII space alone, and the empty pieces it produces are dropped. Python's own
     str.split() is not the same rule, because it folds every Unicode whitespace, which would make a
     table with a no-break space or an ideographic space look like a table of identity rows.

@@ -8,8 +8,8 @@
 #include <wolf/Linguist/LinguistContrib.h>
 
 namespace LinguistApi = wolf::Api::Linguist::L1;
-namespace G2PApi = wolf::Api::G2P::L1;
-namespace S2PApi = wolf::Api::S2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
+namespace S2pApi = wolf::Api::S2p::L1;
 namespace OnsetApi = wolf::Api::Onset::L1;
 
 namespace wolf {
@@ -21,12 +21,12 @@ namespace wolf {
         /// Overloads are used instead of a compile-time probe because whether a contract is
         /// language-bound is a property of the contract and is stated explicitly here. The Onset
         /// contract is not language-bound, so its runtime options have no binding field.
-        void bind(G2PApi::G2PRuntimeOptions &options,
+        void bind(G2pApi::G2pRuntimeOptions &options,
                   const Api::Common::L1::LanguageScheme &binding) {
             options.binding = binding;
         }
 
-        void bind(S2PApi::S2PRuntimeOptions &options,
+        void bind(S2pApi::S2pRuntimeOptions &options,
                   const Api::Common::L1::LanguageScheme &binding) {
             options.binding = binding;
         }
@@ -155,9 +155,9 @@ namespace wolf {
         return static_cast<Executive *>(child.take());
     }
 
-    srt::Expected<Api::G2P::L1::G2PExecutive *> LinguistExecutiveImpl::g2p() {
+    srt::Expected<Api::G2p::L1::G2pExecutive *> LinguistExecutiveImpl::g2p() {
         if (!m_g2p.load()) {
-            auto result = createMember<G2PApi::G2PRuntimeOptions, G2PApi::G2PExecutive>(
+            auto result = createMember<G2pApi::G2pRuntimeOptions, G2pApi::G2pExecutive>(
                 LinguistApi::ROLE_G2P);
             if (!result) {
                 return result.takeError();
@@ -167,14 +167,14 @@ namespace wolf {
         return m_g2p.load();
     }
 
-    srt::Expected<Api::S2P::L1::S2PExecutive *> LinguistExecutiveImpl::s2p() {
+    srt::Expected<Api::S2p::L1::S2pExecutive *> LinguistExecutiveImpl::s2p() {
         if (!m_s2p.load()) {
             // An absent S2P import is valid, as is an absent onset import; the composition then
             // ends at the pronunciation layer.
             if (!spec().findImport(LinguistApi::ROLE_S2P)) {
                 return nullptr;
             }
-            auto result = createMember<S2PApi::S2PRuntimeOptions, S2PApi::S2PExecutive>(
+            auto result = createMember<S2pApi::S2pRuntimeOptions, S2pApi::S2pExecutive>(
                 LinguistApi::ROLE_S2P);
             if (!result) {
                 return result.takeError();
@@ -215,7 +215,7 @@ namespace wolf {
 
         // Pass one: determine the pronunciation layer of each word. Words that arrive with a pinned
         // pronunciation or a pinned phoneme layer skip the stages that would have produced them.
-        G2PApi::G2PStartInput g2pInput;
+        G2pApi::G2pStartInput g2pInput;
         std::vector<std::size_t> g2pPositions;
         for (std::size_t i = 0; i < input.words.size(); ++i) {
             const auto &word = input.words[i];
@@ -223,10 +223,10 @@ namespace wolf {
 
             if (word.locked) {
                 if (!lockedShapeIsValid(*word.locked)) {
-                    output.error = G2PApi::Error::InvalidInput;
+                    output.error = G2pApi::Error::InvalidInput;
                     continue;
                 }
-                output.mode = G2PApi::Mode::Copy;
+                output.mode = G2pApi::Mode::Copy;
                 output.pronunciation = word.pronunciation.value_or(word.lyric);
                 // A pinned layer is granted at the depth that asks for it, like the layer a stage
                 // produces: phonemes from Phonemes upwards and onsets at Onsets. A caller that reads
@@ -242,7 +242,7 @@ namespace wolf {
                 continue;
             }
             if (word.pronunciation) {
-                output.mode = G2PApi::Mode::Copy;
+                output.mode = G2pApi::Mode::Copy;
                 output.pronunciation = *word.pronunciation;
                 output.hitStage = LinguistApi::HitStage::Locked;
                 continue;
@@ -276,19 +276,19 @@ namespace wolf {
                 output.mode = word.mode;
                 output.error = word.error;
                 switch (word.hitSource) {
-                    case G2PApi::HitSource::Dict:
+                    case G2pApi::HitSource::Dict:
                         output.hitStage = LinguistApi::HitStage::Dict;
                         break;
-                    case G2PApi::HitSource::Model:
+                    case G2pApi::HitSource::Model:
                         output.hitStage = LinguistApi::HitStage::Model;
                         break;
-                    case G2PApi::HitSource::Rule:
+                    case G2pApi::HitSource::Rule:
                         output.hitStage = LinguistApi::HitStage::Rule;
                         break;
-                    case G2PApi::HitSource::Fallback:
+                    case G2pApi::HitSource::Fallback:
                         output.hitStage = LinguistApi::HitStage::Fallback;
                         break;
-                    case G2PApi::HitSource::Unspecified:
+                    case G2pApi::HitSource::Unspecified:
                         break;
                 }
             }
@@ -301,12 +301,12 @@ namespace wolf {
         }
 
         // Pass two: phonemes, for the words that do not already carry a pinned layer.
-        S2PApi::S2PStartInput s2pInput;
+        S2pApi::S2pStartInput s2pInput;
         std::vector<std::size_t> s2pPositions;
         for (std::size_t i = 0; i < result->words.size(); ++i) {
             const auto &output = result->words[i];
-            if (input.words[i].locked || output.error != G2PApi::Error::None ||
-                output.mode == G2PApi::Mode::Skip) {
+            if (input.words[i].locked || output.error != G2pApi::Error::None ||
+                output.mode == G2pApi::Mode::Skip) {
                 continue;
             }
             s2pInput.pronunciations.push_back(output.pronunciation);

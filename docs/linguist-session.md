@@ -435,7 +435,7 @@ synthrt `singer` 类别的追加字段，写在声明根，类别校验其形状
   不应视为相邻词，否则「银 · 空词 · 行」仍会按词组匹配读作 hang；
 - **多语言变体**只把判定结果为 `Accept` 的词编入批请求，其余词在原位置回填。
 
-三条各有一个测试覆盖（`test_PipeChain` / `test_PinyinBackend` / `test_MultiG2P`）。
+三条各有一个测试覆盖（`test_PipeChain` / `test_PinyinBackend` / `test_MultiG2p`）。
 
 ## 9. 实施状态
 

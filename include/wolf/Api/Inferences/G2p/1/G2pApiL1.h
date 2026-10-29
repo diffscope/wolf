@@ -12,7 +12,7 @@
 
 #include <wolf/Api/Inferences/Common/1/CommonApiL1.h>
 
-namespace wolf::Api::G2P::L1 {
+namespace wolf::Api::G2p::L1 {
 
     /// Identifies the grapheme to phonological symbol inference contract.
     inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.inference.G2P";
@@ -54,9 +54,9 @@ namespace wolf::Api::G2P::L1 {
     ///
     /// Every payload of a multi variant contract carries the variant, because the loader compares
     /// the whole triple against the declaration that produced the payload.
-    class G2PExports : public srt::ContribExports {
+    class G2pExports : public srt::ContribExports {
     public:
-        explicit G2PExports(std::string variant)
+        explicit G2pExports(std::string variant)
             : ContribExports(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
 
@@ -79,17 +79,17 @@ namespace wolf::Api::G2P::L1 {
 
     /// Level 1 defines no import options vocabulary. An executive is bound to one pair at
     /// creation, and the manifest therefore does not repeat the pair.
-    class G2PImportOptions : public srt::ContribImportOptions {
+    class G2pImportOptions : public srt::ContribImportOptions {
     public:
-        explicit G2PImportOptions(std::string variant)
+        explicit G2pImportOptions(std::string variant)
             : ContribImportOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
     };
 
     /// Settings supplied when a G2P executive is created.
-    class G2PRuntimeOptions : public srt::InferenceRuntimeOptions {
+    class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
-        explicit G2PRuntimeOptions(std::string variant)
+        explicit G2pRuntimeOptions(std::string variant)
             : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
         }
 
@@ -99,23 +99,23 @@ namespace wolf::Api::G2P::L1 {
         Common::L1::LanguageScheme binding;
     };
 
-    class G2PInitArgs : public srt::InferenceInitArgs {
+    class G2pInitArgs : public srt::InferenceInitArgs {
     public:
-        G2PInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
+        G2pInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
         }
     };
 
     /// One batch of words to convert.
-    class G2PStartInput : public srt::TaskStartInput {
+    class G2pStartInput : public srt::TaskStartInput {
     public:
-        G2PStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        G2pStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
         }
 
         std::vector<std::string> lyrics;
     };
 
     /// Conversion result of one word. A failed word keeps its position in the batch.
-    struct G2PWordOutput {
+    struct G2pWordOutput {
         std::string pronunciation;
 
         /// Alternatives, the first of which is the main pronunciation.
@@ -126,27 +126,27 @@ namespace wolf::Api::G2P::L1 {
         HitSource hitSource = HitSource::Unspecified;
     };
 
-    class G2PResult : public srt::TaskResult {
+    class G2pResult : public srt::TaskResult {
     public:
-        G2PResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        G2pResult() : TaskResult(API_INTERFACE, API_LEVEL) {
         }
 
-        std::vector<G2PWordOutput> words;
+        std::vector<G2pWordOutput> words;
     };
 
     /// Executes one G2P module.
     ///
     /// One executive runs at most one conversion at a time, as srt::InferenceExecutive specifies.
     /// Concurrency requires additional executives.
-    class G2PExecutive : public srt::InferenceExecutive {
+    class G2pExecutive : public srt::InferenceExecutive {
     public:
-        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<G2PResult>> result)>;
+        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<G2pResult>> result)>;
 
-        virtual srt::Expected<void> initialize(const G2PInitArgs &args) = 0;
+        virtual srt::Expected<void> initialize(const G2pInitArgs &args) = 0;
 
-        virtual srt::Expected<std::unique_ptr<G2PResult>> start(const G2PStartInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<G2pResult>> start(const G2pStartInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const G2PStartInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const G2pStartInput> input,
                                                AsyncCallback callback) = 0;
 
     protected:

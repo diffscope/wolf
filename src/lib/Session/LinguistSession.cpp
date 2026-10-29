@@ -826,7 +826,7 @@ namespace wolf {
             if (!word.pronunciation.has_value() && !word.locked.has_value() &&
                 Impl::isReserved(markers, word.lyric)) {
                 auto &output = result->words[index];
-                output.mode = Api::G2P::L1::Mode::Copy;
+                output.mode = Api::G2p::L1::Mode::Copy;
                 output.pronunciation = word.lyric;
                 output.candidates = {word.lyric};
                 if (input.depth != LinguistApi::Depth::Pronunciation) {

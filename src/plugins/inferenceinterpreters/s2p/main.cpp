@@ -10,16 +10,16 @@
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Support/ContractValues.h>
 #include <wolf/Support/ExecutiveBase.h>
 #include <wolf/Support/ManifestValues.h>
 #include <wolf/Support/ResourceCache.h>
 
-#include "S2PTables.h"
+#include "S2pTables.h"
 
 namespace fs = std::filesystem;
-namespace S2PApi = wolf::Api::S2P::L1;
+namespace S2pApi = wolf::Api::S2p::L1;
 
 namespace wolf::s2p {
 
@@ -47,8 +47,8 @@ namespace wolf::s2p {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration(std::string variant)
-                : ContribConfiguration(S2PApi::API_INTERFACE, std::move(variant),
-                                       S2PApi::API_LEVEL) {
+                : ContribConfiguration(S2pApi::API_INTERFACE, std::move(variant),
+                                       S2pApi::API_LEVEL) {
             }
 
             /// Parsed during Acquire rather than when an executive is created, because the
@@ -140,7 +140,7 @@ namespace wolf::s2p {
         }
 
         class Executive
-            : public ExecutiveBase<S2PApi::S2PExecutive, S2PApi::S2PStartInput, S2PApi::S2PResult> {
+            : public ExecutiveBase<S2pApi::S2pExecutive, S2pApi::S2pStartInput, S2pApi::S2pResult> {
         public:
             Executive(srt::InferenceSpec &spec, Table table)
                 : ExecutiveBase(spec), m_table(std::move(table)) {
@@ -150,16 +150,16 @@ namespace wolf::s2p {
                 finish();
             }
 
-            srt::Expected<void> initialize(const S2PApi::S2PInitArgs &) override {
+            srt::Expected<void> initialize(const S2pApi::S2pInitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const S2PApi::S2PStartInput &input) override {
+            Batch runBatch(const S2pApi::S2pStartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<S2PApi::S2PResult>();
+                auto result = std::make_unique<S2pApi::S2pResult>();
                 result->phonemes.reserve(input.pronunciations.size());
                 for (const auto &pronunciation : input.pronunciations) {
                     // Cancellation is checked between units, so a caller that stops the batch
@@ -198,7 +198,7 @@ namespace wolf::s2p {
                 if (!read) {
                     return read.takeError();
                 }
-                auto result = std::make_unique<S2PApi::S2PExports>(m_variant);
+                auto result = std::make_unique<S2pApi::S2pExports>(m_variant);
                 result->languages = std::move(read->languages);
                 result->phonemes = std::move(read->strings);
                 result->openSet = read->openSet;
@@ -229,7 +229,7 @@ namespace wolf::s2p {
                     return checked.takeError();
                 }
                 return std::unique_ptr<srt::ContribImportOptions>(
-                    new S2PApi::S2PImportOptions(m_variant));
+                    new S2pApi::S2pImportOptions(m_variant));
             }
 
             srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -250,11 +250,11 @@ namespace wolf::s2p {
 
     }
 
-    class S2PPlugin final : public srt::InferenceInterpreterPlugin {
+    class S2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != S2PApi::API_INTERFACE || level != S2PApi::API_LEVEL) {
+            if (interfaceName != S2pApi::API_INTERFACE || level != S2pApi::API_LEVEL) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported S2P contract: " + std::string(interfaceName) + "/" +
                                       std::to_string(level) + "/" + std::string(variant));
@@ -269,4 +269,4 @@ namespace wolf::s2p {
 
 }
 
-STDC_EXPORT_PLUGIN(wolf::s2p::S2PPlugin)
+STDC_EXPORT_PLUGIN(wolf::s2p::S2pPlugin)

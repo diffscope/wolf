@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_AnswersReservedMarkersItself) {
     BOOST_REQUIRE_EQUAL(words.size(), 4u);
 
     for (const auto index : {1u, 2u}) {
-        BOOST_CHECK(words[index].mode == wolf::Api::G2P::L1::Mode::Copy);
+        BOOST_CHECK(words[index].mode == wolf::Api::G2p::L1::Mode::Copy);
         BOOST_CHECK_EQUAL(words[index].pronunciation, index == 1u ? "SP" : "AP");
         BOOST_REQUIRE_EQUAL(words[index].phonemes.size(), 1u);
         BOOST_CHECK_EQUAL(words[index].phonemes[0], words[index].pronunciation);
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersAreAConventionNotAContract) {
     auto swapped =
         session.convert(singer, "zxx", Line({"rest", "SP"}, LinguistApi::Depth::Pronunciation));
     BOOST_REQUIRE(swapped);
-    BOOST_CHECK((*swapped)->words[0].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK((*swapped)->words[0].mode == wolf::Api::G2p::L1::Mode::Copy);
     // SP is now an ordinary word, and the passthrough language treats it as such.
     BOOST_CHECK_EQUAL((*swapped)->words[1].pronunciation, "SP");
 
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersDeclaredBySingerWinOverTheSessi
     auto result =
         session.convert(singer, "zxx", Line({"EP", "SP"}, LinguistApi::Depth::Pronunciation));
     BOOST_REQUIRE(result);
-    BOOST_CHECK((*result)->words[0].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK((*result)->words[0].mode == wolf::Api::G2p::L1::Mode::Copy);
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "EP");
     // SP is no longer a marker for this singer, so the passthrough language receives it as a word.
     BOOST_CHECK_EQUAL((*result)->words[1].pronunciation, "SP");
@@ -1007,7 +1007,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPerWordFailureOutOfTheCache) {
     BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
     BOOST_REQUIRE_EQUAL((*result)->words.size(), 2u);
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "hh ax l ow");
-    BOOST_CHECK((*result)->words[1].error == wolf::Api::G2P::L1::Error::PhonemeGenerationFailed);
+    BOOST_CHECK((*result)->words[1].error == wolf::Api::G2p::L1::Error::PhonemeGenerationFailed);
 
     // The batch ran to completion, so the executive is pooled again: the route is warm, not broken.
     const auto status = session.probe(singer, "deu");

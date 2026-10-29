@@ -35,7 +35,7 @@ wolf_add_test(Linguist/test_LinguistLoad.cpp synthrt-wolf)
 wolf_add_test(Linguist/test_LinguistProvider.cpp synthrt-wolf)
 
 wolf_add_test(Inference/test_OnsetRules.cpp synthrt-wolf)
-wolf_add_test(Inference/test_S2PVariants.cpp synthrt-wolf)
+wolf_add_test(Inference/test_S2pVariants.cpp synthrt-wolf)
 wolf_add_test(Inference/test_PipeChain.cpp synthrt-wolf)
 wolf_add_test(Inference/test_PinyinBackend.cpp synthrt-wolf)
 # Each of these tests requires the library that its variants embed and is built only if that
@@ -44,8 +44,8 @@ if(WOLF_HAS_LUAJIT)
     wolf_add_test(Inference/test_LuaVariants.cpp synthrt-wolf)
 endif()
 if(WOLF_HAS_DSINFER)
-    wolf_add_test(Inference/test_MultiG2P.cpp synthrt-wolf synthrt::dsinfer)
-    wolf_add_test(Inference/test_MultiG2PMaxLen.cpp synthrt-wolf synthrt::dsinfer)
+    wolf_add_test(Inference/test_MultiG2p.cpp synthrt-wolf synthrt::dsinfer)
+    wolf_add_test(Inference/test_MultiG2pMaxLen.cpp synthrt-wolf synthrt::dsinfer)
 endif()
 
 wolf_add_test(Runtime/test_LinguistRuntime.cpp synthrt-wolf)
@@ -105,7 +105,7 @@ endif()
 if(WOLF_TEST_FIXTURES_SOURCE)
     list(APPEND _wolf_data_env "WOLF_TEST_FIXTURES_SOURCE=${WOLF_TEST_FIXTURES_SOURCE}")
 endif()
-foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2P test_MultiG2PMaxLen
+foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2p test_MultiG2pMaxLen
                        test_LinguistIdentity test_LinguistLoad test_PipeChain test_PinyinBackend
                        test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
@@ -175,9 +175,9 @@ if(TARGET test_ConvertedPackages)
     )
 endif()
 
-if(TARGET test_S2PVariants)
-    add_dependencies(test_S2PVariants wolfs2p)
-    target_compile_definitions(test_S2PVariants PRIVATE
+if(TARGET test_S2pVariants)
+    add_dependencies(test_S2pVariants wolfs2p)
+    target_compile_definitions(test_S2pVariants PRIVATE
         WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfs2p>/.."
     )
 endif()
@@ -209,10 +209,10 @@ foreach(_test IN ITEMS test_PipeChain test_PinyinBackend)
     endif()
 endforeach()
 
-if(TARGET test_MultiG2P)
-    add_dependencies(test_MultiG2P wolflinguistprovider wolfchain wolfmultig2p wolfs2p
+if(TARGET test_MultiG2p)
+    add_dependencies(test_MultiG2p wolflinguistprovider wolfchain wolfmultig2p wolfs2p
                      wolfstubsinger)
-    target_compile_definitions(test_MultiG2P PRIVATE
+    target_compile_definitions(test_MultiG2p PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
         WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
         WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
@@ -224,9 +224,9 @@ endif()
 # The limit case binds the backend directly rather than through a chain, so it needs neither the
 # linguist provider nor the singer plugin: it assembles the smallest tree in which a declaration
 # reaches a model.
-if(TARGET test_MultiG2PMaxLen)
-    add_dependencies(test_MultiG2PMaxLen wolfmultig2p)
-    target_compile_definitions(test_MultiG2PMaxLen PRIVATE
+if(TARGET test_MultiG2pMaxLen)
+    add_dependencies(test_MultiG2pMaxLen wolfmultig2p)
+    target_compile_definitions(test_MultiG2pMaxLen PRIVATE
         WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfmultig2p>/.."
         WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
         WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"

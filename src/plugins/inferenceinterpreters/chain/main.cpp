@@ -14,7 +14,7 @@
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Support/ContractValues.h>
 #include <wolf/Support/ExecutiveBase.h>
 #include <wolf/Support/InputRules.h>
@@ -25,7 +25,7 @@
 #include "ChainTables.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 
 namespace wolf::chain {
 
@@ -82,7 +82,7 @@ namespace wolf::chain {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(G2PApi::API_INTERFACE, VARIANT, G2PApi::API_LEVEL) {
+                : ContribConfiguration(G2pApi::API_INTERFACE, VARIANT, G2pApi::API_LEVEL) {
             }
 
             std::vector<Step> steps;
@@ -92,11 +92,11 @@ namespace wolf::chain {
         struct ChainWord {
             std::string lyric;
             std::string text;
-            G2PApi::Mode mode = G2PApi::Mode::Convert;
+            G2pApi::Mode mode = G2pApi::Mode::Convert;
             std::string pronunciation;
             std::vector<std::string> candidates;
-            G2PApi::Error error = G2PApi::Error::None;
-            G2PApi::HitSource hitSource = G2PApi::HitSource::Unspecified;
+            G2pApi::Error error = G2pApi::Error::None;
+            G2pApi::HitSource hitSource = G2pApi::HitSource::Unspecified;
 
             /// Whether the input ordering of the contract already determined the result for this
             /// word. This flag differs from an error: a word on which a step failed still reaches
@@ -107,7 +107,7 @@ namespace wolf::chain {
             /// its pronunciation from exactly one source, and therefore the producing steps may
             /// appear in any order.
             bool eligible() const {
-                return !settled && mode == G2PApi::Mode::Convert && pronunciation.empty();
+                return !settled && mode == G2pApi::Mode::Convert && pronunciation.empty();
             }
         };
 
@@ -416,8 +416,8 @@ namespace wolf::chain {
                 // Every registered validator receives every contribution in the transaction, so
                 // the interface, level and variant must match before the configuration is cast to
                 // the type of this plugin.
-                if (spec.interfaceId() != G2PApi::API_INTERFACE ||
-                    spec.level() != G2PApi::API_LEVEL || spec.variant() != VARIANT) {
+                if (spec.interfaceId() != G2pApi::API_INTERFACE ||
+                    spec.level() != G2pApi::API_LEVEL || spec.variant() != VARIANT) {
                     return {};
                 }
                 const auto *configuration =
@@ -440,8 +440,8 @@ namespace wolf::chain {
                                           "the import for role " + step.role + " is not bound");
                     }
                     const auto &target = import->binding()->target();
-                    if (target.interfaceId() != G2PApi::API_INTERFACE ||
-                        target.level() != G2PApi::API_LEVEL) {
+                    if (target.interfaceId() != G2pApi::API_INTERFACE ||
+                        target.level() != G2pApi::API_LEVEL) {
                         return srt::Error(srt::Error::InvalidFormat,
                                           "the model step role " + step.role +
                                               " is bound to " + target.interfaceId() +
@@ -453,7 +453,7 @@ namespace wolf::chain {
         };
 
         class Executive
-            : public ExecutiveBase<G2PApi::G2PExecutive, G2PApi::G2PStartInput, G2PApi::G2PResult> {
+            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
         public:
             Executive(srt::InferenceSpec &spec, const Configuration *configuration,
                       Api::Common::L1::LanguageScheme binding)
@@ -465,7 +465,7 @@ namespace wolf::chain {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2PApi::G2PInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
                 return {};
             }
 
@@ -481,7 +481,7 @@ namespace wolf::chain {
             /// guarded and the backends are stopped once the guard is released: a backend may
             /// return through this executive while its own stop runs.
             void onStop() override {
-                std::vector<G2PApi::G2PExecutive *> backends;
+                std::vector<G2pApi::G2pExecutive *> backends;
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     backends.reserve(m_backends.size());
@@ -497,7 +497,7 @@ namespace wolf::chain {
             }
 
         protected:
-            Batch runBatch(const G2PApi::G2PStartInput &input) override {
+            Batch runBatch(const G2pApi::G2pStartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
                 std::vector<ChainWord> words;
                 words.reserve(input.lyrics.size());
@@ -507,11 +507,11 @@ namespace wolf::chain {
                     // processes a word that the contract already settled.
                     switch (classifyLyric(lyric)) {
                         case LyricVerdict::Skip:
-                            word.mode = G2PApi::Mode::Skip;
+                            word.mode = G2pApi::Mode::Skip;
                             word.settled = true;
                             break;
                         case LyricVerdict::Invalid:
-                            word.error = G2PApi::Error::InvalidInput;
+                            word.error = G2pApi::Error::InvalidInput;
                             word.settled = true;
                             break;
                         case LyricVerdict::Accept:
@@ -567,34 +567,34 @@ namespace wolf::chain {
             ///
             /// Also called if a conversion stops partway, so that the caller receives the partial
             /// result of the chain rather than an error.
-            static std::unique_ptr<G2PApi::G2PResult> collect(std::vector<ChainWord> &words) {
-                auto result = std::make_unique<G2PApi::G2PResult>();
+            static std::unique_ptr<G2pApi::G2pResult> collect(std::vector<ChainWord> &words) {
+                auto result = std::make_unique<G2pApi::G2pResult>();
                 result->words.reserve(words.size());
                 for (auto &word : words) {
-                    G2PApi::G2PWordOutput output;
+                    G2pApi::G2pWordOutput output;
                     output.mode = word.mode;
                     output.error = word.error;
                     output.hitSource = word.hitSource;
-                    if (word.mode == G2PApi::Mode::Skip) {
+                    if (word.mode == G2pApi::Mode::Skip) {
                         // A skipped word has no pronunciation and no candidates.
-                    } else if (word.error == G2PApi::Error::InvalidInput) {
+                    } else if (word.error == G2pApi::Error::InvalidInput) {
                         // The lyric is returned unchanged so that a host can display the
                         // submitted text, and the error indicates that the module did not
                         // convert it.
                         output.pronunciation = word.lyric;
-                    } else if (word.mode == G2PApi::Mode::Copy) {
+                    } else if (word.mode == G2pApi::Mode::Copy) {
                         // The pronunciation of a copy word is its lyric, and a copy word has no
                         // candidates.
                         output.pronunciation = word.lyric;
-                    } else if (word.pronunciation.empty() && word.error == G2PApi::Error::None) {
+                    } else if (word.pronunciation.empty() && word.error == G2pApi::Error::None) {
                         // No step produced a pronunciation for this word and no fallback step
                         // covered it. Reporting success with an empty pronunciation would violate
                         // the contract rule that the pronunciation of a converted word is its
                         // first candidate, so the chain reports the failure. In a chain without a
                         // fallback step, every word that the dictionaries do not contain reaches
                         // this branch.
-                        output.error = G2PApi::Error::PhonemeGenerationFailed;
-                    } else if (word.error == G2PApi::Error::None) {
+                        output.error = G2pApi::Error::PhonemeGenerationFailed;
+                    } else if (word.error == G2pApi::Error::None) {
                         output.pronunciation = std::move(word.pronunciation);
                         output.candidates = std::move(word.candidates);
                     }
@@ -617,8 +617,8 @@ namespace wolf::chain {
                     if (words[i].settled) {
                         continue;
                     }
-                    words[i].mode = modes[i] == VerifyMode::Convert ? G2PApi::Mode::Convert
-                                                                    : G2PApi::Mode::Copy;
+                    words[i].mode = modes[i] == VerifyMode::Convert ? G2pApi::Mode::Convert
+                                                                    : G2pApi::Mode::Copy;
                 }
             }
 
@@ -636,7 +636,7 @@ namespace wolf::chain {
                     }
                     word.pronunciation = group->front();
                     word.candidates = *group;
-                    word.hitSource = G2PApi::HitSource::Dict;
+                    word.hitSource = G2pApi::HitSource::Dict;
                 }
             }
 
@@ -720,10 +720,10 @@ namespace wolf::chain {
                 return {};
             }
 
-            static void convertRun(G2PApi::G2PExecutive *backend,
+            static void convertRun(G2pApi::G2pExecutive *backend,
                                    const std::vector<std::size_t> &run,
                                    std::vector<ChainWord> &words) {
-                G2PApi::G2PStartInput request;
+                G2pApi::G2pStartInput request;
                 request.lyrics.reserve(run.size());
                 for (const auto index : run) {
                     request.lyrics.push_back(words[index].text);
@@ -731,14 +731,14 @@ namespace wolf::chain {
                 auto response = backend->start(request);
                 if (!response) {
                     for (const auto index : run) {
-                        words[index].error = G2PApi::Error::ModelInferenceFailed;
+                        words[index].error = G2pApi::Error::ModelInferenceFailed;
                     }
                     return;
                 }
                 const auto result = response.take();
                 if (result->words.size() != run.size()) {
                     for (const auto index : run) {
-                        words[index].error = G2PApi::Error::ModelInferenceFailed;
+                        words[index].error = G2pApi::Error::ModelInferenceFailed;
                     }
                     return;
                 }
@@ -748,7 +748,7 @@ namespace wolf::chain {
                     // Word-level errors of the backend are passed through unchanged; the chain
                     // defines no error codes of its own.
                     word.error = produced.error;
-                    if (produced.error != G2PApi::Error::None || produced.pronunciation.empty()) {
+                    if (produced.error != G2pApi::Error::None || produced.pronunciation.empty()) {
                         continue;
                     }
                     word.pronunciation = produced.pronunciation;
@@ -756,7 +756,7 @@ namespace wolf::chain {
                     // candidate. The chain returns this word as its own output, so the chain
                     // enforces that invariant here instead of relying on every backend.
                     word.candidates = leadWith(produced.pronunciation, produced.candidates);
-                    word.hitSource = G2PApi::HitSource::Model;
+                    word.hitSource = G2pApi::HitSource::Model;
                 }
             }
 
@@ -770,20 +770,20 @@ namespace wolf::chain {
                         // No fallback value is available. The word keeps an empty pronunciation
                         // and reports a failure, rather than silently returning its text as a
                         // pronunciation.
-                        word.error = G2PApi::Error::PhonemeGenerationFailed;
+                        word.error = G2pApi::Error::PhonemeGenerationFailed;
                         word.candidates.clear();
                         continue;
                     }
                     word.pronunciation = filler;
                     word.candidates = {filler};
-                    word.hitSource = G2PApi::HitSource::Fallback;
+                    word.hitSource = G2pApi::HitSource::Fallback;
                     // A word that the fallback step produced counts as a success, regardless of
                     // earlier failures.
-                    word.error = G2PApi::Error::None;
+                    word.error = G2pApi::Error::None;
                 }
             }
 
-            srt::Expected<G2PApi::G2PExecutive *> resolveBackend(const std::string &role) {
+            srt::Expected<G2pApi::G2pExecutive *> resolveBackend(const std::string &role) {
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     const auto it = m_backends.find(role);
@@ -796,13 +796,13 @@ namespace wolf::chain {
                     return srt::Error(srt::Error::InvalidFormat,
                                       "the model step role " + role + " is not bound");
                 }
-                G2PApi::G2PRuntimeOptions options(import->binding()->target().variant());
+                G2pApi::G2pRuntimeOptions options(import->binding()->target().variant());
                 options.binding = m_binding;
                 auto child = createChild(role, options);
                 if (!child) {
                     return child.takeError();
                 }
-                auto *backend = static_cast<G2PApi::G2PExecutive *>(child.take());
+                auto *backend = static_cast<G2pApi::G2pExecutive *>(child.take());
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     m_backends.emplace(role, backend);
@@ -814,7 +814,7 @@ namespace wolf::chain {
             Api::Common::L1::LanguageScheme m_binding;
             /// Guards \c m_backends: the map is filled while a batch runs, and read by onStop().
             std::mutex m_backendsMutex;
-            std::map<std::string, G2PApi::G2PExecutive *> m_backends;
+            std::map<std::string, G2pApi::G2pExecutive *> m_backends;
         };
 
         class Interpreter : public srt::InferenceInterpreter {
@@ -832,7 +832,7 @@ namespace wolf::chain {
                 if (!read) {
                     return read.takeError();
                 }
-                auto result = std::make_unique<G2PApi::G2PExports>(VARIANT);
+                auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
                 result->languages = std::move(read->languages);
                 result->symbols = std::move(read->strings);
                 result->openSet = read->openSet;
@@ -886,7 +886,7 @@ namespace wolf::chain {
                     return checked.takeError();
                 }
                 return std::unique_ptr<srt::ContribImportOptions>(
-                    new G2PApi::G2PImportOptions(VARIANT));
+                    new G2pApi::G2pImportOptions(VARIANT));
             }
 
             srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -899,7 +899,7 @@ namespace wolf::chain {
                                       "the chain module was imported without its configuration");
                 }
                 const auto &binding =
-                    static_cast<const G2PApi::G2PRuntimeOptions &>(runtimeOptions).binding;
+                    static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
                 return std::unique_ptr<srt::InferenceExecutive>(
                     new Executive(spec, configuration, binding));
             }
@@ -911,7 +911,7 @@ namespace wolf::chain {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != G2PApi::API_INTERFACE || level != G2PApi::API_LEVEL ||
+            if (interfaceName != G2pApi::API_INTERFACE || level != G2pApi::API_LEVEL ||
                 variant != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported chain contract: " + std::string(interfaceName) +

@@ -9,7 +9,7 @@
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 
@@ -19,7 +19,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_KeepsPhraseContext) {
     const auto broken =
         convert(unit, "singer-zh", "cmn", {"\xE9\x93\xB6", "zhong", "\xE8\xA1\x8C"});
     BOOST_REQUIRE_EQUAL(broken.size(), 3u);
-    BOOST_CHECK(broken[1].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK(broken[1].mode == wolf::Api::G2p::L1::Mode::Copy);
     BOOST_CHECK_EQUAL(broken[2].pronunciation, "xing");
 }
 
@@ -196,15 +196,15 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_BreaksRunsWhenCalledDirectly) {
     // the arrow operator accesses the stored pointer, so calling reset() through it destroys the
     // executive instead of preparing it for another batch.
     const auto convertWords = [&](const std::vector<std::string> &lyrics) {
-        G2PApi::G2PImportOptions importOptions(spec->variant());
-        G2PApi::G2PRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
         runtimeOptions.binding = {"cmn", "pinyin"};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         BOOST_REQUIRE(executive);
 
-        G2PApi::G2PStartInput input;
+        G2pApi::G2pStartInput input;
         input.lyrics = lyrics;
-        auto result = static_cast<G2PApi::G2PExecutive *>(executive->get())->start(input);
+        auto result = static_cast<G2pApi::G2pExecutive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         return (*result)->words;
     };
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_BreaksRunsWhenCalledDirectly) {
     // takes its first reading.
     const auto separated = convertWords({"\xE9\x93\xB6", "", "\xE8\xA1\x8C"});
     BOOST_REQUIRE_EQUAL(separated.size(), 3u);
-    BOOST_CHECK(separated[1].mode == G2PApi::Mode::Skip);
+    BOOST_CHECK(separated[1].mode == G2pApi::Mode::Skip);
     BOOST_CHECK_EQUAL(separated[2].pronunciation, "xing");
 }
 
@@ -236,14 +236,14 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_FallsBackThroughTheChain) {
 
     // The word is absent from the dictionary of this fixture: the fallback returns the original
     // word, and a word produced by the fallback counts as a success.
-    BOOST_CHECK(words[0].mode == wolf::Api::G2P::L1::Mode::Convert);
-    BOOST_CHECK(words[0].error == wolf::Api::G2P::L1::Error::None);
+    BOOST_CHECK(words[0].mode == wolf::Api::G2p::L1::Mode::Convert);
+    BOOST_CHECK(words[0].error == wolf::Api::G2p::L1::Error::None);
     BOOST_CHECK_EQUAL(words[0].pronunciation, "\xE9\xBE\x99");
     BOOST_CHECK(words[0].hitStage == LinguistApi::HitStage::Fallback);
 
     // The word is already a pinyin syllable, so the verify step marked it as Copy and no engine
     // received it.
-    BOOST_CHECK(words[1].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK(words[1].mode == wolf::Api::G2p::L1::Mode::Copy);
     BOOST_CHECK_EQUAL(words[1].pronunciation, "zhong");
 }
 
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_HonoursTheInputOrdering) {
     const auto words = convert(unit, "singer-zh", "cmn", {"\xE9\x93\xB6", "", "\xE8\xA1\x8C"});
     BOOST_REQUIRE_EQUAL(words.size(), 3u);
     BOOST_CHECK_EQUAL(words[0].pronunciation, "yin");
-    BOOST_CHECK(words[1].mode == wolf::Api::G2P::L1::Mode::Skip);
+    BOOST_CHECK(words[1].mode == wolf::Api::G2p::L1::Mode::Skip);
     BOOST_CHECK(words[1].pronunciation.empty());
     BOOST_CHECK_EQUAL(words[2].pronunciation, "xing");
 }

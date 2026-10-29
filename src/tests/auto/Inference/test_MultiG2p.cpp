@@ -23,7 +23,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 namespace OnnxApi = ds::Api::Onnx;
 
@@ -166,8 +166,8 @@ namespace {
         std::unique_ptr<srt::InferenceExecutive> executive;
 
         /// Returns the contract type of the executive, which is what start() and state() need.
-        G2PApi::G2PExecutive *get() const {
-            return static_cast<G2PApi::G2PExecutive *>(executive.get());
+        G2pApi::G2pExecutive *get() const {
+            return static_cast<G2pApi::G2pExecutive *>(executive.get());
         }
     };
 
@@ -189,8 +189,8 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2PApi::G2PImportOptions importOptions(spec->variant());
-        G2PApi::G2PRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
         runtimeOptions.binding = {language, scheme};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
@@ -337,12 +337,12 @@ namespace {
 
 BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
-BOOST_AUTO_TEST_SUITE(test_MultiG2P)
+BOOST_AUTO_TEST_SUITE(test_MultiG2p)
 
 /// Runs the shipped model end to end: a singer selects a language, the chain of that language
 /// reaches the shared backend through an import, and the backend runs three ONNX models on a real
 /// word.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_ConvertsThroughTheSharedModel) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_ConvertsThroughTheSharedModel) {
     // Declared before the unit because the factory holds the plugin code, and every driver created
     // from the factory must be destroyed first.
     ds::InferenceDriverFactory factory;
@@ -354,8 +354,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_ConvertsThroughTheSharedModel) {
     BOOST_REQUIRE_EQUAL(words.size(), 2u);
 
     for (const auto &word : words) {
-        BOOST_CHECK(word.error == wolf::Api::G2P::L1::Error::None);
-        BOOST_CHECK(word.mode == wolf::Api::G2P::L1::Mode::Convert);
+        BOOST_CHECK(word.error == wolf::Api::G2p::L1::Error::None);
+        BOOST_CHECK(word.mode == wolf::Api::G2p::L1::Mode::Convert);
         BOOST_CHECK_MESSAGE(word.hitStage == LinguistApi::HitStage::Model,
                             "the model should have produced " + word.pronunciation);
         // The contract family defines a pronunciation as space-delimited symbols.
@@ -370,14 +370,14 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_ConvertsThroughTheSharedModel) {
 
     // A word that this chain classifies as Copy never reaches the model.
     const auto punctuation = convert(unit, "eng", {","});
-    BOOST_CHECK(punctuation[0].mode == wolf::Api::G2P::L1::Mode::Copy);
+    BOOST_CHECK(punctuation[0].mode == wolf::Api::G2p::L1::Mode::Copy);
     BOOST_CHECK_EQUAL(punctuation[0].pronunciation, ",");
 }
 
 /// Serves several languages from one bundle in one process. The language ID derives from the
 /// declaration order in the bundle, so an incorrect mapping would appear as the wrong phoneme set
 /// rather than as an error.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_ServesSeveralLanguages) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_ServesSeveralLanguages) {
     ds::InferenceDriverFactory factory;
     srt::SynthUnit unit;
     configure(unit);
@@ -402,7 +402,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_ServesSeveralLanguages) {
 
 /// Without a driver, the package still loads and the chain still runs. The backend reports the
 /// missing driver per word, which allows the fallback of the chain to take over.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_DegradesWithoutADriver) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_DegradesWithoutADriver) {
     srt::SynthUnit unit;
     configure(unit);
     // No driver is registered in this case.
@@ -410,14 +410,14 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_DegradesWithoutADriver) {
     const auto covered = convert(unit, "eng", {"hello"});
     BOOST_REQUIRE_EQUAL(covered.size(), 1u);
     // The chain has a fallback, so the word is returned unchanged and counts as a success.
-    BOOST_CHECK(covered[0].error == wolf::Api::G2P::L1::Error::None);
+    BOOST_CHECK(covered[0].error == wolf::Api::G2p::L1::Error::None);
     BOOST_CHECK_EQUAL(covered[0].pronunciation, "hello");
     BOOST_CHECK(covered[0].hitStage == LinguistApi::HitStage::Fallback);
 
     // The chain of the other language has no fallback, so the error from the backend is retained.
     const auto bare = convert(unit, "deu", {"wasser"});
     BOOST_REQUIRE_EQUAL(bare.size(), 1u);
-    BOOST_CHECK(bare[0].error == wolf::Api::G2P::L1::Error::DriverUnavailable);
+    BOOST_CHECK(bare[0].error == wolf::Api::G2p::L1::Error::DriverUnavailable);
     BOOST_CHECK(bare[0].pronunciation.empty());
 }
 
@@ -425,7 +425,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_DegradesWithoutADriver) {
 /// preserve the ordering under batching: the backend decodes the convertible words as one request,
 /// so a word already decided by a rule must be removed from the batch and its result placed back
 /// in the correct slot.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_HonoursTheInputOrdering) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_HonoursTheInputOrdering) {
     ds::InferenceDriverFactory factory;
     srt::SynthUnit unit;
     configure(unit);
@@ -434,18 +434,18 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_HonoursTheInputOrdering) {
     const auto words = convert(unit, "eng", {"hello", "", "two words", "world"});
     BOOST_REQUIRE_EQUAL(words.size(), 4u);
 
-    BOOST_CHECK(words[0].mode == wolf::Api::G2P::L1::Mode::Convert);
+    BOOST_CHECK(words[0].mode == wolf::Api::G2p::L1::Mode::Convert);
     BOOST_CHECK(!words[0].pronunciation.empty());
 
-    BOOST_CHECK(words[1].mode == wolf::Api::G2P::L1::Mode::Skip);
+    BOOST_CHECK(words[1].mode == wolf::Api::G2p::L1::Mode::Skip);
     BOOST_CHECK(words[1].pronunciation.empty());
 
-    BOOST_CHECK(words[2].error == wolf::Api::G2P::L1::Error::InvalidInput);
+    BOOST_CHECK(words[2].error == wolf::Api::G2p::L1::Error::InvalidInput);
     BOOST_CHECK_EQUAL(words[2].pronunciation, "two words");
 
     // A misplaced batch result would corrupt the last word: two of the four words never reached
     // the model, so the second model result belongs in this slot and not one slot earlier.
-    BOOST_CHECK(words[3].mode == wolf::Api::G2P::L1::Mode::Convert);
+    BOOST_CHECK(words[3].mode == wolf::Api::G2p::L1::Mode::Convert);
     BOOST_CHECK(!words[3].pronunciation.empty());
     BOOST_CHECK(words[3].pronunciation != words[0].pronunciation);
 }
@@ -459,7 +459,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_HonoursTheInputOrdering) {
 /// in that configuration and verifies that the driver loaded the runtime from the staged
 /// directory, so that an accidental dependency on either of the other two locations fails rather
 /// than passes by coincidence.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_RunsOnARuntimeTheHostDeployed) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_RunsOnARuntimeTheHostDeployed) {
 
     const auto staged = deployRuntimeLikeAHost();
     BOOST_TEST_MESSAGE("host deployed the runtime to " + staged.string());
@@ -482,7 +482,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_RunsOnARuntimeTheHostDeployed) {
 
         const auto words = convert(unit, "eng", {"hello"});
         BOOST_REQUIRE_EQUAL(words.size(), 1u);
-        BOOST_CHECK(words[0].error == wolf::Api::G2P::L1::Error::None);
+        BOOST_CHECK(words[0].error == wolf::Api::G2p::L1::Error::None);
         BOOST_CHECK(!words[0].pronunciation.empty());
     }
 
@@ -497,7 +497,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_RunsOnARuntimeTheHostDeployed) {
 /// fallback step below it rewrote those failures into successes: the conversion reported the text
 /// of every word as a pronunciation, so a check on the pronunciation passed while the model had
 /// never run. The call itself must therefore be refused.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_FailsTheBatchWhenTheBackendCannotBeBuilt) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_FailsTheBatchWhenTheBackendCannotBeBuilt) {
     srt::SynthUnit unit;
     configure(unit);
     // No ONNX driver is registered: the backend of this case is refused while it is being built,
@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_FailsTheBatchWhenTheBackendCannotBeBuilt) {
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", CHAIN, UNMAPPED_LANGUAGE,
                            UNMAPPED_SCHEME);
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"hello"};
     auto result = chain.get()->start(input);
 
@@ -520,13 +520,13 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_FailsTheBatchWhenTheBackendCannotBeBuilt) {
 ///
 /// The German fixture chain holds a model step and no fallback step, so before this rule the batch
 /// reported success with every word carrying ModelInferenceFailed and no pronunciation.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_RefusesTheBatchWithoutAFallbackToo) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_RefusesTheBatchWithoutAFallbackToo) {
     srt::SynthUnit unit;
     configure(unit);
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", STRICT,
                            UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"wasser"};
     auto result = chain.get()->start(input);
 
@@ -542,13 +542,13 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_RefusesTheBatchWithoutAFallbackToo) {
 ///
 /// This case uses the chain and the pair of the first case above; only the words differ, which
 /// isolates the work of the step from the state of its backend.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_SucceedsWhenNoWordNeedsTheBackend) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_SucceedsWhenNoWordNeedsTheBackend) {
     srt::SynthUnit unit;
     configure(unit);
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", CHAIN, UNMAPPED_LANGUAGE,
                            UNMAPPED_SCHEME);
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"", "   ", "two words"};
     auto result = chain.get()->start(input);
 
@@ -559,12 +559,12 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_SucceedsWhenNoWordNeedsTheBackend) {
     // The verdicts of the input ordering, as test_PipeChain_HonoursTheInputOrdering expects them
     // for the same lyrics.
     for (const auto index : {0u, 1u}) {
-        BOOST_CHECK((*result)->words[index].mode == G2PApi::Mode::Skip);
-        BOOST_CHECK((*result)->words[index].error == G2PApi::Error::None);
+        BOOST_CHECK((*result)->words[index].mode == G2pApi::Mode::Skip);
+        BOOST_CHECK((*result)->words[index].error == G2pApi::Error::None);
         BOOST_CHECK((*result)->words[index].pronunciation.empty());
         BOOST_CHECK((*result)->words[index].candidates.empty());
     }
-    BOOST_CHECK((*result)->words[2].error == G2PApi::Error::InvalidInput);
+    BOOST_CHECK((*result)->words[2].error == G2pApi::Error::InvalidInput);
     BOOST_CHECK_EQUAL((*result)->words[2].pronunciation, "two words");
 }
 
@@ -574,21 +574,21 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_SucceedsWhenNoWordNeedsTheBackend) {
 /// This case pins one side of the boundary: the step asks for its backend before it looks at its
 /// words, so the decision to report a failure must be taken from the words and not from the
 /// backend.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_SucceedsWhenTheDictionaryCoveredEveryWord) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_SucceedsWhenTheDictionaryCoveredEveryWord) {
     const auto root = writeDictChain("covered");
     srt::SynthUnit unit;
     configure(unit);
     auto chain = bindChain(unit, root, "g2p", UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"a"};
     auto result = chain.get()->start(input);
 
     BOOST_REQUIRE_MESSAGE(result, "the batch should have run: " + wolf::test::why(result));
     BOOST_CHECK(chain.get()->state() == srt::ITask::Succeeded);
     BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
-    BOOST_CHECK((*result)->words[0].error == G2PApi::Error::None);
-    BOOST_CHECK((*result)->words[0].hitSource == G2PApi::HitSource::Dict);
+    BOOST_CHECK((*result)->words[0].error == G2pApi::Error::None);
+    BOOST_CHECK((*result)->words[0].hitSource == G2pApi::HitSource::Dict);
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "p q");
 
     discard(root);
@@ -601,13 +601,13 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_SucceedsWhenTheDictionaryCoveredEveryWord) {
 /// This case pins the other side of the boundary of the case above. Before this rule the batch
 /// succeeded with "a" read by the dictionary and "b" filled in by the fallback, so no single word
 /// of the result would have distinguished the two behaviors.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_FailsTheBatchForOneWordTheDictionaryMissed) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_FailsTheBatchForOneWordTheDictionaryMissed) {
     const auto root = writeDictChain("missed");
     srt::SynthUnit unit;
     configure(unit);
     auto chain = bindChain(unit, root, "g2p", UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"a", "b"};
     auto result = chain.get()->start(input);
 
@@ -625,7 +625,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2P_FailsTheBatchForOneWordTheDictionaryMissed) {
 /// The check reads the files that the bundle names and creates no session, so it holds in a process
 /// without a driver. Every model of the bundle is walked, because the refusal has to name the model
 /// that is missing: what a user restores is that file, not a set of them.
-BOOST_AUTO_TEST_CASE(test_MultiG2P_RejectsAPackageWhoseModelIsMissing) {
+BOOST_AUTO_TEST_CASE(test_MultiG2p_RejectsAPackageWhoseModelIsMissing) {
     const auto root = copiedBackend("model-missing");
     const auto directory = root / "inferences" / "multig2p";
 

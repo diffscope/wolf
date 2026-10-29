@@ -6,7 +6,7 @@
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
 
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 
 #define BOOST_TEST_MAIN
@@ -15,7 +15,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace S2PApi = wolf::Api::S2P::L1;
+namespace S2pApi = wolf::Api::S2p::L1;
 
 namespace {
 
@@ -52,14 +52,14 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "s2p")->as<srt::InferenceSpec>();
-        S2PApi::S2PImportOptions options(spec->variant());
-        S2PApi::S2PRuntimeOptions runtime(spec->variant());
+        S2pApi::S2pImportOptions options(spec->variant());
+        S2pApi::S2pRuntimeOptions runtime(spec->variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        S2PApi::S2PStartInput input;
+        S2pApi::S2pStartInput input;
         input.pronunciations.push_back(pronunciation);
-        auto result = static_cast<S2PApi::S2PExecutive *>(executive->get())->start(input);
+        auto result = static_cast<S2pApi::S2pExecutive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto phonemes = (*result)->phonemes.front();
         executive->reset();
@@ -68,11 +68,11 @@ namespace {
 
 }
 
-BOOST_AUTO_TEST_SUITE(test_S2PVariants)
+BOOST_AUTO_TEST_SUITE(test_S2pVariants)
 
 /// The direct variant requires no resource and drops the empty pieces produced by consecutive
 /// spaces, so no empty phoneme reaches the output.
-BOOST_AUTO_TEST_CASE(test_S2PVariants_DirectSplitsOnSpaces) {
+BOOST_AUTO_TEST_CASE(test_S2pVariants_DirectSplitsOnSpaces) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("direct", "direct", "{}"));
     if (!handle) {
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(test_S2PVariants_DirectSplitsOnSpaces) {
 
 /// The dict variant looks up the whole pronunciation. A miss yields no phonemes and is not a
 /// failure, because Level 1 provides S2P with no per-unit error channel.
-BOOST_AUTO_TEST_CASE(test_S2PVariants_DictLooksUpWholePronunciation) {
+BOOST_AUTO_TEST_CASE(test_S2pVariants_DictLooksUpWholePronunciation) {
     srt::SynthUnit unit;
     auto handle = load(
         unit, writePackage("dict", "dict", R"({ "file": "table.tsv" })", "ni\tn i\nhao\th ao\n"));
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(test_S2PVariants_DictLooksUpWholePronunciation) {
 
 /// The mapping variant substitutes each phoneme individually and passes through unlisted phonemes;
 /// its output set is therefore the target column together with every unlisted input phoneme.
-BOOST_AUTO_TEST_CASE(test_S2PVariants_MappingPassesThroughUnlisted) {
+BOOST_AUTO_TEST_CASE(test_S2pVariants_MappingPassesThroughUnlisted) {
     srt::SynthUnit unit;
     auto handle =
         load(unit, writePackage("mapping", "mapping", R"({ "file": "table.tsv" })", "a\tA\n"));
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(test_S2PVariants_MappingPassesThroughUnlisted) {
 /// Parsing is deliberately strict. A dictionary that silently skipped an unparsable line would
 /// produce incorrect conversions without any error, so any malformed line rejects the whole file
 /// at load time.
-BOOST_AUTO_TEST_CASE(test_S2PVariants_RejectsMalformedTables) {
+BOOST_AUTO_TEST_CASE(test_S2pVariants_RejectsMalformedTables) {
     const struct {
         const char *name;
         const char *content;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_S2PVariants_RejectsMalformedTables) {
 
 /// A misspelled key is rejected rather than ignored, so it cannot silently leave a default in
 /// place.
-BOOST_AUTO_TEST_CASE(test_S2PVariants_RejectsUnknownConfigurationKey) {
+BOOST_AUTO_TEST_CASE(test_S2pVariants_RejectsUnknownConfigurationKey) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("unknown-key", "direct", R"({ "flie": "table.tsv" })"));
     BOOST_REQUIRE(!handle);

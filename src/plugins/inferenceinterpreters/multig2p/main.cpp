@@ -16,7 +16,7 @@
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Support/ContractValues.h>
 #include <wolf/Support/ExecutiveBase.h>
 #include <wolf/Support/InputRules.h>
@@ -27,7 +27,7 @@
 #include "Decoder.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 
 namespace wolf::multig2p {
 
@@ -54,7 +54,7 @@ namespace wolf::multig2p {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(G2PApi::API_INTERFACE, VARIANT, G2PApi::API_LEVEL) {
+                : ContribConfiguration(G2pApi::API_INTERFACE, VARIANT, G2pApi::API_LEVEL) {
             }
 
             std::shared_ptr<const Bundle> bundle;
@@ -68,7 +68,7 @@ namespace wolf::multig2p {
         };
 
         class Executive
-            : public ExecutiveBase<G2PApi::G2PExecutive, G2PApi::G2PStartInput, G2PApi::G2PResult> {
+            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
         public:
             Executive(srt::InferenceSpec &spec, const Configuration *configuration,
                       std::unique_ptr<Decoder> decoder, std::string languageRef,
@@ -82,16 +82,16 @@ namespace wolf::multig2p {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2PApi::G2PInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const G2PApi::G2PStartInput &input) override {
+            Batch runBatch(const G2pApi::G2pStartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<G2PApi::G2PResult>();
+                auto result = std::make_unique<G2pApi::G2pResult>();
                 result->words.resize(input.lyrics.size());
 
                 // No driver is available in this process. The contract defines a word-level error
@@ -99,7 +99,7 @@ namespace wolf::multig2p {
                 // failing to load.
                 if (!m_decoder) {
                     for (auto &word : result->words) {
-                        word.error = G2PApi::Error::DriverUnavailable;
+                        word.error = G2pApi::Error::DriverUnavailable;
                     }
                     return result;
                 }
@@ -116,10 +116,10 @@ namespace wolf::multig2p {
                 for (std::size_t i = 0; i < input.lyrics.size(); ++i) {
                     verdicts.push_back(classifyLyric(input.lyrics[i]));
                     if (verdicts.back() == LyricVerdict::Skip) {
-                        result->words[i].mode = G2PApi::Mode::Skip;
+                        result->words[i].mode = G2pApi::Mode::Skip;
                     } else if (verdicts.back() == LyricVerdict::Invalid) {
                         result->words[i].pronunciation = input.lyrics[i];
-                        result->words[i].error = G2PApi::Error::InvalidInput;
+                        result->words[i].error = G2pApi::Error::InvalidInput;
                     } else {
                         convertible.push_back(input.lyrics[i]);
                         positions.push_back(i);
@@ -142,7 +142,7 @@ namespace wolf::multig2p {
                     // A batch fails as a whole: every word in the batch carries the same error,
                     // rather than the call reporting success with silently empty output.
                     for (const auto position : positions) {
-                        result->words[position].error = G2PApi::Error::ModelInferenceFailed;
+                        result->words[position].error = G2pApi::Error::ModelInferenceFailed;
                     }
                     return result;
                 }
@@ -166,12 +166,12 @@ namespace wolf::multig2p {
                         pronunciation += symbol;
                     }
                     if (pronunciation.empty()) {
-                        word.error = G2PApi::Error::PhonemeGenerationFailed;
+                        word.error = G2pApi::Error::PhonemeGenerationFailed;
                         continue;
                     }
                     word.pronunciation = pronunciation;
                     word.candidates.push_back(pronunciation);
-                    word.hitSource = G2PApi::HitSource::Model;
+                    word.hitSource = G2pApi::HitSource::Model;
                 }
                 return result;
             }
@@ -191,7 +191,7 @@ namespace wolf::multig2p {
                 if (!read) {
                     return read.takeError();
                 }
-                auto result = std::make_unique<G2PApi::G2PExports>(VARIANT);
+                auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
                 result->languages = std::move(read->languages);
                 result->symbols = std::move(read->strings);
                 result->openSet = read->openSet;
@@ -336,7 +336,7 @@ namespace wolf::multig2p {
                     return checked.takeError();
                 }
                 return std::unique_ptr<srt::ContribImportOptions>(
-                    new G2PApi::G2PImportOptions(VARIANT));
+                    new G2pApi::G2pImportOptions(VARIANT));
             }
 
             srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -349,7 +349,7 @@ namespace wolf::multig2p {
                                       "the multig2p module was imported without its configuration");
                 }
                 const auto &binding =
-                    static_cast<const G2PApi::G2PRuntimeOptions &>(runtimeOptions).binding;
+                    static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
 
                 const MappedLanguage *mapped = nullptr;
                 for (const auto &entry : configuration->languageMap) {
@@ -391,11 +391,11 @@ namespace wolf::multig2p {
 
     }
 
-    class MultiG2PPlugin final : public srt::InferenceInterpreterPlugin {
+    class MultiG2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != G2PApi::API_INTERFACE || level != G2PApi::API_LEVEL ||
+            if (interfaceName != G2pApi::API_INTERFACE || level != G2pApi::API_LEVEL ||
                 variant != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported multig2p contract: " + std::string(interfaceName) +
@@ -407,4 +407,4 @@ namespace wolf::multig2p {
 
 }
 
-STDC_EXPORT_PLUGIN(wolf::multig2p::MultiG2PPlugin)
+STDC_EXPORT_PLUGIN(wolf::multig2p::MultiG2pPlugin)

@@ -9,7 +9,7 @@
 #include <synthrt/Core/PackageHandle.h>
 #include <synthrt/Core/SynthUnit.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 #include <wolf/Session/LinguistSession.h>
@@ -20,7 +20,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace G2PApi = wolf::Api::G2P::L1;
+namespace G2pApi = wolf::Api::G2p::L1;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
@@ -162,14 +162,14 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_ForwardsAStopToItsBackend) {
     auto *spec = handle->contribution("inference", "g2p")->as<srt::InferenceSpec>();
     BOOST_REQUIRE(spec != nullptr);
 
-    G2PApi::G2PImportOptions importOptions(spec->variant());
-    G2PApi::G2PRuntimeOptions runtimeOptions(spec->variant());
+    G2pApi::G2pImportOptions importOptions(spec->variant());
+    G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
     runtimeOptions.binding = {"eng", "arpabet"};
     auto executive = spec->createInference(importOptions, runtimeOptions);
     BOOST_REQUIRE_MESSAGE(static_cast<bool>(executive), wolf::test::why(executive));
-    auto *chain = static_cast<G2PApi::G2PExecutive *>(executive->get());
+    auto *chain = static_cast<G2pApi::G2pExecutive *>(executive->get());
 
-    G2PApi::G2PStartInput input;
+    G2pApi::G2pStartInput input;
     input.lyrics = {"hello"};
 
     // The request arrives while the batch is inside the backend, which is the only moment the chain
@@ -244,14 +244,14 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_ReportsWhenTheFallbackHasNothingToGive) {
     const auto words = convert(unit, {"unlisted", "-"});
     BOOST_REQUIRE_EQUAL(words.size(), 2u);
 
-    BOOST_CHECK(words[0].mode == wolf::Api::G2P::L1::Mode::Convert);
-    BOOST_CHECK(words[0].error == wolf::Api::G2P::L1::Error::PhonemeGenerationFailed);
+    BOOST_CHECK(words[0].mode == wolf::Api::G2p::L1::Mode::Convert);
+    BOOST_CHECK(words[0].error == wolf::Api::G2p::L1::Error::PhonemeGenerationFailed);
     BOOST_CHECK(words[0].pronunciation.empty());
     BOOST_CHECK(words[0].candidates.empty());
 
     // Classified as Copy, so no producing step processed the word and it is returned unchanged.
-    BOOST_CHECK(words[1].mode == wolf::Api::G2P::L1::Mode::Copy);
-    BOOST_CHECK(words[1].error == wolf::Api::G2P::L1::Error::None);
+    BOOST_CHECK(words[1].mode == wolf::Api::G2p::L1::Mode::Copy);
+    BOOST_CHECK(words[1].error == wolf::Api::G2p::L1::Error::None);
     BOOST_CHECK_EQUAL(words[1].pronunciation, "-");
 }
 
@@ -279,12 +279,12 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_ReportsUnproducedWordsWithoutAFallback) {
     BOOST_REQUIRE_EQUAL(words.size(), 2u);
 
     // The dictionary covered the first word.
-    BOOST_CHECK(words[0].error == wolf::Api::G2P::L1::Error::None);
+    BOOST_CHECK(words[0].error == wolf::Api::G2p::L1::Error::None);
     BOOST_CHECK_EQUAL(words[0].pronunciation, "hh ax l ow");
 
     // No step covered the second word, and the chain has no fallback step.
-    BOOST_CHECK(words[1].mode == wolf::Api::G2P::L1::Mode::Convert);
-    BOOST_CHECK(words[1].error == wolf::Api::G2P::L1::Error::PhonemeGenerationFailed);
+    BOOST_CHECK(words[1].mode == wolf::Api::G2p::L1::Mode::Convert);
+    BOOST_CHECK(words[1].error == wolf::Api::G2p::L1::Error::PhonemeGenerationFailed);
     BOOST_CHECK(words[1].pronunciation.empty());
     BOOST_CHECK(words[1].candidates.empty());
 }
@@ -472,13 +472,13 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_HonoursTheInputOrdering) {
     const auto words = convert(unit, {"hello", "", "   ", "two words", " hello"});
     BOOST_REQUIRE_EQUAL(words.size(), 5u);
 
-    BOOST_CHECK(words[0].mode == wolf::Api::G2P::L1::Mode::Convert);
+    BOOST_CHECK(words[0].mode == wolf::Api::G2p::L1::Mode::Convert);
     BOOST_CHECK_EQUAL(words[0].pronunciation, "hh ax l ow");
 
     // Empty and whitespace-only lyrics are both skipped without an error.
     for (const auto index : {1u, 2u}) {
-        BOOST_CHECK(words[index].mode == wolf::Api::G2P::L1::Mode::Skip);
-        BOOST_CHECK(words[index].error == wolf::Api::G2P::L1::Error::None);
+        BOOST_CHECK(words[index].mode == wolf::Api::G2p::L1::Mode::Skip);
+        BOOST_CHECK(words[index].error == wolf::Api::G2p::L1::Error::None);
         BOOST_CHECK(words[index].pronunciation.empty());
         BOOST_CHECK(words[index].candidates.empty());
     }
@@ -488,7 +488,7 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_HonoursTheInputOrdering) {
     // whitespace also counts, which distinguishes this case from a word that the chain could not
     // find.
     for (const auto index : {3u, 4u}) {
-        BOOST_CHECK(words[index].error == wolf::Api::G2P::L1::Error::InvalidInput);
+        BOOST_CHECK(words[index].error == wolf::Api::G2p::L1::Error::InvalidInput);
     }
     BOOST_CHECK_EQUAL(words[3].pronunciation, "two words");
     BOOST_CHECK_EQUAL(words[4].pronunciation, " hello");

@@ -1,4 +1,4 @@
-#include "S2PTables.h"
+#include "S2pTables.h"
 
 #include <fstream>
 #include <utility>

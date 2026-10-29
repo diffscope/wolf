@@ -63,7 +63,7 @@ Executive Factory；G2P / S2P / Onset 三份独立的推理契约，经三个固
 
 **变体**（收录表无缺口）：S2P `direct` / `dict` / `mapping` / `lua`；Onset `rule` / `lua`；
 G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共用的 `Verifier`。
-`multig2p-onnx` 已用真实模型跑通，语言 id 实际传入模型（`test_MultiG2P` 断言两种语言产生不同的读法）。
+`multig2p-onnx` 已用真实模型跑通，语言 id 实际传入模型（`test_MultiG2p` 断言两种语言产生不同的读法）。
 
 **资源**：13 个旧套件经转换管线转为 spec 2.4 格式，得到 12 个语言包与共享后端包
 `wolf/g2p-multi`；转换管线另生成共享后端包 `wolf/g2p-pinyin`；连同手写的直通包 `wolf/lang-zxx`，
@@ -102,8 +102,8 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 | 项 | 结果 |
 | :-- | :-- |
 | 完整构建 | CTest 注册 **20** 个测试二进制、**137** 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）——这两个数是权威，其它文档引用它们时只写指针；曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
-| 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaVariants` 与 `test_MultiG2P`）全部通过；现行该配置为 17 个，被排除的三个见 `src/tests/auto/CMakeLists.txt` 的注册条件 |
-| ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2P`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
+| 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaVariants` 与 `test_MultiG2p`）全部通过；现行该配置为 17 个，被排除的三个见 `src/tests/auto/CMakeLists.txt` 的注册条件 |
+| ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2p`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
 | 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，当时的 17 个测试二进制以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(wolf)` 并链接；检查 `wolf::wolf` 目标、`WOLF_PLUGINS_DIR` 下的两个类别目录，以及安装包中不含 Support 头文件。把私有依赖放回公开链接接口时，配置期断言即失败 |
 | 版本区间 | 消费者夹具钉在修订 2，由安装的修订 3 供给：解析结果版本为 `1.0.0.3`，请求侧不是该版本（A68；用例为 `test_LinguistLoad.cpp` 的 `ServesAConsumerPinnedToAnOlderRevision`） |
@@ -116,7 +116,7 @@ G2P `pipe-chain` / `algo-pinyin` / `multig2p-onnx`；另有三种打标类型共
 （由 CI 的 `Generate the test fixture packages` 步骤产出）的 lint、发布 pin 与仓内副本的一致性
 检查（`check-release-assets.py`）、CTest 与安装包消费检查。
 `lang-packages` 是唯一**下载并校验**语言包发布资产的步骤，`test_ConvertedPackages` 因此只在
-Linux 端真跑；`test_MultiG2P`、`test_MultiG2PMaxLen` 与 `test_HostFlow` 需要 CI 不提供的共享
+Linux 端真跑；`test_MultiG2p`、`test_MultiG2pMaxLen` 与 `test_HostFlow` 需要 CI 不提供的共享
 G2P 模型后端（该端口只在非缺省的 `multi` 特性下安装）或声库夹具，两端都报
 跳过（`.github/workflows/ci.yml:21-31,65-79,92-96`）。
 

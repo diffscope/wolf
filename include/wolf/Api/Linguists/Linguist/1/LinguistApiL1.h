@@ -15,7 +15,7 @@
 #include <synthrt/Task/ITask.h>
 
 #include <wolf/Api/Inferences/Common/1/CommonApiL1.h>
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 // This is the only include from Api into the Linguist layer, and it is intentional. The inference
 // contracts under Api/Inferences depend on synthrt's inference category alone, but this contract is
 // defined on wolf's linguist category. LinguistExecutive derives from the executive base of that
@@ -144,14 +144,14 @@ namespace wolf::Api::Linguist::L1 {
         Depth depth = Depth::Onsets;
     };
 
-    /// Conversion result of one word. See G2P::L1::G2PWordOutput: a failed word keeps its position
+    /// Conversion result of one word. See G2p::L1::G2pWordOutput: a failed word keeps its position
     /// in the batch.
     struct LinguistWordOutput {
         std::string pronunciation;
         std::vector<std::string> candidates;
 
-        G2P::L1::Mode mode = G2P::L1::Mode::Convert;
-        G2P::L1::Error error = G2P::L1::Error::None;
+        G2p::L1::Mode mode = G2p::L1::Mode::Convert;
+        G2p::L1::Error error = G2p::L1::Error::None;
 
         /// Present according to the requested depth.
         std::vector<std::string> phonemes;
@@ -329,7 +329,7 @@ namespace wolf::Api::Linguist::L1 {
         ///
         /// A composition reaches phonemes through one S2P step. A member that converts the symbols
         /// produces a phoneme layer that differs from its input, and the pronunciation is then a
-        /// layer of its own. A member that copies the symbols (see S2P::L1::VARIANT_DIRECT) produces
+        /// layer of its own. A member that copies the symbols (see S2p::L1::VARIANT_DIRECT) produces
         /// the phoneme layer without adding one, and so does a composition without an S2P member,
         /// whose reachable layers end at the pronunciation. The symbols of the deepest reachable
         /// layer are the phoneme layer in every case.

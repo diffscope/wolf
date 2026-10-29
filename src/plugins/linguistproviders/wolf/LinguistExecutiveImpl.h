@@ -5,9 +5,9 @@
 
 #include <wolf/Support/ExecutiveBase.h>
 
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 
 namespace wolf {
@@ -70,8 +70,8 @@ namespace wolf {
         template <class Options, class Executive>
         srt::Expected<Executive *> createMember(std::string_view role);
 
-        srt::Expected<Api::G2P::L1::G2PExecutive *> g2p();
-        srt::Expected<Api::S2P::L1::S2PExecutive *> s2p();
+        srt::Expected<Api::G2p::L1::G2pExecutive *> g2p();
+        srt::Expected<Api::S2p::L1::S2pExecutive *> s2p();
 
         /// Returns the Onset executive and creates it on first use.
         ///
@@ -85,8 +85,8 @@ namespace wolf {
 
         // Atomic because stop() may be called on another thread while a conversion is creating
         // the members, and stop() must reach every member that already exists.
-        std::atomic<Api::G2P::L1::G2PExecutive *> m_g2p = nullptr;
-        std::atomic<Api::S2P::L1::S2PExecutive *> m_s2p = nullptr;
+        std::atomic<Api::G2p::L1::G2pExecutive *> m_g2p = nullptr;
+        std::atomic<Api::S2p::L1::S2pExecutive *> m_s2p = nullptr;
         std::atomic<Api::Onset::L1::OnsetExecutive *> m_onset = nullptr;
     };
 

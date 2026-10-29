@@ -19,9 +19,9 @@
 #include <synthrt/SVS/SingerContrib.h>
 
 #include <wolf/Api/Inferences/Common/1/CommonApiL1.h>
-#include <wolf/Api/Inferences/G2P/1/G2PApiL1.h>
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 #include <wolf/Linguist/SingerLanguages.h>
@@ -183,27 +183,27 @@ namespace wolf {
                     auto linguist = spec.as<LinguistSpec>();
                     const Api::Common::L1::LanguageScheme pair(linguist->language(),
                                                                linguist->scheme());
-                    bool hasG2P = false;
+                    bool hasG2p = false;
                     for (const auto &item : spec.imports()) {
                         if (item.role() == LinguistApi::ROLE_G2P) {
                             if (auto result =
-                                    validateLinguistRole(item, Api::G2P::L1::API_INTERFACE);
+                                    validateLinguistRole(item, Api::G2p::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
-                            if (auto result = validateLanguageMatch<Api::G2P::L1::G2PExports>(
+                            if (auto result = validateLanguageMatch<Api::G2p::L1::G2pExports>(
                                     item.binding()->target(), pair, LinguistApi::ROLE_G2P);
                                 !result) {
                                 return result.takeError();
                             }
-                            hasG2P = true;
+                            hasG2p = true;
                         } else if (item.role() == LinguistApi::ROLE_S2P) {
                             if (auto result =
-                                    validateLinguistRole(item, Api::S2P::L1::API_INTERFACE);
+                                    validateLinguistRole(item, Api::S2p::L1::API_INTERFACE);
                                 !result) {
                                 return result.takeError();
                             }
-                            if (auto result = validateLanguageMatch<Api::S2P::L1::S2PExports>(
+                            if (auto result = validateLanguageMatch<Api::S2p::L1::S2pExports>(
                                     item.binding()->target(), pair, LinguistApi::ROLE_S2P);
                                 !result) {
                                 return result.takeError();
@@ -232,7 +232,7 @@ namespace wolf {
                     // supplies the phoneme stage. The importing variant determines which roles are
                     // required, and the upper specification states that an importer *may*
                     // require a role, not that it must.
-                    if (!hasG2P) {
+                    if (!hasG2p) {
                         return srt::Error(srt::Error::InvalidFormat,
                                           std::string("linguist imports require a ") +
                                               LinguistApi::ROLE_G2P + " role");
@@ -296,7 +296,7 @@ namespace wolf {
                                     : LinguistApi::Depth::Phonemes;
                         if (const auto *binding = s2p->binding()) {
                             separateLayer =
-                                !Api::S2P::L1::variantKeepsSymbols(binding->target().variant());
+                                !Api::S2p::L1::variantKeepsSymbols(binding->target().variant());
                         }
                     }
                     m_depths.emplace(entry.language, depth);

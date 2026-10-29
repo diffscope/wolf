@@ -9,7 +9,7 @@
 #include <synthrt/Core/SynthUnit.h>
 
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
-#include <wolf/Api/Inferences/S2P/1/S2PApiL1.h>
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 
 #define BOOST_TEST_MAIN
@@ -18,7 +18,7 @@
 #include "TestSupport.h"
 
 namespace fs = std::filesystem;
-namespace S2PApi = wolf::Api::S2P::L1;
+namespace S2pApi = wolf::Api::S2p::L1;
 namespace OnsetApi = wolf::Api::Onset::L1;
 
 namespace {
@@ -55,14 +55,14 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "m")->as<srt::InferenceSpec>();
-        S2PApi::S2PImportOptions options(spec->variant());
-        S2PApi::S2PRuntimeOptions runtime(spec->variant());
+        S2pApi::S2pImportOptions options(spec->variant());
+        S2pApi::S2pRuntimeOptions runtime(spec->variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        S2PApi::S2PStartInput input;
+        S2pApi::S2pStartInput input;
         input.pronunciations.push_back(pronunciation);
-        auto result = static_cast<S2PApi::S2PExecutive *>(executive->get())->start(input);
+        auto result = static_cast<S2pApi::S2pExecutive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto phonemes = (*result)->phonemes.front();
         executive->reset();
@@ -90,7 +90,7 @@ namespace {
 BOOST_AUTO_TEST_SUITE(test_LuaVariants)
 
 /// Checks that the S2P script converts a pronunciation into a list of phonemes.
-BOOST_AUTO_TEST_CASE(test_LuaVariants_ScriptedS2P) {
+BOOST_AUTO_TEST_CASE(test_LuaVariants_ScriptedS2p) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("s2p", "S2P", R"(
 function s2p(pronunciation)
@@ -279,11 +279,11 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2PApi::S2PImportOptions options(spec->variant());
-    S2PApi::S2PRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto *s2p = static_cast<S2PApi::S2PExecutive *>(executive->get());
+    auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
 
     // Stops the script after it enters the running state and a short delay elapses. test_PipeChain
     // explains why the wait depends on the state rather than on a delay alone.
@@ -296,7 +296,7 @@ end
         (void) s2p->stop();
     });
 
-    S2PApi::S2PStartInput input;
+    S2pApi::S2pStartInput input;
     input.pronunciations.push_back("anything");
     auto result = s2p->start(input);
     stopper.join();
@@ -324,11 +324,11 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2PApi::S2PImportOptions options(spec->variant());
-    S2PApi::S2PRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto *s2p = static_cast<S2PApi::S2PExecutive *>(executive->get());
+    auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
 
     // Stops the script after it enters the running state and a short delay elapses. test_PipeChain
     // explains why the wait depends on the state rather than on a delay alone.
@@ -341,7 +341,7 @@ end
         (void) s2p->stop();
     });
 
-    S2PApi::S2PStartInput input;
+    S2pApi::S2pStartInput input;
     input.pronunciations.push_back("done");
     input.pronunciations.push_back("loop");
     auto result = s2p->start(input);
@@ -370,15 +370,15 @@ end
     BOOST_REQUIRE(handle);
 
     auto spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2PApi::S2PImportOptions options(spec->variant());
-    S2PApi::S2PRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto s2p = static_cast<S2PApi::S2PExecutive *>(executive->get());
+    auto s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
 
     (void) s2p->stop();
 
-    S2PApi::S2PStartInput input;
+    S2pApi::S2pStartInput input;
     input.pronunciations.push_back("a");
     auto cancelled = s2p->start(input);
     BOOST_REQUIRE(cancelled);
