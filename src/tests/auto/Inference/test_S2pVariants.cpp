@@ -52,8 +52,8 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "s2p")->as<srt::InferenceSpec>();
-        S2pApi::S2pImportOptions options(spec->variant());
-        S2pApi::S2pRuntimeOptions runtime(spec->variant());
+        S2pApi::S2pImportOptions options(spec->triplet().variant());
+        S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 

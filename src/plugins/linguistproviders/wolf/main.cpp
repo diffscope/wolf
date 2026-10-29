@@ -10,14 +10,14 @@ namespace wolf {
         WolfLinguistProviderPlugin() = default;
 
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
+            create(const srt::ContribTriplet &triplet) override {
             namespace LinguistApi = Api::Linguist::L1;
-            if (interfaceName != LinguistApi::API_INTERFACE || level != LinguistApi::API_LEVEL ||
-                variant != LinguistApi::API_VARIANT) {
-                return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported linguist interpreter contract: " +
-                                      std::string(interfaceName) + "/" + std::to_string(level) +
-                                      "/" + std::string(variant));
+            if (triplet != srt::ContribTriplet(LinguistApi::API_INTERFACE, LinguistApi::API_LEVEL,
+                                               LinguistApi::API_VARIANT)) {
+                return srt::Error(
+                    srt::Error::InvalidArgument,
+                    "unsupported linguist interpreter contract: " + triplet.interfaceId() + "/" +
+                        std::to_string(triplet.level()) + "/" + triplet.variant());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new WolfLinguistProvider());
         }

@@ -55,8 +55,8 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "m")->as<srt::InferenceSpec>();
-        S2pApi::S2pImportOptions options(spec->variant());
-        S2pApi::S2pRuntimeOptions runtime(spec->variant());
+        S2pApi::S2pImportOptions options(spec->triplet().variant());
+        S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
@@ -71,8 +71,8 @@ namespace {
 
     std::vector<bool> mark(srt::PackageHandle &handle, const std::vector<std::string> &phonemes) {
         auto *spec = handle.contribution("inference", "m")->as<srt::InferenceSpec>();
-        OnsetApi::OnsetImportOptions options(spec->variant());
-        OnsetApi::OnsetRuntimeOptions runtime(spec->variant());
+        OnsetApi::OnsetImportOptions options(spec->triplet().variant());
+        OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
@@ -252,8 +252,8 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    OnsetApi::OnsetImportOptions options(spec->variant());
-    OnsetApi::OnsetRuntimeOptions runtime(spec->variant());
+    OnsetApi::OnsetImportOptions options(spec->triplet().variant());
+    OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
 
@@ -279,8 +279,8 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->triplet().variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
     auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
@@ -324,8 +324,8 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->triplet().variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
     auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
@@ -370,8 +370,8 @@ end
     BOOST_REQUIRE(handle);
 
     auto spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->variant());
+    S2pApi::S2pImportOptions options(spec->triplet().variant());
+    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
     auto s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());

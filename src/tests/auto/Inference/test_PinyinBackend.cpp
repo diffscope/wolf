@@ -102,8 +102,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_BuildsEnginesConcurrently) {
     srt::SynthUnit unit;
     configure(unit);
 
-    auto handle =
-        unit.openPackage(wolf::test::fixtureRoot() / "singer-zh", srt::SynthUnit::Load);
+    auto handle = unit.openPackage(wolf::test::fixtureRoot() / "singer-zh", srt::SynthUnit::Load);
     if (!handle) {
         BOOST_FAIL("singer-zh should have loaded: " + handle.error().toString());
     }
@@ -196,8 +195,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_BreaksRunsWhenCalledDirectly) {
     // the arrow operator accesses the stored pointer, so calling reset() through it destroys the
     // executive instead of preparing it for another batch.
     const auto convertWords = [&](const std::vector<std::string> &lyrics) {
-        G2pApi::G2pImportOptions importOptions(spec->variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
         runtimeOptions.binding = {"cmn", "pinyin"};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         BOOST_REQUIRE(executive);
@@ -211,8 +210,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_BreaksRunsWhenCalledDirectly) {
 
     // The characters are adjacent, so the phrase table still assigns the phrase reading to the
     // polyphonic character.
-    const auto adjacent =
-        convertWords({"\xE9\x93\xB6", "\xE8\xA1\x8C"});
+    const auto adjacent = convertWords({"\xE9\x93\xB6", "\xE8\xA1\x8C"});
     BOOST_REQUIRE_EQUAL(adjacent.size(), 2u);
     BOOST_CHECK_EQUAL(adjacent[0].pronunciation, "yin");
     BOOST_CHECK_EQUAL(adjacent[1].pronunciation, "hang");
@@ -262,8 +260,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinBackend_ServesTwoDictionaryRoots) {
         BOOST_FAIL("the first engine package should have loaded: " + first.error().toString());
     }
 
-    auto second = unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine-rival",
-                                   srt::SynthUnit::Load);
+    auto second =
+        unit.openPackage(wolf::test::fixtureRoot() / "pinyin-engine-rival", srt::SynthUnit::Load);
     if (!second) {
         BOOST_FAIL("a second dictionary root must load: " + second.error().toString());
     }

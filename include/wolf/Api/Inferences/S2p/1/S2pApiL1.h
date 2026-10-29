@@ -40,7 +40,8 @@ namespace wolf::Api::S2p::L1 {
     /// third-party variant may keep them as well, and no version of this header can say so.
     inline constexpr char VARIANT_DIRECT[] = "direct";
 
-    /// Whether \a variant converts a pronunciation without changing its symbols. See VARIANT_DIRECT.
+    /// Whether \a variant converts a pronunciation without changing its symbols. See
+    /// VARIANT_DIRECT.
     ///
     /// Only VARIANT_DIRECT is known to keep the symbols; every other name returns false. That
     /// includes a variant this version does not know, because a caller must not assume that an
@@ -64,7 +65,7 @@ namespace wolf::Api::S2p::L1 {
     class S2pExports : public srt::ContribExports {
     public:
         explicit S2pExports(std::string variant)
-            : ContribExports(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
 
         /// Pairs whose pronunciations this module consumes. This key is the dual of the G2P key
@@ -84,14 +85,14 @@ namespace wolf::Api::S2p::L1 {
     class S2pImportOptions : public srt::ContribImportOptions {
     public:
         explicit S2pImportOptions(std::string variant)
-            : ContribImportOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
     };
 
     class S2pRuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
         explicit S2pRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
 
         /// See G2p::L1::G2pRuntimeOptions::binding: the pair bound for the whole lifetime.

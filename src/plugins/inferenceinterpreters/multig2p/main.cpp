@@ -54,7 +54,7 @@ namespace wolf::multig2p {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(G2pApi::API_INTERFACE, VARIANT, G2pApi::API_LEVEL) {
+                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
             }
 
             std::shared_ptr<const Bundle> bundle;
@@ -394,12 +394,11 @@ namespace wolf::multig2p {
     class MultiG2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != G2pApi::API_INTERFACE || level != G2pApi::API_LEVEL ||
-                variant != VARIANT) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet != srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported multig2p contract: " + std::string(interfaceName) +
-                                      "/" + std::to_string(level) + "/" + std::string(variant));
+                                  "unsupported multig2p contract: " + triplet.interfaceId() + "/" +
+                                      std::to_string(triplet.level()) + "/" + triplet.variant());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

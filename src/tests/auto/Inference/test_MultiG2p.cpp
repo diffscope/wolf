@@ -110,8 +110,8 @@ namespace {
         convert(srt::SynthUnit &unit, const std::string &language,
                 const std::vector<std::string> &lyrics,
                 LinguistApi::Depth depth = LinguistApi::Depth::Phonemes) {
-        auto handle = unit.openPackage(wolf::test::fixtureRoot() / "singer-model",
-                                       srt::SynthUnit::Load);
+        auto handle =
+            unit.openPackage(wolf::test::fixtureRoot() / "singer-model", srt::SynthUnit::Load);
         if (!handle) {
             BOOST_FAIL("the singer should have loaded: " + handle.error().toString());
         }
@@ -189,8 +189,8 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2pApi::G2pImportOptions importOptions(spec->variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
         runtimeOptions.binding = {language, scheme};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
@@ -663,8 +663,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2p_RejectsAPackageWhoseModelIsMissing) {
     // The model names are walked in a fixed order, so a failure names the model that was hidden.
     for (const auto *logical : {"encoder", "decoder_step_init", "decoder_step"}) {
         const auto model = modelFile(logical);
-        BOOST_REQUIRE_MESSAGE(!model.empty(), std::string("the bundle should name a ") + logical +
-                                                  " model");
+        BOOST_REQUIRE_MESSAGE(!model.empty(),
+                              std::string("the bundle should name a ") + logical + " model");
 
         // Hidden rather than removed, so that the next name can be walked on the same tree.
         const auto hidden = fs::path(model.string() + ".hidden");
@@ -683,8 +683,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2p_RejectsAPackageWhoseModelIsMissing) {
                             message);
         // The text names the file, which is what tells a user which model to restore.
         BOOST_CHECK_MESSAGE(message.find(model.filename().string()) != std::string::npos, message);
-        // The load may add its own framing around the error of the contribution, so the code is read
-        // from the innermost error of the chain, which is the one the check sets.
+        // The load may add its own framing around the error of the contribution, so the code is
+        // read from the innermost error of the chain, which is the one the check sets.
         BOOST_CHECK_MESSAGE(refused.error().rootCause().code() == srt::Error::FileNotFound,
                             "the refusal should report FileNotFound: " + message);
 

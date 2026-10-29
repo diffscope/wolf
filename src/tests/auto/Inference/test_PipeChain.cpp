@@ -32,8 +32,8 @@ namespace {
     std::vector<LinguistApi::LinguistWordOutput> convert(srt::SynthUnit &unit,
                                                          const std::vector<std::string> &lyrics,
                                                          const std::string &language = "eng") {
-        auto handle = unit.openPackage(wolf::test::fixtureRoot() / "singer-chain",
-                                       srt::SynthUnit::Load);
+        auto handle =
+            unit.openPackage(wolf::test::fixtureRoot() / "singer-chain", srt::SynthUnit::Load);
         if (!handle) {
             BOOST_FAIL("the singer should have loaded: " + handle.error().toString());
         }
@@ -125,8 +125,7 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_ForwardsAStopToItsBackend) {
     "runtimeLevel": 1,
     "contributions": { "inference": [ { "id": "g2p", "path": "./inferences/g2p/inference.json" } ] }
 })";
-    std::ofstream(root / "backend" / "inferences" / "g2p" / "inference.json")
-        << R"({
+    std::ofstream(root / "backend" / "inferences" / "g2p" / "inference.json") << R"({
     "interface": "org.openvpi.wolf.inference.G2P",
     "level": 1,
     "variant": "stub-miscount",
@@ -162,8 +161,8 @@ BOOST_AUTO_TEST_CASE(test_PipeChain_ForwardsAStopToItsBackend) {
     auto *spec = handle->contribution("inference", "g2p")->as<srt::InferenceSpec>();
     BOOST_REQUIRE(spec != nullptr);
 
-    G2pApi::G2pImportOptions importOptions(spec->variant());
-    G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
+    G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
+    G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
     runtimeOptions.binding = {"eng", "arpabet"};
     auto executive = spec->createInference(importOptions, runtimeOptions);
     BOOST_REQUIRE_MESSAGE(static_cast<bool>(executive), wolf::test::why(executive));

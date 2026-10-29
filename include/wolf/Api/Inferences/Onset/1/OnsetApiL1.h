@@ -24,7 +24,7 @@ namespace wolf::Api::Onset::L1 {
     class OnsetExports : public srt::ContribExports {
     public:
         explicit OnsetExports(std::string variant)
-            : ContribExports(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
 
         /// Phonemes that this module recognizes and matches. This is a recognition set, not an
@@ -36,14 +36,14 @@ namespace wolf::Api::Onset::L1 {
     class OnsetImportOptions : public srt::ContribImportOptions {
     public:
         explicit OnsetImportOptions(std::string variant)
-            : ContribImportOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
     };
 
     class OnsetRuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
         explicit OnsetRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
     };
 

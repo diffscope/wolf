@@ -47,8 +47,8 @@ namespace {
 
     std::vector<bool> mark(srt::PackageHandle &handle, const std::vector<std::string> &phonemes) {
         auto *spec = handle.contribution("inference", "onset")->as<srt::InferenceSpec>();
-        OnsetApi::OnsetImportOptions options(spec->variant());
-        OnsetApi::OnsetRuntimeOptions runtime(spec->variant());
+        OnsetApi::OnsetImportOptions options(spec->triplet().variant());
+        OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
@@ -153,24 +153,24 @@ BOOST_AUTO_TEST_CASE(test_OnsetRules_RejectsMalformedRules) {
         const char *rules;
         const char *reason;
     } cases[] = {
-        {"no-types",    R"({ "rules": [] })",                               "phonemeTypes"    },
-        {"empty-types", R"({ "phonemeTypes": {}, "rules": [] })",           "phonemeTypes"    },
-        {"star-type",   R"({ "phonemeTypes": { "a": "*" }, "rules": [] })", "may not be named"},
-        {"no-rules",    R"({ "phonemeTypes": { "a": "vowel" } })",          "rules must be"   },
-        {"bad-onset",   R"({ "phonemeTypes": { "a": "vowel" },
+        {"no-types",       R"({ "rules": [] })",                                               "phonemeTypes"    },
+        {"empty-types",    R"({ "phonemeTypes": {}, "rules": [] })",                           "phonemeTypes"    },
+        {"star-type",      R"({ "phonemeTypes": { "a": "*" }, "rules": [] })",                 "may not be named"},
+        {"no-rules",       R"({ "phonemeTypes": { "a": "vowel" } })",                          "rules must be"   },
+        {"bad-onset",      R"({ "phonemeTypes": { "a": "vowel" },
                              "rules": [ { "pattern": ["a"], "onsets": [3] } ] })",
-         "outside its pattern"                                                                },
-        {"extra-key",   R"({ "phonemeTypes": { "a": "vowel" }, "rules": [], "extra": 1 })",
-         "unknown key in the rule file"                                                       },
+         "outside its pattern"                                                                                   },
+        {"extra-key",      R"({ "phonemeTypes": { "a": "vowel" }, "rules": [], "extra": 1 })",
+         "unknown key in the rule file"                                                                          },
         {"extra-rule-key", R"({ "phonemeTypes": { "a": "vowel" },
                                 "rules": [ { "pattern": ["a"], "onsets": [0], "extra": 1 } ] })",
-         "unknown key in a rule"                                                              },
-        {"zero-version", R"({ "formatVersion": 0, "phonemeTypes": { "a": "vowel" },
+         "unknown key in a rule"                                                                                 },
+        {"zero-version",   R"({ "formatVersion": 0, "phonemeTypes": { "a": "vowel" },
                                                    "rules": [] })",
-         "positive integer"                                                                   },
+         "positive integer"                                                                                      },
         {"future-version", R"({ "formatVersion": 99, "phonemeTypes": { "a": "vowel" },
                                                     "rules": [] })",
-         "supports format versions up to"                                                     },
+         "supports format versions up to"                                                                        },
     };
     for (const auto &entry : cases) {
         srt::SynthUnit unit;

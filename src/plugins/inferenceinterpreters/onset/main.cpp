@@ -36,7 +36,7 @@ namespace wolf::onset {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(OnsetApi::API_INTERFACE, RULE, OnsetApi::API_LEVEL) {
+                : ContribConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, RULE}) {
             }
 
             std::shared_ptr<const RuleTable> table;
@@ -166,12 +166,12 @@ namespace wolf::onset {
     class OnsetPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != OnsetApi::API_INTERFACE || level != OnsetApi::API_LEVEL ||
-                variant != RULE) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet !=
+                srt::ContribTriplet(OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, RULE)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported onset contract: " + std::string(interfaceName) +
-                                      "/" + std::to_string(level) + "/" + std::string(variant));
+                                  "unsupported onset contract: " + triplet.interfaceId() + "/" +
+                                      std::to_string(triplet.level()) + "/" + triplet.variant());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

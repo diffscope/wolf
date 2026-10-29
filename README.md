@@ -56,7 +56,7 @@ Implement `wolf::LinguistProvider` and expose it through a `wolf::LinguistProvid
 class MyLinguistProviderPlugin : public wolf::LinguistProviderPlugin {
 public:
     srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-        create(std::string_view interfaceName, int level, std::string_view variant) override {
+        create(const srt::ContribTriplet &triplet) override {
         // Validate the requested contract and return its provider.
     }
 };

@@ -11,19 +11,21 @@ namespace wolf::stub {
     class StubInferencePlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName == Api::G2p::L1::API_INTERFACE && level == Api::G2p::L1::API_LEVEL) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet.interfaceId() == Api::G2p::L1::API_INTERFACE &&
+                triplet.level() == Api::G2p::L1::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(
-                    new StubG2pInterpreter(std::string(variant)));
+                    new StubG2pInterpreter(triplet.variant()));
             }
-            if (interfaceName == Api::S2p::L1::API_INTERFACE && level == Api::S2p::L1::API_LEVEL) {
+            if (triplet.interfaceId() == Api::S2p::L1::API_INTERFACE &&
+                triplet.level() == Api::S2p::L1::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(
-                    new StubS2pInterpreter(std::string(variant)));
+                    new StubS2pInterpreter(triplet.variant()));
             }
-            if (interfaceName == Api::Onset::L1::API_INTERFACE &&
-                level == Api::Onset::L1::API_LEVEL) {
+            if (triplet.interfaceId() == Api::Onset::L1::API_INTERFACE &&
+                triplet.level() == Api::Onset::L1::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(
-                    new StubOnsetInterpreter(std::string(variant)));
+                    new StubOnsetInterpreter(triplet.variant()));
             }
             return srt::Error(srt::Error::InvalidArgument,
                               "unsupported inference interpreter contract");

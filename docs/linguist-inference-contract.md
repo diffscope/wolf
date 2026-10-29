@@ -360,13 +360,11 @@ S2P 与 G2P 的 `RuntimeOptions` 携带 `binding`；Onset 不涉及注音体系�
 
 ### 6.3 `RuntimeOptions` 的目标变体约束
 
-`srt::ContribSpecPayload` 的三元组在创建执行体时被逐项比对：
+`srt::ContribSpecPayload` 的三元组在创建执行体时被整体比对：
 
 ```cpp
-// synthrt/lib/SVS/InferenceContrib.cpp:26-29
-if (runtimeOptions.interface() != target.interface() ||
-    runtimeOptions.variant()   != target.variant()   ||   // 变体也参与比对
-    runtimeOptions.level()     != target.level()) { … }
+// synthrt/lib/SVS/InferenceContrib.cpp
+if (runtimeOptions.triplet() != target.triplet()) { … }   // 变体也在三元组里
 ```
 
 G2P / S2P / Onset 都是**多变体契约**，因此其 `RuntimeOptions` 类**不得**像 dsinfer 的单变体

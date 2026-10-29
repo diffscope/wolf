@@ -49,7 +49,7 @@ namespace wolf::Api::Linguist::L1 {
     /// The phoneme inventory declared by one linguist composition.
     class LinguistExports : public srt::ContribExports {
     public:
-        LinguistExports() : ContribExports(API_INTERFACE, API_VARIANT, API_LEVEL) {
+        LinguistExports() : ContribExports({API_INTERFACE, API_LEVEL, API_VARIANT}) {
         }
 
         std::vector<std::string> phonemes;
@@ -67,7 +67,7 @@ namespace wolf::Api::Linguist::L1 {
     /// The wolf variant configuration for a linguist composition.
     class LinguistConfiguration : public srt::ContribConfiguration {
     public:
-        LinguistConfiguration() : ContribConfiguration(API_INTERFACE, API_VARIANT, API_LEVEL) {
+        LinguistConfiguration() : ContribConfiguration({API_INTERFACE, API_LEVEL, API_VARIANT}) {
         }
     };
 
@@ -77,14 +77,14 @@ namespace wolf::Api::Linguist::L1 {
     /// therefore does not repeat it.
     class LinguistImportOptions : public srt::ContribImportOptions {
     public:
-        LinguistImportOptions() : ContribImportOptions(API_INTERFACE, API_VARIANT, API_LEVEL) {
+        LinguistImportOptions() : ContribImportOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
         }
     };
 
     /// Supplies runtime settings when a linguist executive is created.
     class LinguistRuntimeOptions : public srt::ContribRuntimeOptions {
     public:
-        LinguistRuntimeOptions() : ContribRuntimeOptions(API_INTERFACE, API_VARIANT, API_LEVEL) {
+        LinguistRuntimeOptions() : ContribRuntimeOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
         }
     };
 
@@ -225,7 +225,7 @@ namespace wolf::Api::Linguist::L1 {
     class WolfPipelineRuntimeOptions : public srt::SingerPipelineRuntimeOptions {
     public:
         WolfPipelineRuntimeOptions()
-            : SingerPipelineRuntimeOptions(API_INTERFACE, API_VARIANT, API_LEVEL) {
+            : SingerPipelineRuntimeOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
         }
     };
 
@@ -329,19 +329,19 @@ namespace wolf::Api::Linguist::L1 {
         ///
         /// A composition reaches phonemes through one S2P step. A member that converts the symbols
         /// produces a phoneme layer that differs from its input, and the pronunciation is then a
-        /// layer of its own. A member that copies the symbols (see S2p::L1::VARIANT_DIRECT) produces
-        /// the phoneme layer without adding one, and so does a composition without an S2P member,
-        /// whose reachable layers end at the pronunciation. The symbols of the deepest reachable
-        /// layer are the phoneme layer in every case.
+        /// layer of its own. A member that copies the symbols (see S2p::L1::VARIANT_DIRECT)
+        /// produces the phoneme layer without adding one, and so does a composition without an S2P
+        /// member, whose reachable layers end at the pronunciation. The symbols of the deepest
+        /// reachable layer are the phoneme layer in every case.
         ///
-        /// A host uses this to know whether a word has a pronunciation to show next to its phonemes,
-        /// or whether the two hold the same symbols. The value is read from the declaration of the
-        /// S2P member, and this query therefore creates no object. It answers a different question
-        /// than maxDepth(): a composition that reaches Onsets may hold a separate pronunciation
-        /// layer or not.
+        /// A host uses this to know whether a word has a pronunciation to show next to its
+        /// phonemes, or whether the two hold the same symbols. The value is read from the
+        /// declaration of the S2P member, and this query therefore creates no object. It answers a
+        /// different question than maxDepth(): a composition that reaches Onsets may hold a
+        /// separate pronunciation layer or not.
         ///
-        /// Returns false for a handle that this singer does not declare. locate() distinguishes that
-        /// case.
+        /// Returns false for a handle that this singer does not declare. locate() distinguishes
+        /// that case.
         virtual bool hasSeparatePronunciationLayer(std::string_view language) const = 0;
 
         /// Returns the phoneme inventory that the composition behind a handle declares, together

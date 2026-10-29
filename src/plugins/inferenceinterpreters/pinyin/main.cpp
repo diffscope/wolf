@@ -54,7 +54,7 @@ namespace wolf::pinyin {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(G2pApi::API_INTERFACE, VARIANT, G2pApi::API_LEVEL) {
+                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
             }
 
             fs::path dictRoot;
@@ -330,8 +330,8 @@ namespace wolf::pinyin {
                     static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
                 for (const auto &entry : configuration->languageMap) {
                     if (entry.pair == binding) {
-                        auto engine = PinyinEngineRegistry::createEngine(configuration->dictRoot,
-                                                                         entry.ref);
+                        auto engine =
+                            PinyinEngineRegistry::createEngine(configuration->dictRoot, entry.ref);
                         if (!engine) {
                             return engine.takeError();
                         }
@@ -350,12 +350,11 @@ namespace wolf::pinyin {
     class PinyinPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != G2pApi::API_INTERFACE || level != G2pApi::API_LEVEL ||
-                variant != VARIANT) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet != srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported pinyin contract: " + std::string(interfaceName) +
-                                      "/" + std::to_string(level) + "/" + std::string(variant));
+                                  "unsupported pinyin contract: " + triplet.interfaceId() + "/" +
+                                      std::to_string(triplet.level()) + "/" + triplet.variant());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

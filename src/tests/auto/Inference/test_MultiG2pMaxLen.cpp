@@ -120,18 +120,17 @@ namespace {
         BOOST_REQUIRE_MESSAGE(!error, "the stale temporary root should have been removed: " +
                                           error.message());
         fs::create_directories(root, error);
-        BOOST_REQUIRE_MESSAGE(!error, "the temporary root should have been created: " +
-                                          error.message());
+        BOOST_REQUIRE_MESSAGE(!error,
+                              "the temporary root should have been created: " + error.message());
         for (const auto &entry : fs::recursive_directory_iterator(source)) {
             const auto relative = entry.path().lexically_relative(source);
-            BOOST_REQUIRE_MESSAGE(!entry.is_symlink(),
-                                  "the package should hold no link to copy: " +
-                                      entry.path().string());
+            BOOST_REQUIRE_MESSAGE(!entry.is_symlink(), "the package should hold no link to copy: " +
+                                                           entry.path().string());
             if (entry.is_directory()) {
                 fs::create_directories(root / relative, error);
             } else {
-                fs::copy_file(entry.path(), root / relative,
-                              fs::copy_options::overwrite_existing, error);
+                fs::copy_file(entry.path(), root / relative, fs::copy_options::overwrite_existing,
+                              error);
             }
             BOOST_REQUIRE_MESSAGE(!error,
                                   "the package should have been copied: " + error.message());
@@ -150,8 +149,7 @@ namespace {
         std::ifstream input(declaration, std::ios::binary);
         BOOST_REQUIRE_MESSAGE(input, "the declaration should have opened for reading: " +
                                          declaration.string());
-        std::string text((std::istreambuf_iterator<char>(input)),
-                         std::istreambuf_iterator<char>());
+        std::string text((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
 
         constexpr std::string_view key = "\"maxLen\"";
         const auto keyPosition = text.find(key);
@@ -210,8 +208,8 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2pApi::G2pImportOptions importOptions(spec->variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->variant());
+        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
+        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
         runtimeOptions.binding = {LANGUAGE, SCHEME};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
@@ -295,8 +293,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pMaxLen_RejectsAValueOutsideAPositiveInt) {
                                           wolf::test::why(loaded));
     }
 
-    for (const auto &text : {std::string("0"), std::string("-1"), std::string("2147483648"),
-                             std::string("\"x\"")}) {
+    for (const auto &text :
+         {std::string("0"), std::string("-1"), std::string("2147483648"), std::string("\"x\"")}) {
         setMaxLen(patched, text);
 
         srt::SynthUnit unit;

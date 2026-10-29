@@ -170,11 +170,11 @@ SingerSpec ──extension──▶ WolfPipelineExecutive
 
 `LinguistExecutive` 创建 G2P 与 S2P 子执行体时，把**自身 spec 的 `(language, scheme)`** 写入
 各自 `RuntimeOptions` 的 `binding`；Onset 的 `RuntimeOptions` 不携带二元组。变体必须取自目标
-spec 的 `variant()`，不得硬编码，见链推理契约 §6.3。
+spec 的 `triplet().variant()`，不得硬编码，见链推理契约 §6.3。
 
 ```cpp
 const auto &target = spec().findImport("linguist/g2p")->binding()->target();
-Api::G2p::L1::G2pRuntimeOptions options(target.variant());
+Api::G2p::L1::G2pRuntimeOptions options(target.triplet().variant());
 options.binding = { spec().language(), spec().scheme() };
 auto child = createChild("linguist/g2p", options);
 ```

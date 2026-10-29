@@ -45,9 +45,9 @@ namespace wolf {
 
             srt::Expected<std::unique_ptr<srt::ContribExecutive>>
                 create(const srt::ContribRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interfaceId() != LinguistApi::API_INTERFACE ||
-                    runtimeOptions.variant() != LinguistApi::API_VARIANT ||
-                    runtimeOptions.level() != LinguistApi::API_LEVEL) {
+                if (runtimeOptions.triplet() != srt::ContribTriplet(LinguistApi::API_INTERFACE,
+                                                                    LinguistApi::API_LEVEL,
+                                                                    LinguistApi::API_VARIANT)) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
                         "linguist runtime options have an incompatible contract identity");
@@ -78,9 +78,9 @@ namespace wolf {
             }
             const auto &target = item.binding()->target();
             return target.locator().category() == LINGUIST_CATEGORY &&
-                   target.interfaceId() == LinguistApi::API_INTERFACE &&
-                   target.variant() == LinguistApi::API_VARIANT &&
-                   target.level() == LinguistApi::API_LEVEL;
+                   target.triplet() == srt::ContribTriplet(LinguistApi::API_INTERFACE,
+                                                           LinguistApi::API_LEVEL,
+                                                           LinguistApi::API_VARIANT);
         }
 
         /// Validates one entry of the language map of a singer against the contribution that the
@@ -105,9 +105,9 @@ namespace wolf {
                                   "singer language " + entry.language +
                                       " names an import that is not a linguist contribution");
             }
-            if (target.interfaceId() != LinguistApi::API_INTERFACE ||
-                target.variant() != LinguistApi::API_VARIANT ||
-                target.level() != LinguistApi::API_LEVEL) {
+            if (target.triplet() != srt::ContribTriplet(LinguistApi::API_INTERFACE,
+                                                        LinguistApi::API_LEVEL,
+                                                        LinguistApi::API_VARIANT)) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "singer linguist import has an incompatible contract identity");
             }
@@ -165,7 +165,7 @@ namespace wolf {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "linguist import has no prepared binding");
             }
-            if (item.binding()->target().interfaceId() != expectedInterface) {
+            if (item.binding()->target().triplet().interfaceId() != expectedInterface) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "linguist import role targets an incompatible interface");
             }
@@ -295,8 +295,8 @@ namespace wolf {
                                     ? LinguistApi::Depth::Onsets
                                     : LinguistApi::Depth::Phonemes;
                         if (const auto *binding = s2p->binding()) {
-                            separateLayer =
-                                !Api::S2p::L1::variantKeepsSymbols(binding->target().variant());
+                            separateLayer = !Api::S2p::L1::variantKeepsSymbols(
+                                binding->target().triplet().variant());
                         }
                     }
                     m_depths.emplace(entry.language, depth);
@@ -359,9 +359,9 @@ namespace wolf {
 
             srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
                 createPipeline(const srt::SingerPipelineRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.interfaceId() != LinguistApi::API_INTERFACE ||
-                    runtimeOptions.variant() != LinguistApi::API_VARIANT ||
-                    runtimeOptions.level() != LinguistApi::API_LEVEL) {
+                if (runtimeOptions.triplet() != srt::ContribTriplet(LinguistApi::API_INTERFACE,
+                                                                    LinguistApi::API_LEVEL,
+                                                                    LinguistApi::API_VARIANT)) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
                         "wolf pipeline options have an incompatible contract identity");
@@ -433,9 +433,9 @@ namespace wolf {
         if (auto checked = requireNoImportOptions(manifestOptions, "linguist"); !checked) {
             return checked.takeError();
         }
-        if (target.interfaceId() != LinguistApi::API_INTERFACE ||
-            target.variant() != LinguistApi::API_VARIANT ||
-            target.level() != LinguistApi::API_LEVEL) {
+        if (target.triplet() != srt::ContribTriplet(LinguistApi::API_INTERFACE,
+                                                    LinguistApi::API_LEVEL,
+                                                    LinguistApi::API_VARIANT)) {
             return srt::Error(srt::Error::InvalidArgument,
                               "linguist import target has an unsupported contract");
         }

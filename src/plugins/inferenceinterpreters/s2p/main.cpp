@@ -47,8 +47,8 @@ namespace wolf::s2p {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration(std::string variant)
-                : ContribConfiguration(S2pApi::API_INTERFACE, std::move(variant),
-                                       S2pApi::API_LEVEL) {
+                : ContribConfiguration(
+                      {S2pApi::API_INTERFACE, S2pApi::API_LEVEL, std::move(variant)}) {
             }
 
             /// Parsed during Acquire rather than when an executive is created, because the
@@ -253,17 +253,18 @@ namespace wolf::s2p {
     class S2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != S2pApi::API_INTERFACE || level != S2pApi::API_LEVEL) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet.interfaceId() != S2pApi::API_INTERFACE ||
+                triplet.level() != S2pApi::API_LEVEL) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported S2P contract: " + std::string(interfaceName) + "/" +
-                                      std::to_string(level) + "/" + std::string(variant));
+                                  "unsupported S2P contract: " + triplet.toString());
             }
-            if (variant != DIRECT && variant != DICT && variant != MAPPING) {
+            if (triplet.variant() != DIRECT && triplet.variant() != DICT &&
+                triplet.variant() != MAPPING) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported S2P variant: " + std::string(variant));
+                                  "unsupported S2P variant: " + triplet.variant());
             }
-            return std::unique_ptr<srt::ContribInterpreter>(new Interpreter(std::string(variant)));
+            return std::unique_ptr<srt::ContribInterpreter>(new Interpreter(triplet.variant()));
         }
     };
 

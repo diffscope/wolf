@@ -53,7 +53,7 @@ namespace wolf::lua {
         class S2pConfiguration : public srt::ContribConfiguration {
         public:
             S2pConfiguration()
-                : ContribConfiguration(S2pApi::API_INTERFACE, VARIANT, S2pApi::API_LEVEL) {
+                : ContribConfiguration({S2pApi::API_INTERFACE, S2pApi::API_LEVEL, VARIANT}) {
             }
 
             std::string source;
@@ -63,7 +63,7 @@ namespace wolf::lua {
         class OnsetConfiguration : public srt::ContribConfiguration {
         public:
             OnsetConfiguration()
-                : ContribConfiguration(OnsetApi::API_INTERFACE, VARIANT, OnsetApi::API_LEVEL) {
+                : ContribConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, VARIANT}) {
             }
 
             std::string source;
@@ -353,15 +353,17 @@ namespace wolf::lua {
     class LuaPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (variant != VARIANT) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet.variant() != VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported variant: " + std::string(variant));
+                                  "unsupported variant: " + triplet.variant());
             }
-            if (interfaceName == S2pApi::API_INTERFACE && level == S2pApi::API_LEVEL) {
+            if (triplet.interfaceId() == S2pApi::API_INTERFACE &&
+                triplet.level() == S2pApi::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(new S2pInterpreter());
             }
-            if (interfaceName == OnsetApi::API_INTERFACE && level == OnsetApi::API_LEVEL) {
+            if (triplet.interfaceId() == OnsetApi::API_INTERFACE &&
+                triplet.level() == OnsetApi::API_LEVEL) {
                 return std::unique_ptr<srt::ContribInterpreter>(new OnsetInterpreter());
             }
             return srt::Error(srt::Error::InvalidArgument, "unsupported scripted contract");

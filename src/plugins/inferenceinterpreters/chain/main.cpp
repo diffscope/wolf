@@ -82,7 +82,7 @@ namespace wolf::chain {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration()
-                : ContribConfiguration(G2pApi::API_INTERFACE, VARIANT, G2pApi::API_LEVEL) {
+                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
             }
 
             std::vector<Step> steps;
@@ -416,8 +416,8 @@ namespace wolf::chain {
                 // Every registered validator receives every contribution in the transaction, so
                 // the interface, level and variant must match before the configuration is cast to
                 // the type of this plugin.
-                if (spec.interfaceId() != G2pApi::API_INTERFACE ||
-                    spec.level() != G2pApi::API_LEVEL || spec.variant() != VARIANT) {
+                if (spec.triplet() !=
+                    srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
                     return {};
                 }
                 const auto *configuration =
@@ -440,11 +440,11 @@ namespace wolf::chain {
                                           "the import for role " + step.role + " is not bound");
                     }
                     const auto &target = import->binding()->target();
-                    if (target.interfaceId() != G2pApi::API_INTERFACE ||
-                        target.level() != G2pApi::API_LEVEL) {
+                    if (target.triplet().interfaceId() != G2pApi::API_INTERFACE ||
+                        target.triplet().level() != G2pApi::API_LEVEL) {
                         return srt::Error(srt::Error::InvalidFormat,
-                                          "the model step role " + step.role +
-                                              " is bound to " + target.interfaceId() +
+                                          "the model step role " + step.role + " is bound to " +
+                                              target.triplet().interfaceId() +
                                               ", which is not the G2P contract");
                     }
                 }
@@ -473,9 +473,9 @@ namespace wolf::chain {
 
             /// Forwards a stop request to the backends of the steps, the way the linguist executive
             /// forwards it to its own stages (A51). A model or a script backend is exactly the wait
-            /// that a caller wants to interrupt, and a batch sitting inside one of them sees no flag
-            /// of this executive, so without this the request would only take effect at the next
-            /// step boundary.
+            /// that a caller wants to interrupt, and a batch sitting inside one of them sees no
+            /// flag of this executive, so without this the request would only take effect at the
+            /// next step boundary.
             ///
             /// A batch fills the map while it runs, on its own thread, so every access to it is
             /// guarded and the backends are stopped once the guard is released: a backend may
@@ -796,7 +796,7 @@ namespace wolf::chain {
                     return srt::Error(srt::Error::InvalidFormat,
                                       "the model step role " + role + " is not bound");
                 }
-                G2pApi::G2pRuntimeOptions options(import->binding()->target().variant());
+                G2pApi::G2pRuntimeOptions options(import->binding()->target().triplet().variant());
                 options.binding = m_binding;
                 auto child = createChild(role, options);
                 if (!child) {
@@ -910,12 +910,11 @@ namespace wolf::chain {
     class ChainPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != G2pApi::API_INTERFACE || level != G2pApi::API_LEVEL ||
-                variant != VARIANT) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet != srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported chain contract: " + std::string(interfaceName) +
-                                      "/" + std::to_string(level) + "/" + std::string(variant));
+                                  "unsupported chain contract: " + triplet.interfaceId() + "/" +
+                                      std::to_string(triplet.level()) + "/" + triplet.variant());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

@@ -57,7 +57,7 @@ namespace wolf::Api::G2p::L1 {
     class G2pExports : public srt::ContribExports {
     public:
         explicit G2pExports(std::string variant)
-            : ContribExports(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
 
         /// Pairs for which this module produces pronunciations. The list may be empty. An empty
@@ -82,7 +82,7 @@ namespace wolf::Api::G2p::L1 {
     class G2pImportOptions : public srt::ContribImportOptions {
     public:
         explicit G2pImportOptions(std::string variant)
-            : ContribImportOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
     };
 
@@ -90,7 +90,7 @@ namespace wolf::Api::G2p::L1 {
     class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
         explicit G2pRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {
+            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
         }
 
         /// Pair to which this executive is bound for its whole lifetime. Runtime input carries no

@@ -114,8 +114,8 @@ namespace wolf {
     }
 
     template <class Stage, class Input>
-    auto LinguistExecutiveImpl::runStage(Stage &stage,
-                                         const Input &input) -> decltype(stage.start(input)) {
+    auto LinguistExecutiveImpl::runStage(Stage &stage, const Input &input)
+        -> decltype(stage.start(input)) {
         // The flag is checked after the stage has been created, and only then. A stop request
         // that arrives after the check by the caller but before the stage is published cannot be
         // forwarded to any stage, and a stage started afterwards would run its whole batch
@@ -146,7 +146,7 @@ namespace wolf {
             return srt::Error(srt::Error::InvalidFormat,
                               "linguist import " + std::string(role) + " is not bound");
         }
-        Options options(import->binding()->target().variant());
+        Options options(import->binding()->target().triplet().variant());
         bind(options, m_binding);
         auto child = createChild(role, options);
         if (!child) {
@@ -229,9 +229,9 @@ namespace wolf {
                 output.mode = G2pApi::Mode::Copy;
                 output.pronunciation = word.pronunciation.value_or(word.lyric);
                 // A pinned layer is granted at the depth that asks for it, like the layer a stage
-                // produces: phonemes from Phonemes upwards and onsets at Onsets. A caller that reads
-                // an empty phoneme list as the mark of the depth it received is otherwise misled by
-                // a single locked word of the batch.
+                // produces: phonemes from Phonemes upwards and onsets at Onsets. A caller that
+                // reads an empty phoneme list as the mark of the depth it received is otherwise
+                // misled by a single locked word of the batch.
                 if (input.depth != LinguistApi::Depth::Pronunciation) {
                     output.phonemes = word.locked->phonemes;
                 }

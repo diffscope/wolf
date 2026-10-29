@@ -47,8 +47,8 @@ namespace wolf::stub {
         ///
         /// \return The strings; an empty list if the exports are not an object or have no \a key;
         /// an error if the value is malformed.
-        srt::Expected<std::vector<std::string>>
-            readOptionalStringSet(const srt::ContribSpec &spec, std::string_view key) {
+        srt::Expected<std::vector<std::string>> readOptionalStringSet(const srt::ContribSpec &spec,
+                                                                      std::string_view key) {
             if (!spec.manifestExports().isObject()) {
                 return std::vector<std::string>();
             }
@@ -65,8 +65,8 @@ namespace wolf::stub {
         /// declare no reusable configuration class.
         class StubConfiguration : public srt::ContribConfiguration {
         public:
-            StubConfiguration(std::string interfaceName, std::string variant, int level)
-                : ContribConfiguration(std::move(interfaceName), std::move(variant), level) {
+            explicit StubConfiguration(srt::ContribTriplet triplet)
+                : ContribConfiguration(std::move(triplet)) {
             }
 
             /// Number of words to omit from the result, used to test callers against a module that
@@ -113,10 +113,10 @@ namespace wolf::stub {
         protected:
             Batch runBatch(const G2pApi::G2pStartInput &input) override {
                 // The one thing this stub waits for: the hold stands for the work of a model or a
-                // script backend, and a stop request ends it, which is how a caller can tell whether
-                // the request reached this executive at all.
-                const auto deadline = std::chrono::steady_clock::now() +
-                                      std::chrono::milliseconds(m_holdMs);
+                // script backend, and a stop request ends it, which is how a caller can tell
+                // whether the request reached this executive at all.
+                const auto deadline =
+                    std::chrono::steady_clock::now() + std::chrono::milliseconds(m_holdMs);
                 while (m_holdMs > 0 && std::chrono::steady_clock::now() < deadline &&
                        !stopRequested()) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -212,8 +212,8 @@ namespace wolf::stub {
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubG2pInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
-        auto result = std::make_unique<StubConfiguration>(G2pApi::API_INTERFACE, m_variant,
-                                                          G2pApi::API_LEVEL);
+        auto result = std::make_unique<StubConfiguration>(
+            srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, m_variant));
         if (spec.manifestConfiguration().isObject()) {
             const auto &object = spec.manifestConfiguration().toObject();
             if (const auto it = object.find("dropWords"); it != object.end()) {
@@ -271,7 +271,7 @@ namespace wolf::stub {
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubS2pInterpreter::createConfiguration(const srt::ContribSpec &) const {
         return std::unique_ptr<srt::ContribConfiguration>(
-            new StubConfiguration(S2pApi::API_INTERFACE, m_variant, S2pApi::API_LEVEL));
+            new StubConfiguration({S2pApi::API_INTERFACE, S2pApi::API_LEVEL, m_variant}));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
@@ -303,7 +303,7 @@ namespace wolf::stub {
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubOnsetInterpreter::createConfiguration(const srt::ContribSpec &) const {
         return std::unique_ptr<srt::ContribConfiguration>(
-            new StubConfiguration(OnsetApi::API_INTERFACE, m_variant, OnsetApi::API_LEVEL));
+            new StubConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, m_variant}));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>

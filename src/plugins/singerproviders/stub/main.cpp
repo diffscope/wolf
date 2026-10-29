@@ -27,41 +27,35 @@ namespace wolf::stub {
     /// only accepts every configuration.
     class StubSingerProvider : public srt::SingerProvider {
     public:
-        explicit StubSingerProvider(std::string interfaceName, std::string variant, int level)
-            : m_interface(std::move(interfaceName)), m_variant(std::move(variant)), m_level(level) {
+        explicit StubSingerProvider(srt::ContribTriplet triplet) : m_triplet(std::move(triplet)) {
         }
 
         srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
             createConfiguration(const srt::ContribSpec &) const override {
-            return std::unique_ptr<srt::ContribConfiguration>(
-                new Configuration(m_interface, m_variant, m_level));
+            return std::unique_ptr<srt::ContribConfiguration>(new Configuration(m_triplet));
         }
 
     private:
         class Configuration : public srt::ContribConfiguration {
         public:
-            Configuration(std::string interfaceName, std::string variant, int level)
-                : ContribConfiguration(std::move(interfaceName), std::move(variant), level) {
+            explicit Configuration(srt::ContribTriplet triplet)
+                : ContribConfiguration(std::move(triplet)) {
             }
         };
 
-        std::string m_interface;
-        std::string m_variant;
-        int m_level;
+        srt::ContribTriplet m_triplet;
     };
 
     class StubSingerPlugin final : public srt::SingerProviderPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(std::string_view interfaceName, int level, std::string_view variant) override {
-            if (interfaceName != INTERFACE || level != LEVEL || variant != VARIANT) {
+            create(const srt::ContribTriplet &triplet) override {
+            if (triplet !=
+                srt::ContribTriplet(std::string(INTERFACE), LEVEL, std::string(VARIANT))) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported stub singer contract: " +
-                                      std::string(interfaceName) + "/" + std::to_string(level) +
-                                      "/" + std::string(variant));
+                                  "unsupported stub singer contract: " + triplet.toString());
             }
-            return std::unique_ptr<srt::ContribInterpreter>(
-                new StubSingerProvider(std::string(interfaceName), std::string(variant), level));
+            return std::unique_ptr<srt::ContribInterpreter>(new StubSingerProvider(triplet));
         }
     };
 
