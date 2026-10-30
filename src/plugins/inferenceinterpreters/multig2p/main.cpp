@@ -397,8 +397,7 @@ namespace wolf::multig2p {
             create(const srt::ContribTriplet &triplet) override {
             if (triplet != srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported multig2p contract: " + triplet.interfaceId() + "/" +
-                                      std::to_string(triplet.level()) + "/" + triplet.variant());
+                                  "unsupported contract: " + triplet.toString());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }

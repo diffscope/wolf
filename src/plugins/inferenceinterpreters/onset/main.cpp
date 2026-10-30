@@ -170,8 +170,7 @@ namespace wolf::onset {
             if (triplet !=
                 srt::ContribTriplet(OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, RULE)) {
                 return srt::Error(srt::Error::InvalidArgument,
-                                  "unsupported onset contract: " + triplet.interfaceId() + "/" +
-                                      std::to_string(triplet.level()) + "/" + triplet.variant());
+                                  "unsupported contract: " + triplet.toString());
             }
             return std::unique_ptr<srt::ContribInterpreter>(new Interpreter());
         }
