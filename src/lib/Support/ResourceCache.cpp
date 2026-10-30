@@ -1,5 +1,5 @@
 #include "ResourceCache.h"
-#include "ResourceCacheImpl.h"
+#include "ResourceCache_p.h"
 
 #include "Files.h"
 
@@ -28,7 +28,7 @@ namespace wolf {
         using resourcecache::Stamp;
 
         static_assert(std::tuple_size_v<Digest> == BLAKE3_OUT_LEN,
-                      "the digest type of ResourceCacheImpl.h must hold a BLAKE3 hash");
+                      "the digest type of ResourceCache_p.h must hold a BLAKE3 hash");
 
         /// Chunk size of one hash read. The resources reach several megabytes, so a whole file is
         /// never held in memory. A buffer of this size keeps the read loop short at a negligible

@@ -267,7 +267,7 @@ Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](linguist
 6. 新增**枚举值**：检查全部 `switch`（R21）。
 7. 清理**死代码**前先全仓搜索：只命中声明与定义的即为死代码（`MappingTable::targets()` 与
    s2p 的 `Configuration::file` 即按此删除）。只供测试观察的状态不进入库的导出面：测试经友元类读取
-   私有状态（样板为 `ResourceCacheProbe` 与 `src/lib/Support/ResourceCacheImpl.h`）。
+   私有状态（样板为 `ResourceCacheProbe` 与 `src/lib/Support/ResourceCache_p.h`）。
 8. 修改**分批与邻接语义**：后端**自行**按「原词序中的极大连续可转换段」分批，**不得假定调用方已
    切分**。依据：`pipe-chain` 的 `model` 步已按段切分，因此后端是否自行切分在链下**不可观察**，只有
    **直接使用契约**的宿主能触发差异；反例：pinyin 曾把过滤后的词合并为一张表，使被否决词两侧的

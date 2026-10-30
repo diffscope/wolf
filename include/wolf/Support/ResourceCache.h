@@ -78,7 +78,7 @@ namespace wolf {
 
         /// Sharing and reclamation are observable only through entry counts. The resource cache
         /// test therefore reads the index through this class, which the test defines against the
-        /// private ResourceCacheImpl.h. The library contains no definition of this class.
+        /// private ResourceCache_p.h. The library contains no definition of this class.
         friend class ResourceCacheProbe;
     };
 

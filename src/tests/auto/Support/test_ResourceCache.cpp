@@ -12,7 +12,7 @@
 
 // The private state of the cache, used by the probe below. The build adds src/lib/Support to the
 // include path of this test and of no other target.
-#include "ResourceCacheImpl.h"
+#include "ResourceCache_p.h"
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
