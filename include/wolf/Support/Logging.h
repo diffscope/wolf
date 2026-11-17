@@ -1,5 +1,5 @@
-#ifndef WOLF_LOGGING_H
-#define WOLF_LOGGING_H
+#ifndef WOLF_SUPPORT_LOGGING_H
+#define WOLF_SUPPORT_LOGGING_H
 
 #include <synthrt/Support/Logging.h>
 
@@ -16,4 +16,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_LOGGING_H
+#endif // WOLF_SUPPORT_LOGGING_H

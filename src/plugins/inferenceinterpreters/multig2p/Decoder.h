@@ -1,5 +1,5 @@
-#ifndef WOLF_MULTIG2P_DECODER_H
-#define WOLF_MULTIG2P_DECODER_H
+#ifndef WOLF_INFERENCEINTERPRETERS_MULTIG2P_DECODER_H
+#define WOLF_INFERENCEINTERPRETERS_MULTIG2P_DECODER_H
 
 #include <atomic>
 #include <cstdint>
@@ -64,9 +64,9 @@ namespace wolf::multig2p {
         ///
         /// \return the decoder, or an error if the bundle records no file for a model, a model
         /// file is missing, the driver creates no session, or a model fails to open.
-        static srt::Expected<std::unique_ptr<Decoder>>
-            open(ds::InferenceDriver &driver, const Bundle &bundle,
-                 const std::filesystem::path &directory);
+        static srt::Expected<std::unique_ptr<Decoder>> open(ds::InferenceDriver &driver,
+                                                            const Bundle &bundle,
+                                                            const std::filesystem::path &directory);
 
         ~Decoder();
 
@@ -94,4 +94,4 @@ namespace wolf::multig2p {
 
 }
 
-#endif // WOLF_MULTIG2P_DECODER_H
+#endif // WOLF_INFERENCEINTERPRETERS_MULTIG2P_DECODER_H

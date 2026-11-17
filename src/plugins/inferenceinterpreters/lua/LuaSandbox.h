@@ -1,5 +1,5 @@
-#ifndef WOLF_LUASANDBOX_H
-#define WOLF_LUASANDBOX_H
+#ifndef WOLF_INFERENCEINTERPRETERS_LUA_LUASANDBOX_H
+#define WOLF_INFERENCEINTERPRETERS_LUA_LUASANDBOX_H
 
 #include <filesystem>
 #include <memory>
@@ -77,4 +77,4 @@ namespace wolf::lua {
 
 }
 
-#endif // WOLF_LUASANDBOX_H
+#endif // WOLF_INFERENCEINTERPRETERS_LUA_LUASANDBOX_H

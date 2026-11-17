@@ -1,5 +1,5 @@
-#ifndef WOLF_SUPPORTGLOBAL_H
-#define WOLF_SUPPORTGLOBAL_H
+#ifndef WOLF_SUPPORT_SUPPORTGLOBAL_H
+#define WOLF_SUPPORT_SUPPORTGLOBAL_H
 
 #include <wolf/wolf_global.h>
 
@@ -19,4 +19,4 @@
 /// plugin link privately, with hidden visibility.
 #define WOLF_INTERNAL_EXPORT WOLF_EXPORT
 
-#endif // WOLF_SUPPORTGLOBAL_H
+#endif // WOLF_SUPPORT_SUPPORTGLOBAL_H

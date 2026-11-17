@@ -1,5 +1,5 @@
-#ifndef WOLF_MANIFESTVALUES_H
-#define WOLF_MANIFESTVALUES_H
+#ifndef WOLF_SUPPORT_MANIFESTVALUES_H
+#define WOLF_SUPPORT_MANIFESTVALUES_H
 
 #include <filesystem>
 #include <initializer_list>
@@ -83,4 +83,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_MANIFESTVALUES_H
+#endif // WOLF_SUPPORT_MANIFESTVALUES_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_API_G2PAPIL1_H
-#define WOLF_API_G2PAPIL1_H
+#ifndef WOLF_API_INFERENCES_G2P_1_G2PAPIL1_H
+#define WOLF_API_INFERENCES_G2P_1_G2PAPIL1_H
 
 #include <functional>
 #include <memory>
@@ -155,4 +155,4 @@ namespace wolf::Api::G2p::L1 {
 
 }
 
-#endif // WOLF_API_G2PAPIL1_H
+#endif // WOLF_API_INFERENCES_G2P_1_G2PAPIL1_H

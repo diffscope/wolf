@@ -1,5 +1,5 @@
-#ifndef WOLF_TEST_SUPPORT_H
-#define WOLF_TEST_SUPPORT_H
+#ifndef WOLF_TESTS_TESTSUPPORT_H
+#define WOLF_TESTS_TESTSUPPORT_H
 
 #include <cstdlib>
 #include <filesystem>
@@ -23,8 +23,8 @@
 /// this translation unit.
 namespace wolf::test {
 
-    /// Exit status that ctest interprets as a skip, so that a run without generated data is reported
-    /// as not run rather than as passed. The matching SKIP_RETURN_CODE is set in CMake.
+    /// Exit status that ctest interprets as a skip, so that a run without generated data is
+    /// reported as not run rather than as passed. The matching SKIP_RETURN_CODE is set in CMake.
     inline constexpr int SKIP_EXIT_CODE = 77;
 
     /// Returns the error text of \a expected, or an empty string if \a expected holds a value.
@@ -55,7 +55,8 @@ namespace wolf::test {
     }
 
     /// Returns the directory of the generated voicebank fixture, as specified by the
-    /// WOLF_VOICEBANK_FIXTURE_SOURCE environment variable, or an empty path if the variable is unset.
+    /// WOLF_VOICEBANK_FIXTURE_SOURCE environment variable, or an empty path if the variable is
+    /// unset.
     inline std::filesystem::path voicebankRoot() {
         if (const char *override = std::getenv("WOLF_VOICEBANK_FIXTURE_SOURCE")) {
             return std::filesystem::path(override);
@@ -79,8 +80,8 @@ namespace wolf::test {
     }
 
     /// Configures \a unit as a host does: references the library so that a linker which drops
-    /// unreferenced libraries retains it, sets the package search paths to \a packagePaths, and sets
-    /// one plugin search path for each category that the build defined for this test.
+    /// unreferenced libraries retains it, sets the package search paths to \a packagePaths, and
+    /// sets one plugin search path for each category that the build defined for this test.
     inline void configure(srt::SynthUnit &unit, std::vector<std::filesystem::path> packagePaths) {
         wolf::linkLinguistCategory();
         unit.setPackagePaths(packagePaths);
@@ -120,4 +121,4 @@ namespace wolf::test {
 
 }
 
-#endif // WOLF_TEST_SUPPORT_H
+#endif // WOLF_TESTS_TESTSUPPORT_H

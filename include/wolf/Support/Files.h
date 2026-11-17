@@ -1,5 +1,5 @@
-#ifndef WOLF_FILES_H
-#define WOLF_FILES_H
+#ifndef WOLF_SUPPORT_FILES_H
+#define WOLF_SUPPORT_FILES_H
 
 #include <filesystem>
 #include <fstream>
@@ -49,4 +49,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_FILES_H
+#endif // WOLF_SUPPORT_FILES_H

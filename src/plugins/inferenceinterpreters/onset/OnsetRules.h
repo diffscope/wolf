@@ -1,5 +1,5 @@
-#ifndef WOLF_ONSETRULES_H
-#define WOLF_ONSETRULES_H
+#ifndef WOLF_INFERENCEINTERPRETERS_ONSET_ONSETRULES_H
+#define WOLF_INFERENCEINTERPRETERS_ONSET_ONSETRULES_H
 
 #include <filesystem>
 #include <map>
@@ -58,4 +58,4 @@ namespace wolf::onset {
 
 }
 
-#endif // WOLF_ONSETRULES_H
+#endif // WOLF_INFERENCEINTERPRETERS_ONSET_ONSETRULES_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_API_COMMONAPIL1_H
-#define WOLF_API_COMMONAPIL1_H
+#ifndef WOLF_API_INFERENCES_COMMON_1_COMMONAPIL1_H
+#define WOLF_API_INFERENCES_COMMON_1_COMMONAPIL1_H
 
 #include <string>
 #include <utility>
@@ -41,4 +41,4 @@ namespace wolf::Api::Common::L1 {
 
 }
 
-#endif // WOLF_API_COMMONAPIL1_H
+#endif // WOLF_API_INFERENCES_COMMON_1_COMMONAPIL1_H

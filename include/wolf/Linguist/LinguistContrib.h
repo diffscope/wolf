@@ -1,5 +1,5 @@
-#ifndef WOLF_LINGUISTCONTRIB_H
-#define WOLF_LINGUISTCONTRIB_H
+#ifndef WOLF_LINGUIST_LINGUISTCONTRIB_H
+#define WOLF_LINGUIST_LINGUISTCONTRIB_H
 
 #include <memory>
 #include <string>
@@ -88,4 +88,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_LINGUISTCONTRIB_H
+#endif // WOLF_LINGUIST_LINGUISTCONTRIB_H

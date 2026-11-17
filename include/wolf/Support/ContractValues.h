@@ -1,5 +1,5 @@
-#ifndef WOLF_CONTRACTVALUES_H
-#define WOLF_CONTRACTVALUES_H
+#ifndef WOLF_SUPPORT_CONTRACTVALUES_H
+#define WOLF_SUPPORT_CONTRACTVALUES_H
 
 #include <functional>
 #include <string>
@@ -89,4 +89,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_CONTRACTVALUES_H
+#endif // WOLF_SUPPORT_CONTRACTVALUES_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_LINGUISTSESSION_H
-#define WOLF_LINGUISTSESSION_H
+#ifndef WOLF_SESSION_LINGUISTSESSION_H
+#define WOLF_SESSION_LINGUISTSESSION_H
 
 #include <memory>
 #include <string>
@@ -324,4 +324,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_LINGUISTSESSION_H
+#endif // WOLF_SESSION_LINGUISTSESSION_H

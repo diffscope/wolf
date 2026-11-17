@@ -1,5 +1,5 @@
-#ifndef WOLF_API_LINGUISTAPIL1_H
-#define WOLF_API_LINGUISTAPIL1_H
+#ifndef WOLF_API_LINGUISTS_LINGUIST_1_LINGUISTAPIL1_H
+#define WOLF_API_LINGUISTS_LINGUIST_1_LINGUISTAPIL1_H
 
 #include <functional>
 #include <memory>
@@ -385,4 +385,4 @@ namespace wolf::Api::Linguist::L1 {
 
 }
 
-#endif // WOLF_API_LINGUISTAPIL1_H
+#endif // WOLF_API_LINGUISTS_LINGUIST_1_LINGUISTAPIL1_H

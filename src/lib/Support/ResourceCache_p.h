@@ -1,5 +1,5 @@
-#ifndef WOLF_RESOURCECACHE_P_H
-#define WOLF_RESOURCECACHE_P_H
+#ifndef WOLF_SUPPORT_RESOURCECACHE_P_H
+#define WOLF_SUPPORT_RESOURCECACHE_P_H
 
 // State of the resource cache. It is kept out of ResourceCache.cpp because one other file reads
 // it: the resource cache test inspects the index through ResourceCacheProbe, the class that
@@ -178,4 +178,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_RESOURCECACHE_P_H
+#endif // WOLF_SUPPORT_RESOURCECACHE_P_H

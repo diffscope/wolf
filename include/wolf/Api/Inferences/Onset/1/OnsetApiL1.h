@@ -1,5 +1,5 @@
-#ifndef WOLF_API_ONSETAPIL1_H
-#define WOLF_API_ONSETAPIL1_H
+#ifndef WOLF_API_INFERENCES_ONSET_1_ONSETAPIL1_H
+#define WOLF_API_INFERENCES_ONSET_1_ONSETAPIL1_H
 
 #include <functional>
 #include <memory>
@@ -92,4 +92,4 @@ namespace wolf::Api::Onset::L1 {
 
 }
 
-#endif // WOLF_API_ONSETAPIL1_H
+#endif // WOLF_API_INFERENCES_ONSET_1_ONSETAPIL1_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_RESOURCECACHE_H
-#define WOLF_RESOURCECACHE_H
+#ifndef WOLF_SUPPORT_RESOURCECACHE_H
+#define WOLF_SUPPORT_RESOURCECACHE_H
 
 #include <filesystem>
 #include <functional>
@@ -47,16 +47,16 @@ namespace wolf {
                     std::string_view parserGeneration,
                     const std::function<srt::Expected<std::shared_ptr<const T>>(
                         const std::filesystem::path &)> &parse) {
-            auto entry = acquireErased(
-                path, kind, parserGeneration,
-                [&parse](const std::filesystem::path &resolved)
-                    -> srt::Expected<std::shared_ptr<const void>> {
-                    auto parsed = parse(resolved);
-                    if (!parsed) {
-                        return parsed.takeError();
-                    }
-                    return std::static_pointer_cast<const void>(parsed.take());
-                });
+            auto entry =
+                acquireErased(path, kind, parserGeneration,
+                              [&parse](const std::filesystem::path &resolved)
+                                  -> srt::Expected<std::shared_ptr<const void>> {
+                                  auto parsed = parse(resolved);
+                                  if (!parsed) {
+                                      return parsed.takeError();
+                                  }
+                                  return std::static_pointer_cast<const void>(parsed.take());
+                              });
             if (!entry) {
                 return entry.takeError();
             }
@@ -84,4 +84,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_RESOURCECACHE_H
+#endif // WOLF_SUPPORT_RESOURCECACHE_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_INPUTRULES_H
-#define WOLF_INPUTRULES_H
+#ifndef WOLF_SUPPORT_INPUTRULES_H
+#define WOLF_SUPPORT_INPUTRULES_H
 
 #include <string_view>
 
@@ -22,4 +22,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_INPUTRULES_H
+#endif // WOLF_SUPPORT_INPUTRULES_H

@@ -1,5 +1,5 @@
-#ifndef WOLF_SINGERLANGUAGES_H
-#define WOLF_SINGERLANGUAGES_H
+#ifndef WOLF_LINGUIST_SINGERLANGUAGES_H
+#define WOLF_LINGUIST_SINGERLANGUAGES_H
 
 #include <string>
 #include <vector>
@@ -48,4 +48,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_SINGERLANGUAGES_H
+#endif // WOLF_LINGUIST_SINGERLANGUAGES_H

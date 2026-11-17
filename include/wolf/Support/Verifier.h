@@ -1,5 +1,5 @@
-#ifndef WOLF_VERIFIER_H
-#define WOLF_VERIFIER_H
+#ifndef WOLF_SUPPORT_VERIFIER_H
+#define WOLF_SUPPORT_VERIFIER_H
 
 #include <filesystem>
 #include <memory>
@@ -72,4 +72,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_VERIFIER_H
+#endif // WOLF_SUPPORT_VERIFIER_H

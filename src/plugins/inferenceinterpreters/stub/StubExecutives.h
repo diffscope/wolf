@@ -1,5 +1,5 @@
-#ifndef WOLF_STUBEXECUTIVES_H
-#define WOLF_STUBEXECUTIVES_H
+#ifndef WOLF_INFERENCEINTERPRETERS_STUB_STUBEXECUTIVES_H
+#define WOLF_INFERENCEINTERPRETERS_STUB_STUBEXECUTIVES_H
 
 #include <memory>
 #include <string>
@@ -33,7 +33,8 @@ namespace wolf::stub {
             createImportOptions(const srt::ContribSpec &target,
                                 const srt::JsonValue &manifestOptions) const override;
         srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
-            createInference(srt::InferenceSpec &spec, const srt::ContribImportOptions &importOptions,
+            createInference(srt::InferenceSpec &spec,
+                            const srt::ContribImportOptions &importOptions,
                             const srt::InferenceRuntimeOptions &runtimeOptions) override;
 
     private:
@@ -54,7 +55,8 @@ namespace wolf::stub {
             createImportOptions(const srt::ContribSpec &target,
                                 const srt::JsonValue &manifestOptions) const override;
         srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
-            createInference(srt::InferenceSpec &spec, const srt::ContribImportOptions &importOptions,
+            createInference(srt::InferenceSpec &spec,
+                            const srt::ContribImportOptions &importOptions,
                             const srt::InferenceRuntimeOptions &runtimeOptions) override;
 
     private:
@@ -76,7 +78,8 @@ namespace wolf::stub {
             createImportOptions(const srt::ContribSpec &target,
                                 const srt::JsonValue &manifestOptions) const override;
         srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
-            createInference(srt::InferenceSpec &spec, const srt::ContribImportOptions &importOptions,
+            createInference(srt::InferenceSpec &spec,
+                            const srt::ContribImportOptions &importOptions,
                             const srt::InferenceRuntimeOptions &runtimeOptions) override;
 
     private:
@@ -85,4 +88,4 @@ namespace wolf::stub {
 
 }
 
-#endif // WOLF_STUBEXECUTIVES_H
+#endif // WOLF_INFERENCEINTERPRETERS_STUB_STUBEXECUTIVES_H

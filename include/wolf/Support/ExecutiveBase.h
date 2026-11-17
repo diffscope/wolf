@@ -1,5 +1,5 @@
-#ifndef WOLF_EXECUTIVEBASE_H
-#define WOLF_EXECUTIVEBASE_H
+#ifndef WOLF_SUPPORT_EXECUTIVEBASE_H
+#define WOLF_SUPPORT_EXECUTIVEBASE_H
 
 #include <atomic>
 #include <memory>
@@ -125,4 +125,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_EXECUTIVEBASE_H
+#endif // WOLF_SUPPORT_EXECUTIVEBASE_H

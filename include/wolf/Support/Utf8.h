@@ -1,5 +1,5 @@
-#ifndef WOLF_UTF8_H
-#define WOLF_UTF8_H
+#ifndef WOLF_SUPPORT_UTF8_H
+#define WOLF_SUPPORT_UTF8_H
 
 #include <cstddef>
 #include <cstdint>
@@ -36,4 +36,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_UTF8_H
+#endif // WOLF_SUPPORT_UTF8_H

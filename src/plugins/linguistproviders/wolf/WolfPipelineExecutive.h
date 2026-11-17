@@ -1,5 +1,5 @@
-#ifndef WOLF_WOLFPIPELINEEXECUTIVE_H
-#define WOLF_WOLFPIPELINEEXECUTIVE_H
+#ifndef WOLF_LINGUISTPROVIDERS_WOLF_WOLFPIPELINEEXECUTIVE_H
+#define WOLF_LINGUISTPROVIDERS_WOLF_WOLFPIPELINEEXECUTIVE_H
 
 #include <string>
 #include <string_view>
@@ -24,9 +24,9 @@ namespace wolf {
 
         const std::vector<std::string> &languages() const override;
 
-        srt::Expected<Api::Linguist::L1::LinguistExecutive *>
-            createLinguist(std::string_view language,
-                           const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) override;
+        srt::Expected<Api::Linguist::L1::LinguistExecutive *> createLinguist(
+            std::string_view language,
+            const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) override;
 
     private:
         SingerLanguages m_languages;
@@ -35,4 +35,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_WOLFPIPELINEEXECUTIVE_H
+#endif // WOLF_LINGUISTPROVIDERS_WOLF_WOLFPIPELINEEXECUTIVE_H

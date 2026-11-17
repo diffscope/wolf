@@ -1,5 +1,5 @@
-#ifndef WOLF_S2PTABLES_H
-#define WOLF_S2PTABLES_H
+#ifndef WOLF_INFERENCEINTERPRETERS_S2P_S2PTABLES_H
+#define WOLF_INFERENCEINTERPRETERS_S2P_S2PTABLES_H
 
 #include <filesystem>
 #include <map>
@@ -59,4 +59,4 @@ namespace wolf::s2p {
 
 }
 
-#endif // WOLF_S2PTABLES_H
+#endif // WOLF_INFERENCEINTERPRETERS_S2P_S2PTABLES_H
