@@ -46,6 +46,28 @@ BOOST_AUTO_TEST_CASE(test_ChainTables_LowercasesAsciiAndLatin1) {
     BOOST_CHECK_EQUAL(toLowercase("\xC3\x9F"), "\xC3\x9F");
 }
 
+/// Latin Extended-A places the capital on the even code point of each pair, but on the odd one
+/// from U+0139 to U+0148 and from U+0179 to U+017E. A word that is already lowercase must come back
+/// unchanged, or a dictionary lookup after the cleanup step misses it.
+BOOST_AUTO_TEST_CASE(test_ChainTables_LowercasesLatinExtendedA) {
+    // A with macron, C with caron, G with breve: capitals on even code points
+    BOOST_CHECK_EQUAL(toLowercase("\xC4\x80\xC4\x8C\xC4\x9E"), "\xC4\x81\xC4\x8D\xC4\x9F");
+    // L with stroke, N with acute: capitals on odd code points
+    BOOST_CHECK_EQUAL(toLowercase("\xC5\x81\xC5\x83"), "\xC5\x82\xC5\x84");
+    // Z with acute, Z with dot above, Z with caron: capitals on odd code points
+    BOOST_CHECK_EQUAL(toLowercase("\xC5\xB9\xC5\xBB\xC5\xBD"), "\xC5\xBA\xC5\xBC\xC5\xBE");
+    // Y with diaeresis pairs with U+00FF, outside the block
+    BOOST_CHECK_EQUAL(toLowercase("\xC5\xB8"), "\xC3\xBF");
+
+    // Polish lodz and Czech zena in small letters stay as they are
+    const std::string lodz = "\xC5\x82\xC3\xB3\x64\xC5\xBA";
+    BOOST_CHECK_EQUAL(toLowercase(lodz), lodz);
+    const std::string zena = "\xC5\xBE\x65na";
+    BOOST_CHECK_EQUAL(toLowercase(zena), zena);
+    // Kra, dotless i and capital I with dot above have no partner in the block
+    BOOST_CHECK_EQUAL(toLowercase("\xC4\xB8\xC4\xB1\xC4\xB0"), "\xC4\xB8\xC4\xB1\xC4\xB0");
+}
+
 BOOST_AUTO_TEST_CASE(test_ChainTables_LowercasesCyrillic) {
     // Privet
     BOOST_CHECK_EQUAL(toLowercase("\xD0\x9F\xD0\xA0\xD0\x98\xD0\x92\xD0\x95\xD0\xA2"),

@@ -41,8 +41,19 @@ namespace wolf::chain {
             if (code >= 0xC0 && code <= 0xDE && code != 0xD7) {
                 return code + 0x20;
             }
-            if (code >= 0x0100 && code <= 0x017E && (code % 2) == 0 && code != 0x0130) {
+            // Latin Extended-A puts each capital before its small letter, on an even code point
+            // except in the runs from U+0139 to U+0148 and from U+0179 to U+017E, where the
+            // capitals are odd. U+0130 and U+0138 have no partner in the block, and the small
+            // letter of U+0178 is U+00FF.
+            if ((code >= 0x0139 && code <= 0x0148) || (code >= 0x0179 && code <= 0x017E)) {
+                return (code % 2) == 1 ? code + 1 : code;
+            }
+            if (code >= 0x0100 && code <= 0x0177 && (code % 2) == 0 && code != 0x0130 &&
+                code != 0x0138) {
                 return code + 1;
+            }
+            if (code == 0x0178) {
+                return 0x00FF;
             }
             if (code >= 0x0410 && code <= 0x042F) {
                 return code + 0x20;
