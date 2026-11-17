@@ -7,7 +7,7 @@
 #include <stdcorelib/path.h>
 #include <stdcorelib/utf.h>
 
-#include <wolf/Support/Files.h>
+#include <textutil/Files.h>
 
 namespace fs = std::filesystem;
 

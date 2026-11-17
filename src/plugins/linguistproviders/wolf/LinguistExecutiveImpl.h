@@ -3,7 +3,7 @@
 
 #include <atomic>
 
-#include <wolf/Support/ExecutiveBase.h>
+#include <executiveutil/ExecutiveBase.h>
 
 #include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>

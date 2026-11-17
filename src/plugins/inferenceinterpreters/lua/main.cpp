@@ -12,9 +12,9 @@
 
 #include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
 #include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
-#include <wolf/Support/ContractValues.h>
-#include <wolf/Support/ExecutiveBase.h>
-#include <wolf/Support/ManifestValues.h>
+#include <linguistutil/ContractValues.h>
+#include <executiveutil/ExecutiveBase.h>
+#include <linguistutil/ManifestValues.h>
 
 #include "LuaSandbox.h"
 

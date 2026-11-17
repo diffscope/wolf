@@ -3,7 +3,7 @@
 
 #include <synthrt/Support/Logging.h>
 
-#include <wolf/Support/SupportGlobal.h>
+#include <wolf/wolf_global.h>
 
 namespace wolf {
 
@@ -12,7 +12,7 @@ namespace wolf {
     /// The category is separate from the synthrt category, so that a host can adjust the
     /// verbosity of wolf diagnostics without affecting the framework diagnostics. Both categories
     /// share the stdcorelib registry, callback and filter rules.
-    WOLF_INTERNAL_EXPORT srt::LogCategory &logCategory();
+    WOLF_EXPORT srt::LogCategory &logCategory();
 
 }
 

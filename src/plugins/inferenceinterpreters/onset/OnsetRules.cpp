@@ -11,7 +11,7 @@
 
 #include <synthrt/Support/Json.h>
 
-#include <wolf/Support/Files.h>
+#include <textutil/Files.h>
 
 namespace fs = std::filesystem;
 
@@ -44,8 +44,8 @@ namespace wolf::onset {
         if (error || !document.isObject()) {
             // The parser error records the position at which parsing stopped. Rule files are
             // written by hand, so that position is required for a usable diagnostic.
-            return invalid(path, error ? error.message()
-                                       : "the file does not contain a JSON object");
+            return invalid(path,
+                           error ? error.message() : "the file does not contain a JSON object");
         }
         const auto &object = document.toObject();
 
@@ -62,13 +62,12 @@ namespace wolf::onset {
                 return invalid(path, "formatVersion must be a positive integer");
             }
             if (item.toInt() > RuleTable::FORMAT_VERSION) {
-                return srt::Error(srt::Error::FeatureNotSupported,
-                                  stdc::path::to_utf8(path) +
-                                      ": the onset rules specify format version " +
-                                      std::to_string(item.toInt()) +
-                                      ", but this build supports format versions up to " +
-                                      std::to_string(RuleTable::FORMAT_VERSION) +
-                                      ". Upgrade wolf to load them.");
+                return srt::Error(
+                    srt::Error::FeatureNotSupported,
+                    stdc::path::to_utf8(path) + ": the onset rules specify format version " +
+                        std::to_string(item.toInt()) +
+                        ", but this build supports format versions up to " +
+                        std::to_string(RuleTable::FORMAT_VERSION) + ". Upgrade wolf to load them.");
             }
         }
 
@@ -179,13 +178,12 @@ namespace wolf::onset {
                 if (!fits) {
                     continue;
                 }
-                const auto better =
-                    !best || fit.length > best->length ||
-                    (fit.length == best->length && fit.exact > best->exact) ||
-                    (fit.length == best->length && fit.exact == best->exact &&
-                     fit.typed > best->typed) ||
-                    (fit.length == best->length && fit.exact == best->exact &&
-                     fit.typed == best->typed && fit.firstExact < best->firstExact);
+                const auto better = !best || fit.length > best->length ||
+                                    (fit.length == best->length && fit.exact > best->exact) ||
+                                    (fit.length == best->length && fit.exact == best->exact &&
+                                     fit.typed > best->typed) ||
+                                    (fit.length == best->length && fit.exact == best->exact &&
+                                     fit.typed == best->typed && fit.firstExact < best->firstExact);
                 if (better) {
                     best = fit;
                     chosen = &rule;

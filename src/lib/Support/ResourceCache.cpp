@@ -1,7 +1,7 @@
 #include "ResourceCache.h"
 #include "ResourceCache_p.h"
 
-#include "Files.h"
+#include <textutil/Files.h>
 
 #include <array>
 #include <cstdint>

@@ -11,11 +11,11 @@
 #include <stdcorelib/path.h>
 
 #include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
-#include <wolf/Support/ContractValues.h>
-#include <wolf/Support/ExecutiveBase.h>
-#include <wolf/Support/InputRules.h>
-#include <wolf/Support/ManifestValues.h>
-#include <wolf/Support/Utf8.h>
+#include <linguistutil/ContractValues.h>
+#include <executiveutil/ExecutiveBase.h>
+#include <linguistutil/InputRules.h>
+#include <linguistutil/ManifestValues.h>
+#include <textutil/Utf8.h>
 
 #include "PinyinEngines.h"
 

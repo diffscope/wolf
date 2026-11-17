@@ -1,6 +1,6 @@
 #include "ManifestValues.h"
 
-#include "Files.h"
+#include <textutil/Files.h>
 
 #include <algorithm>
 #include <fstream>

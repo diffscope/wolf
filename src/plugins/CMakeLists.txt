@@ -13,7 +13,7 @@ endfunction()
 # The directory name is the name of the plugin within its category, so it is derived from the
 # directory instead of being repeated: the binary is placed under <category>/<dir>, with plugin.json
 # beside it, in both the build tree and the install tree. Every plugin links wolf, and links
-# wolfsupport privately for the stateless helpers (see lib/CMakeLists.txt); LINKS_PRIVATE adds
+# linguistutil textutil executiveutil privately for the stateless helpers (see lib/CMakeLists.txt); LINKS_PRIVATE adds
 # further private dependencies. NO_INSTALL is intended for test scaffolding. NO_MANIFEST leaves
 # plugin.json to the caller, for a plugin whose manifest depends on the build configuration.
 #
@@ -35,7 +35,7 @@ function(wolf_add_interpreter_plugin _target)
         SOURCES ${_src}
         FEATURES cxx_std_17
         LINKS synthrt-wolf
-        LINKS_PRIVATE wolfsupport ${FUNC_LINKS_PRIVATE}
+        LINKS_PRIVATE linguistutil textutil executiveutil ${FUNC_LINKS_PRIVATE}
         INCLUDE_PRIVATE *
     )
     wolf_drop_plugin_postfix(${_target})

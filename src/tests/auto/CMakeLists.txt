@@ -18,10 +18,10 @@ endmacro()
 
 # The stateless helpers are not exported from libwolf; their tests link the static library that
 # contains them, as the plugins do.
-wolf_add_test(Support/test_ManifestValues.cpp synthrt-wolf wolfsupport)
-wolf_add_test(Support/test_Utf8.cpp synthrt-wolf wolfsupport)
-wolf_add_test(Support/test_Verifier.cpp synthrt-wolf wolfsupport)
-wolf_add_test(Support/test_ExecutiveTask.cpp synthrt-wolf wolfsupport)
+wolf_add_test(Support/test_ManifestValues.cpp synthrt-wolf linguistutil textutil executiveutil)
+wolf_add_test(Support/test_Utf8.cpp synthrt-wolf linguistutil textutil executiveutil)
+wolf_add_test(Support/test_Verifier.cpp synthrt-wolf linguistutil textutil executiveutil)
+wolf_add_test(Support/test_ExecutiveTask.cpp synthrt-wolf linguistutil textutil executiveutil)
 wolf_add_test(Support/test_ResourceCache.cpp synthrt-wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache

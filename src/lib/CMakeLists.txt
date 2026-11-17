@@ -1,38 +1,9 @@
 file(GLOB_RECURSE _src "*.cpp")
 
-# The stateless Support helpers are compiled into a static library rather than into libwolf, and
-# libwolf and every plugin in this repository link it privately. Its objects are built with hidden
-# visibility, so none of them is exported from any binary: the helpers are internal tools of the
-# library, their headers are not installed, and a symbol that no consumer may use must not be
-# exported. Each plugin carries its own copy, which is safe because none of the helpers holds
-# state.
-#
-# The components that hold state which must be shared stay in libwolf and are exported under
-# WOLF_INTERNAL_EXPORT (Support/SupportGlobal.h): the resource cache, which must be unique per
-# process, and the log category, which is registered by name.
-set(_wolf_support_sources
-    Support/ContractValues.cpp
-    Support/Files.cpp
-    Support/InputRules.cpp
-    Support/ManifestValues.cpp
-    Support/Utf8.cpp
-    Support/Verifier.cpp
-)
-list(TRANSFORM _wolf_support_sources PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
-list(REMOVE_ITEM _src ${_wolf_support_sources})
-
-add_library(wolfsupport STATIC ${_wolf_support_sources})
-target_compile_features(wolfsupport PUBLIC cxx_std_17)
-target_include_directories(wolfsupport
-    PUBLIC "${WOLF_SOURCE_DIR}/include"
-    PRIVATE "${WOLF_SOURCE_DIR}/include/wolf/Support"
-)
-target_link_libraries(wolfsupport PUBLIC synthrt::synthrt PRIVATE re2::re2)
-set_target_properties(wolfsupport PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-)
+# The components that hold state which must be shared are part of libwolf and are exported with
+# WOLF_EXPORT (Support/): the resource cache, which must be unique per process, and the log
+# category, which is registered by name. The stateless helpers are in the static libraries under
+# src/util, which libwolf and the plugins in this repository link privately.
 
 # The export macros would take their prefix from the target name, SYNTHRT_WOLF, while
 # wolf_global.h tests WOLF_LIBRARY and WOLF_STATIC.
@@ -40,7 +11,7 @@ wolf_add_library(${PROJECT_NAME} SHARED
     MACRO_PREFIX WOLF
     SOURCES ${_src}
     LINKS synthrt::synthrt
-    LINKS_PRIVATE BLAKE3::blake3 wolfsupport
+    LINKS_PRIVATE BLAKE3::blake3 linguistutil textutil
     INCLUDE_PRIVATE ../../include/** **
 )
 
@@ -56,8 +27,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME wolf)
 # to call.
 
 # blake3 and re2 are private: neither appears in a public header (blake3 only in
-# Support/ResourceCache.cpp, re2 only in Support/Verifier.cpp, which is compiled into the static
-# wolfsupport library), so neither belongs in the exported link interface.
+# Support/ResourceCache.cpp, re2 only in Verifier.cpp of the static linguistutil library), so neither
+# belongs in the exported link interface.
 # synthrt-wolf-config.cmake.in declares only find_dependency(synthrt), and an exported link
 # interface must not name a target that the config does not import; otherwise
 # find_package(synthrt-wolf) fails at generate time with "but the target was not found" for every

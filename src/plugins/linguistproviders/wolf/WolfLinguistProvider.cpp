@@ -25,9 +25,9 @@
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 #include <wolf/Linguist/LinguistContrib.h>
 #include <wolf/Linguist/SingerLanguages.h>
-#include <wolf/Support/ContractValues.h>
+#include <linguistutil/ContractValues.h>
 #include <wolf/Support/Logging.h>
-#include <wolf/Support/ManifestValues.h>
+#include <linguistutil/ManifestValues.h>
 
 namespace fs = std::filesystem;
 

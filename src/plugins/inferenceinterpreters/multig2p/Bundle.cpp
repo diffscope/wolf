@@ -8,7 +8,7 @@
 
 #include <synthrt/Support/Json.h>
 
-#include <wolf/Support/Files.h>
+#include <textutil/Files.h>
 
 namespace fs = std::filesystem;
 
@@ -32,9 +32,9 @@ namespace wolf::multig2p {
             stdc::json::ParseError error;
             auto value = srt::JsonValue::fromJson(buffer.str(), false, &error);
             if (error) {
-                return srt::Error(srt::Error::InvalidFormat, stdc::path::to_utf8(path) +
-                                                                 " is not valid JSON: " +
-                                                                 error.message());
+                return srt::Error(srt::Error::InvalidFormat,
+                                  stdc::path::to_utf8(path) +
+                                      " is not valid JSON: " + error.message());
             }
             if (!value.isObject()) {
                 return srt::Error(srt::Error::InvalidFormat,
@@ -85,8 +85,7 @@ namespace wolf::multig2p {
         for (std::size_t i = 0; i < vocabulary.m_symbols.size(); ++i) {
             // A repeated symbol would make one of its ids unreachable, and the id that remains
             // reachable would depend on the iteration order.
-            if (!vocabulary.m_index.emplace(vocabulary.m_symbols[i],
-                                            static_cast<std::int64_t>(i))
+            if (!vocabulary.m_index.emplace(vocabulary.m_symbols[i], static_cast<std::int64_t>(i))
                      .second) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "the vocabulary repeats a symbol: " + vocabulary.m_symbols[i]);
@@ -103,8 +102,8 @@ namespace wolf::multig2p {
         static constexpr Reserved reserved[] = {
             {UNKNOWN, &SpecialSymbols::unknown},
             {PADDING, &SpecialSymbols::padding},
-            {BEGIN, &SpecialSymbols::begin},
-            {END, &SpecialSymbols::end},
+            {BEGIN,   &SpecialSymbols::begin  },
+            {END,     &SpecialSymbols::end    },
         };
         for (const auto &entry : reserved) {
             const auto id = vocabulary.lookup(entry.name);
@@ -152,12 +151,11 @@ namespace wolf::multig2p {
                               "the bundle needs a positive integer bundle_version");
         }
         if (version->second.toInt() > SUPPORTED_VERSION) {
-            return srt::Error(srt::Error::FeatureNotSupported,
-                              "this bundle declares version " +
-                                  std::to_string(version->second.toInt()) +
-                                  ", above the highest version " +
-                                  std::to_string(SUPPORTED_VERSION) +
-                                  " that this build supports; upgrade wolf to load it");
+            return srt::Error(
+                srt::Error::FeatureNotSupported,
+                "this bundle declares version " + std::to_string(version->second.toInt()) +
+                    ", above the highest version " + std::to_string(SUPPORTED_VERSION) +
+                    " that this build supports; upgrade wolf to load it");
         }
 
         Bundle bundle;
@@ -168,9 +166,8 @@ namespace wolf::multig2p {
         }
         for (const auto &[logical, name] : files->second.toObject()) {
             if (!name.isString() || name.toString().empty()) {
-                return srt::Error(srt::Error::InvalidFormat,
-                                  "the bundle file entry " + logical +
-                                      " must be a non-empty file name");
+                return srt::Error(srt::Error::InvalidFormat, "the bundle file entry " + logical +
+                                                                 " must be a non-empty file name");
             }
             bundle.m_files.emplace(logical, name.toString());
         }

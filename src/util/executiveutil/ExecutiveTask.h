@@ -1,5 +1,5 @@
-#ifndef WOLF_SUPPORT_EXECUTIVETASK_H
-#define WOLF_SUPPORT_EXECUTIVETASK_H
+#ifndef WOLF_EXECUTIVEUTIL_EXECUTIVETASK_H
+#define WOLF_EXECUTIVEUTIL_EXECUTIVETASK_H
 
 #include <condition_variable>
 #include <functional>
@@ -146,4 +146,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_SUPPORT_EXECUTIVETASK_H
+#endif // WOLF_EXECUTIVEUTIL_EXECUTIVETASK_H

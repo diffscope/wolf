@@ -1,11 +1,11 @@
-#ifndef WOLF_SUPPORT_EXECUTIVEBASE_H
-#define WOLF_SUPPORT_EXECUTIVEBASE_H
+#ifndef WOLF_EXECUTIVEUTIL_EXECUTIVEBASE_H
+#define WOLF_EXECUTIVEUTIL_EXECUTIVEBASE_H
 
 #include <atomic>
 #include <memory>
 #include <utility>
 
-#include <wolf/Support/ExecutiveTask.h>
+#include "executiveutil/ExecutiveTask.h"
 
 namespace wolf {
 
@@ -125,4 +125,4 @@ namespace wolf {
 
 }
 
-#endif // WOLF_SUPPORT_EXECUTIVEBASE_H
+#endif // WOLF_EXECUTIVEUTIL_EXECUTIVEBASE_H

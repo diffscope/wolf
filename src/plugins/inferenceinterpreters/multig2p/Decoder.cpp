@@ -10,7 +10,7 @@
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Support/ManifestValues.h>
+#include <linguistutil/ManifestValues.h>
 
 namespace OnnxApi = ds::Api::Onnx;
 
@@ -34,8 +34,8 @@ namespace wolf::multig2p {
             const char *output;
         };
         constexpr CacheNames CACHES[] = {
-            {"kv_cache_k", "new_kv_cache_k"},
-            {"kv_cache_v", "new_kv_cache_v"},
+            {"kv_cache_k",       "new_kv_cache_k"      },
+            {"kv_cache_v",       "new_kv_cache_v"      },
             {"kv_cache_cross_k", "new_kv_cache_cross_k"},
             {"kv_cache_cross_v", "new_kv_cache_cross_v"},
         };
@@ -85,8 +85,7 @@ namespace wolf::multig2p {
                 const auto it = outputs->outputs.find(name);
                 if (it == outputs->outputs.end() || !it->second) {
                     return srt::Error(srt::Error::InvalidFormat,
-                                      std::string("the ") + what + " model did not return " +
-                                          name);
+                                      std::string("the ") + what + " model did not return " + name);
                 }
             }
             return outputs->outputs;
@@ -273,9 +272,8 @@ namespace wolf::multig2p {
         if (!maskTensor) {
             return maskTensor.takeError();
         }
-        auto languageTensor =
-            int64Tensor({static_cast<std::int64_t>(batch)},
-                        std::vector<std::int64_t>(batch, languageId));
+        auto languageTensor = int64Tensor({static_cast<std::int64_t>(batch)},
+                                          std::vector<std::int64_t>(batch, languageId));
         if (!languageTensor) {
             return languageTensor.takeError();
         }
@@ -284,11 +282,14 @@ namespace wolf::multig2p {
         const TensorPtr maskValue = maskTensor.take();
         const TensorPtr languageValue = languageTensor.take();
 
-        auto encoderOut = invoke(*m_encoder,
-                                 {{SRC, sourceValue},
-                                  {LANG_IDS, languageValue},
-                                  {SRC_PAD_MASK, maskValue}},
-                                 {ENCODER_OUT}, "encoder");
+        auto encoderOut =
+            invoke(*m_encoder,
+                   {
+                       {SRC,          sourceValue  },
+                       {LANG_IDS,     languageValue},
+                       {SRC_PAD_MASK, maskValue    }
+        },
+                   {ENCODER_OUT}, "encoder");
         if (!encoderOut) {
             return encoderOut.takeError();
         }
@@ -304,10 +305,12 @@ namespace wolf::multig2p {
             return begin.takeError();
         }
         auto initial = invoke(*m_stepInit,
-                              {{DEC_INPUT, TensorPtr(begin.take())},
-                               {LANG_IDS, languageValue},
-                               {ENCODER_OUT, encoderOut->at(ENCODER_OUT)},
-                               {SRC_PAD_MASK, maskValue}},
+                              {
+                                  {DEC_INPUT,    TensorPtr(begin.take())    },
+                                  {LANG_IDS,     languageValue              },
+                                  {ENCODER_OUT,  encoderOut->at(ENCODER_OUT)},
+                                  {SRC_PAD_MASK, maskValue                  }
+        },
                               stepOutputs, "decoder_step_init");
         if (!initial) {
             return initial.takeError();
@@ -352,9 +355,9 @@ namespace wolf::multig2p {
                 return input.takeError();
             }
             std::map<std::string, TensorPtr> arguments{
-                {DEC_INPUT, TensorPtr(input.take())},
-                {LANG_IDS, languageValue},
-                {SRC_PAD_MASK, maskValue},
+                {DEC_INPUT,    TensorPtr(input.take())},
+                {LANG_IDS,     languageValue          },
+                {SRC_PAD_MASK, maskValue              },
             };
             for (const auto &cache : CACHES) {
                 arguments.emplace(cache.input, state[cache.output]);

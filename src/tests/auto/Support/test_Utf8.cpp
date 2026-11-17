@@ -2,7 +2,7 @@
 #include <string>
 #include <string_view>
 
-#include <wolf/Support/Utf8.h>
+#include <textutil/Utf8.h>
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
@@ -104,7 +104,8 @@ namespace {
     BOOST_AUTO_TEST_CASE(splitter_drops_no_byte) {
         // The splitter is lenient on purpose: an invalid byte becomes an element of its own and a
         // truncated sequence takes what remains, so that the elements always reassemble the input.
-        for (const std::string_view text : {"", "abc", "\xC3\xA9", "\xE2\x82", "a\x80z", "\xF0\x9F\x98"}) {
+        for (const std::string_view text :
+             {"", "abc", "\xC3\xA9", "\xE2\x82", "a\x80z", "\xF0\x9F\x98"}) {
             std::string joined;
             for (const auto &character : wolf::splitUtf8(text)) {
                 joined += character;

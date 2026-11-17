@@ -9,7 +9,7 @@
 
 #include <synthrt/Support/Expected.h>
 
-#include <wolf/Support/SupportGlobal.h>
+#include <wolf/wolf_global.h>
 
 namespace wolf {
 
@@ -28,7 +28,7 @@ namespace wolf {
     /// The cache holds weak references, and an entry is destroyed with the last module that uses
     /// it. The cache belongs to the provider execution domain instead of to a Package, which
     /// allows it to outlive an individual load.
-    class WOLF_INTERNAL_EXPORT ResourceCache {
+    class WOLF_EXPORT ResourceCache {
     public:
         /// Returns the single cache of the current provider domain.
         static ResourceCache &instance();

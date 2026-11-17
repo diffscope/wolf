@@ -5,7 +5,7 @@
 
 #include <synthrt/Support/Json.h>
 
-#include <wolf/Support/Verifier.h>
+#include <linguistutil/Verifier.h>
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>

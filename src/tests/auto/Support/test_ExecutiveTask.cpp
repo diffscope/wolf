@@ -4,7 +4,7 @@
 #include <synthrt/Support/Error.h>
 #include <synthrt/Task/ITask.h>
 
-#include <wolf/Support/ExecutiveTask.h>
+#include <executiveutil/ExecutiveTask.h>
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>

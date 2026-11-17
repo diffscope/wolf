@@ -12,7 +12,7 @@
 #include <synthrt/Core/ContribImportBinding.h>
 
 #include "Logging.h"
-#include "ManifestValues.h"
+#include <linguistutil/ManifestValues.h>
 #include "LinguistProvider.h"
 #include "LinguistProviderPlugin.h"
 

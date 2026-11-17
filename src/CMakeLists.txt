@@ -9,6 +9,8 @@ wolf_init_buildsystem()
 set(WOLF_BUILD_PLUGINS_DIR ${WOLF_BUILD_LIBRARY_DIR}/plugins/${WOLF_INSTALL_NAME})
 set(WOLF_INSTALL_PLUGINS_DIR ${WOLF_INSTALL_LIBRARY_DIR}/plugins/${WOLF_INSTALL_NAME})
 
+add_subdirectory(util)
+
 add_subdirectory(lib)
 
 add_subdirectory(plugins)
@@ -22,7 +24,7 @@ endif()
 # (the task face, manifest readers, the resource cache, the verifier), shared with the plugins in
 # this tree and subject to change together with them. The host interface consists of Api, Linguist
 # and Session. The symbols behind Support follow the headers: the stateless helpers are compiled
-# into the static wolfsupport library and are exported from no binary, and the two components that
+# into the static linguistutil textutil executiveutil library and are exported from no binary, and the two components that
 # must be unique per process are exported under WOLF_INTERNAL_EXPORT, which carries no API or ABI
 # guarantee (see lib/CMakeLists.txt and Support/SupportGlobal.h). The consumer check in
 # .github/consumer verifies that the package contains no Support header.

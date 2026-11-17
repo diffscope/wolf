@@ -6,8 +6,8 @@
 
 #include <utility>
 
-#include <wolf/Support/ExecutiveBase.h>
-#include <wolf/Support/ManifestValues.h>
+#include <executiveutil/ExecutiveBase.h>
+#include <linguistutil/ManifestValues.h>
 
 namespace G2pApi = wolf::Api::G2p::L1;
 namespace S2pApi = wolf::Api::S2p::L1;

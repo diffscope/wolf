@@ -11,8 +11,8 @@
 
 #include <stdcorelib/path.h>
 
-#include <wolf/Support/Files.h>
-#include <wolf/Support/Utf8.h>
+#include <textutil/Files.h>
+#include <textutil/Utf8.h>
 
 namespace wolf::lua {
 
