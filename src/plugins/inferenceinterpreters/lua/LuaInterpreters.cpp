@@ -52,8 +52,7 @@ namespace wolf::lua {
         /// this text.
         class S2pConfiguration : public srt::ContribConfiguration {
         public:
-            S2pConfiguration()
-                : ContribConfiguration({S2pApi::API_INTERFACE, S2pApi::API_LEVEL, VARIANT}) {
+            S2pConfiguration() : ContribConfiguration(S2pTriplet) {
             }
 
             std::string source;
@@ -62,8 +61,7 @@ namespace wolf::lua {
 
         class OnsetConfiguration : public srt::ContribConfiguration {
         public:
-            OnsetConfiguration()
-                : ContribConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, VARIANT}) {
+            OnsetConfiguration() : ContribConfiguration(OnsetTriplet) {
             }
 
             std::string source;
@@ -132,7 +130,7 @@ namespace wolf::lua {
         }
 
         class S2pExecutive
-            : public ExecutiveBase<S2pApi::S2pExecutive, S2pApi::S2pStartInput, S2pApi::S2pResult> {
+            : public ExecutiveBase<S2pApi::Executive, S2pApi::StartInput, S2pApi::Result> {
         public:
             S2pExecutive(srt::InferenceSpec &spec, std::unique_ptr<Sandbox> sandbox)
                 : ExecutiveBase(spec), m_sandbox(std::move(sandbox)) {
@@ -142,16 +140,16 @@ namespace wolf::lua {
                 finish();
             }
 
-            srt::Expected<void> initialize(const S2pApi::S2pInitArgs &) override {
+            srt::Expected<void> initialize(const S2pApi::InitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const S2pApi::S2pStartInput &input) override {
+            Batch runBatch(const S2pApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<S2pApi::S2pResult>();
+                auto result = std::make_unique<S2pApi::Result>();
                 result->phonemes.reserve(input.pronunciations.size());
                 for (const auto &pronunciation : input.pronunciations) {
                     if (stopRequested()) {
@@ -188,8 +186,7 @@ namespace wolf::lua {
         };
 
         class OnsetExecutive
-            : public ExecutiveBase<OnsetApi::OnsetExecutive, OnsetApi::OnsetStartInput,
-                                   OnsetApi::OnsetResult> {
+            : public ExecutiveBase<OnsetApi::Executive, OnsetApi::StartInput, OnsetApi::Result> {
         public:
             OnsetExecutive(srt::InferenceSpec &spec, std::unique_ptr<Sandbox> sandbox)
                 : ExecutiveBase(spec), m_sandbox(std::move(sandbox)) {
@@ -199,16 +196,16 @@ namespace wolf::lua {
                 finish();
             }
 
-            srt::Expected<void> initialize(const OnsetApi::OnsetInitArgs &) override {
+            srt::Expected<void> initialize(const OnsetApi::InitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const OnsetApi::OnsetStartInput &input) override {
+            Batch runBatch(const OnsetApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<OnsetApi::OnsetResult>();
+                auto result = std::make_unique<OnsetApi::Result>();
                 result->onsets.reserve(input.phonemes.size());
                 for (const auto &word : input.phonemes) {
                     if (stopRequested()) {
@@ -248,7 +245,7 @@ namespace wolf::lua {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<S2pApi::S2pExports>(VARIANT);
+        auto result = std::make_unique<S2pApi::Exports>();
         result->languages = std::move(read->languages);
         result->phonemes = std::move(read->strings);
         result->openSet = read->openSet;
@@ -270,7 +267,7 @@ namespace wolf::lua {
         if (auto checked = wolf::requireNoImportOptions(manifestOptions, LUA_S2P); !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::S2pImportOptions(VARIANT));
+        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -294,7 +291,7 @@ namespace wolf::lua {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<OnsetApi::OnsetExports>(VARIANT);
+        auto result = std::make_unique<OnsetApi::Exports>();
         result->knownPhonemes = std::move(read->strings);
         return std::unique_ptr<srt::ContribExports>(std::move(result));
     }
@@ -314,8 +311,7 @@ namespace wolf::lua {
         if (auto checked = wolf::requireNoImportOptions(manifestOptions, LUA_ONSET); !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(
-            new OnsetApi::OnsetImportOptions(VARIANT));
+        return std::unique_ptr<srt::ContribImportOptions>(new OnsetApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>

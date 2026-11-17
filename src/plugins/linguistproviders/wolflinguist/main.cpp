@@ -3,15 +3,15 @@
 
 #include "WolfLinguistProvider.h"
 
+#include <wolf/Api/Linguists/Linguist/1/LinguistWolfApiL1.h>
+
 namespace wolf {
 
     class WolfLinguistProviderPlugin final : public LinguistProviderPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(Api::Linguist::L1::API_INTERFACE,
-                                                       Api::Linguist::L1::API_LEVEL,
-                                                       Api::Linguist::L1::API_VARIANT)) {
+            if (triplet != Api::Linguist::L1::Wolf::Triplet) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

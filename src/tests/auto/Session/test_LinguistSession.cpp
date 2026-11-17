@@ -40,7 +40,7 @@ namespace {
     /// A conversion input is a task payload, which is neither copyable nor movable, so the input is
     /// constructed in place and passed by reference.
     struct Line {
-        LinguistApi::LinguistConvertInput input;
+        LinguistApi::ConvertInput input;
 
         Line(std::initializer_list<const char *> lyrics, LinguistApi::Depth depth) {
             input.depth = depth;
@@ -49,7 +49,7 @@ namespace {
             }
         }
 
-        operator const LinguistApi::LinguistConvertInput &() const {
+        operator const LinguistApi::ConvertInput &() const {
             return input;
         }
     };
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersAreAConventionNotAContract) {
     BOOST_CHECK_EQUAL((*swapped)->words[1].pronunciation, "SP");
 
     session.setReservedMarkers({"SP", "AP"});
-    LinguistApi::LinguistConvertInput pinned;
+    LinguistApi::ConvertInput pinned;
     pinned.depth = LinguistApi::Depth::Pronunciation;
     pinned.words.push_back({"SP", std::string("s p"), std::nullopt});
     auto result = session.convert(singer, "zxx", pinned);
@@ -456,7 +456,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPinnedLayerOnAReservedMarker) {
     wolf::LinguistSession session(unit);
     const auto singer = refOf(package, "s");
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Onsets;
     LinguistApi::LockedPhonemes pinned;
     pinned.phonemes = {"s", "il"};
@@ -473,7 +473,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPinnedLayerOnAReservedMarker) {
     BOOST_CHECK(word.hitStage == LinguistApi::HitStage::Locked);
 
     // Without a pinned layer, the session still converts the marker as before.
-    LinguistApi::LinguistConvertInput plain;
+    LinguistApi::ConvertInput plain;
     plain.depth = LinguistApi::Depth::Onsets;
     plain.words.push_back({"SP", std::nullopt, std::nullopt});
     auto marker = session.convert(singer, "zxx", plain);
@@ -502,7 +502,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertsInParallel) {
             // wrong thread appears as an incorrect value rather than as an empty result.
             const std::string mine = std::to_string(worker);
             for (int round = 0; round < ROUNDS; ++round) {
-                LinguistApi::LinguistConvertInput input;
+                LinguistApi::ConvertInput input;
                 input.depth = LinguistApi::Depth::Onsets;
                 input.words.push_back({mine, std::nullopt, std::nullopt});
                 auto result = session.convert(singer, "zxx", input);
@@ -615,7 +615,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_TwoSessionsShareOneUnit) {
     std::atomic<int> wrong{0};
     const auto churn = [&](wolf::LinguistSession &session, const std::string &word) {
         for (int round = 0; round < ROUNDS; ++round) {
-            LinguistApi::LinguistConvertInput input;
+            LinguistApi::ConvertInput input;
             input.depth = LinguistApi::Depth::Onsets;
             input.words.push_back({word, std::nullopt, std::nullopt});
             auto result = session.convert(singer, "zxx", input);

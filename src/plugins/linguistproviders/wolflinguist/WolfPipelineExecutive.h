@@ -24,9 +24,9 @@ namespace wolf {
 
         const std::vector<std::string> &languages() const override;
 
-        srt::Expected<Api::Linguist::L1::LinguistExecutive *> createLinguist(
-            std::string_view language,
-            const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) override;
+        srt::Expected<Api::Linguist::L1::Executive *>
+            createLinguist(std::string_view language,
+                           const Api::Linguist::L1::RuntimeOptions &runtimeOptions) override;
 
     private:
         SingerLanguages m_languages;

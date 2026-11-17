@@ -21,17 +21,15 @@ namespace wolf {
         /// Overloads are used instead of a compile-time probe because whether a contract is
         /// language-bound is a property of the contract and is stated explicitly here. The Onset
         /// contract is not language-bound, so its runtime options have no binding field.
-        void bind(G2pApi::G2pRuntimeOptions &options,
-                  const Api::Common::L1::LanguageScheme &binding) {
+        void bind(G2pApi::RuntimeOptions &options, const Api::Common::L1::LanguageScheme &binding) {
             options.binding = binding;
         }
 
-        void bind(S2pApi::S2pRuntimeOptions &options,
-                  const Api::Common::L1::LanguageScheme &binding) {
+        void bind(S2pApi::RuntimeOptions &options, const Api::Common::L1::LanguageScheme &binding) {
             options.binding = binding;
         }
 
-        void bind(OnsetApi::OnsetRuntimeOptions &, const Api::Common::L1::LanguageScheme &) {
+        void bind(OnsetApi::RuntimeOptions &, const Api::Common::L1::LanguageScheme &) {
         }
 
         bool lockedShapeIsValid(const LinguistApi::LockedPhonemes &locked) {
@@ -146,7 +144,7 @@ namespace wolf {
             return srt::Error(srt::Error::InvalidFormat,
                               "linguist import " + std::string(role) + " is not bound");
         }
-        Options options(import->binding()->target().triplet().variant());
+        Options options;
         bind(options, m_binding);
         auto child = createChild(role, options);
         if (!child) {
@@ -155,10 +153,10 @@ namespace wolf {
         return static_cast<Executive *>(child.take());
     }
 
-    srt::Expected<Api::G2p::L1::G2pExecutive *> LinguistExecutiveImpl::g2p() {
+    srt::Expected<Api::G2p::L1::Executive *> LinguistExecutiveImpl::g2p() {
         if (!m_g2p.load()) {
-            auto result = createMember<G2pApi::G2pRuntimeOptions, G2pApi::G2pExecutive>(
-                LinguistApi::ROLE_G2P);
+            auto result =
+                createMember<G2pApi::RuntimeOptions, G2pApi::Executive>(LinguistApi::ROLE_G2P);
             if (!result) {
                 return result.takeError();
             }
@@ -167,15 +165,15 @@ namespace wolf {
         return m_g2p.load();
     }
 
-    srt::Expected<Api::S2p::L1::S2pExecutive *> LinguistExecutiveImpl::s2p() {
+    srt::Expected<Api::S2p::L1::Executive *> LinguistExecutiveImpl::s2p() {
         if (!m_s2p.load()) {
             // An absent S2P import is valid, as is an absent onset import; the composition then
             // ends at the pronunciation layer.
             if (!spec().findImport(LinguistApi::ROLE_S2P)) {
                 return nullptr;
             }
-            auto result = createMember<S2pApi::S2pRuntimeOptions, S2pApi::S2pExecutive>(
-                LinguistApi::ROLE_S2P);
+            auto result =
+                createMember<S2pApi::RuntimeOptions, S2pApi::Executive>(LinguistApi::ROLE_S2P);
             if (!result) {
                 return result.takeError();
             }
@@ -184,12 +182,12 @@ namespace wolf {
         return m_s2p.load();
     }
 
-    srt::Expected<Api::Onset::L1::OnsetExecutive *> LinguistExecutiveImpl::onset() {
+    srt::Expected<Api::Onset::L1::Executive *> LinguistExecutiveImpl::onset() {
         if (!m_onset.load()) {
             if (!spec().findImport(LinguistApi::ROLE_ONSET)) {
                 return nullptr;
             }
-            auto result = createMember<OnsetApi::OnsetRuntimeOptions, OnsetApi::OnsetExecutive>(
+            auto result = createMember<OnsetApi::RuntimeOptions, OnsetApi::Executive>(
                 LinguistApi::ROLE_ONSET);
             if (!result) {
                 return result.takeError();
@@ -200,8 +198,8 @@ namespace wolf {
     }
 
     LinguistExecutiveImpl::Batch
-        LinguistExecutiveImpl::runBatch(const LinguistApi::LinguistConvertInput &input) {
-        auto result = std::make_unique<LinguistApi::LinguistConvertResult>();
+        LinguistExecutiveImpl::runBatch(const LinguistApi::ConvertInput &input) {
+        auto result = std::make_unique<LinguistApi::ConvertResult>();
         result->words.resize(input.words.size());
 
         // A stop request that arrives before this call cancels the conversion. stop() applies to
@@ -215,7 +213,7 @@ namespace wolf {
 
         // Pass one: determine the pronunciation layer of each word. Words that arrive with a pinned
         // pronunciation or a pinned phoneme layer skip the stages that would have produced them.
-        G2pApi::G2pStartInput g2pInput;
+        G2pApi::StartInput g2pInput;
         std::vector<std::size_t> g2pPositions;
         for (std::size_t i = 0; i < input.words.size(); ++i) {
             const auto &word = input.words[i];
@@ -301,7 +299,7 @@ namespace wolf {
         }
 
         // Pass two: phonemes, for the words that do not already carry a pinned layer.
-        S2pApi::S2pStartInput s2pInput;
+        S2pApi::StartInput s2pInput;
         std::vector<std::size_t> s2pPositions;
         for (std::size_t i = 0; i < result->words.size(); ++i) {
             const auto &output = result->words[i];
@@ -354,7 +352,7 @@ namespace wolf {
             return marker.takeError();
         }
 
-        OnsetApi::OnsetStartInput onsetInput;
+        OnsetApi::StartInput onsetInput;
         std::vector<std::size_t> onsetPositions;
         for (std::size_t i = 0; i < result->words.size(); ++i) {
             if (input.words[i].locked) {

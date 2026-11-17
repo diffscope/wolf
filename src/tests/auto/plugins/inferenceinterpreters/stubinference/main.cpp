@@ -23,18 +23,18 @@ namespace wolf::stub {
         public:
             srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
                 create(const srt::ContribContractTriplet &triplet) override {
-                if (triplet.interfaceId() == Api::G2p::L1::API_INTERFACE &&
-                    triplet.level() == Api::G2p::L1::API_LEVEL) {
+                if (triplet.interfaceId() == Api::G2p::L1::Contract.interfaceId() &&
+                    triplet.level() == Api::G2p::L1::Contract.level()) {
                     return std::unique_ptr<srt::ContribInterpreter>(
                         new StubG2pInterpreter(triplet.variant()));
                 }
-                if (triplet.interfaceId() == Api::S2p::L1::API_INTERFACE &&
-                    triplet.level() == Api::S2p::L1::API_LEVEL) {
+                if (triplet.interfaceId() == Api::S2p::L1::Contract.interfaceId() &&
+                    triplet.level() == Api::S2p::L1::Contract.level()) {
                     return std::unique_ptr<srt::ContribInterpreter>(
                         new StubS2pInterpreter(triplet.variant()));
                 }
-                if (triplet.interfaceId() == Api::Onset::L1::API_INTERFACE &&
-                    triplet.level() == Api::Onset::L1::API_LEVEL) {
+                if (triplet.interfaceId() == Api::Onset::L1::Contract.interfaceId() &&
+                    triplet.level() == Api::Onset::L1::Contract.level()) {
                     return std::unique_ptr<srt::ContribInterpreter>(
                         new StubOnsetInterpreter(triplet.variant()));
                 }
@@ -45,9 +45,9 @@ namespace wolf::stub {
 
         stdc::json::Object g2pDeclaration(const char *variant) {
             return stdc::json::Object{
-                {"interface", Api::G2p::L1::API_INTERFACE},
-                {"level",     Api::G2p::L1::API_LEVEL    },
-                {"variant",   variant                    },
+                {"interface", Api::G2p::L1::Contract.interfaceId()},
+                {"level",     Api::G2p::L1::Contract.level()      },
+                {"variant",   variant                             },
             };
         }
 

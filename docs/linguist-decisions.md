@@ -1209,7 +1209,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 
 **为什么需要新属性**：`maxDepth` 只回答「能到多深」，不回答「发音与音素是不是两层」。eng 的 S2P 是 `direct`（按保留分隔符切分、不改符号），发音层就是音素层；cmn 的声库侧 S2P 是 `dict`（真分解），发音层是独立一层。两者的 `maxDepth` 相同，`imports` 集合区分不出来，宿主此前没有判据：lite 侧唯一相关的代码是按 `onsets.size() != phonemes.size()` 兜底的启发式，其注释也已自陈应当先读会话状态。
 
-**判据只读 variant 的理由**：该查询必须与 `maxDepth` 同源、不创建对象，而 `dict` / `mapping` 的表与 `lua` 脚本要到 Acquire 期才由插件读入，声明期不可见。`direct` 的语义由接口定义（`S2pApiL1.h` 的 `VARIANT_DIRECT` 与 `variantKeepsSymbols()`），是唯一可静态断言的恒等变体。
+~~**判据只读 variant 的理由**：该查询必须与 `maxDepth` 同源、不创建对象，而 `dict` / `mapping` 的表与 `lua` 脚本要到 Acquire 期才由插件读入，声明期不可见。`direct` 的语义由接口定义（`S2pApiL1.h` 的 `VARIANT_DIRECT` 与 `variantKeepsSymbols()`），是唯一可静态断言的恒等变体。~~ 本项由 A84 的 exports 能力声明取代。
 
 **内容级例外的处理**（"内容推导优先、不可推导由作者声明"的落地）：
 
@@ -1293,3 +1293,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 旧变体草案的九轮攻防复核记录（对照面快照、防线记录、下轮攻击者须知）**不迁移**，可经 git 历史回溯。其中确认有效的事实断言已并入 A 系列的依据栏。
 
 一处需要更正的复核结论：多轮复核声明的「synthrt origin/main 观察点即 HEAD、未漂移」已失效。其后 main 前进了一个提交（*Update registry usage*，2026-09-04），该提交改动了 `ContribCategory.h` 第 158 行下方的注册表导出宏；已复核全部被引锚点在该提交上仍然命中。
+
+### A84 — 契约 payload 与实现身份分离
+
+2026-11-17：契约头文件以 Contract 统一 interface 和 level，exports、import options、runtime options 不再接收 variant。configuration 保存完整三元组，具体变体以 Triplet 声明。契约类型去掉命名空间中已经表达的前缀，既有公开 LinguistConfiguration 移入平铺的 LinguistWolfApiL1.h。S2p 的 Exports::preservesSymbols 由解释器声明，direct 为 true，未知或条件性行为为 false。wolflinguist 读取此能力，不再按 variant 名称推断层关系。这取代 A81 的变体白名单判据，不改变包清单或语言数据。见 [ContractApiMigration.md](codex/ContractApiMigration.md)。

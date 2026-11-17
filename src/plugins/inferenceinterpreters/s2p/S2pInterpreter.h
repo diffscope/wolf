@@ -6,13 +6,15 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
+
 namespace wolf::s2p {
 
-    inline constexpr char DIRECT[] = "direct";
+    inline const srt::ContribContractTriplet DirectTriplet{Api::S2p::L1::Contract, "direct"};
 
-    inline constexpr char DICT[] = "dict";
+    inline const srt::ContribContractTriplet DictTriplet{Api::S2p::L1::Contract, "dict"};
 
-    inline constexpr char MAPPING[] = "mapping";
+    inline const srt::ContribContractTriplet MappingTriplet{Api::S2p::L1::Contract, "mapping"};
 
     /// Interprets S2P modules of the direct, dict and mapping variants. The variant is
     /// fixed when the interpreter is created.

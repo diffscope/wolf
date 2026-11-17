@@ -92,12 +92,12 @@ public:
     /// 语言句柄对应的组合可达的最深层，由其 imports 集合读出（语言域契约 §5.0.1）。
     virtual Depth maxDepth(std::string_view language) const = 0;
 
-    /// 语言句柄对应的组合是否把发音层与音素层分成两层，由其 S2P 成员的 variant 读出
+    /// 语言句柄对应的组合是否把发音层与音素层分成两层，由其 S2P 成员的 exports 能力读出
     /// （语言域契约 §5.0.2）。
     virtual bool hasSeparatePronunciationLayer(std::string_view language) const = 0;
 
     /// 语言句柄对应的组合所声明的音素清单与 openSet；未声明的句柄返回 nullptr。
-    virtual const LinguistExports *exports(std::string_view language) const = 0;
+    virtual const Exports *exports(std::string_view language) const = 0;
 };
 ```
 
@@ -120,11 +120,11 @@ SingerSpec ──extension──▶ WolfPipelineExecutive
 
 ### 3.1 二元组注入
 
-`LinguistExecutive` 创建 G2P 与 S2P 子执行体时，把**自身 spec 的 `(language, scheme)`** 写入各自 `RuntimeOptions` 的 `binding`；Onset 的 `RuntimeOptions` 不携带二元组。变体必须取自目标 spec 的 `triplet().variant()`，不得硬编码，见链推理契约 §6.3。
+`LinguistExecutive` 创建 G2P 与 S2P 子执行体时，把**自身 spec 的 `(language, scheme)`** 写入各自 `RuntimeOptions` 的 `binding`；Onset 的 `RuntimeOptions` 不携带二元组。RuntimeOptions 只携带契约身份，构造时不需要 variant，见链推理契约 §6.3。
 
 ```cpp
 const auto &target = spec().findImport("linguist/g2p")->binding()->target();
-Api::G2p::L1::G2pRuntimeOptions options(target.triplet().variant());
+Api::G2p::L1::RuntimeOptions options;
 options.binding = { spec().language(), spec().scheme() };
 auto child = createChild("linguist/g2p", options);
 ```
@@ -155,7 +155,7 @@ auto child = createChild("linguist/g2p", options);
 形制与 `srt::InferenceExecutive` 对应：
 
 ```cpp
-class LinguistExecutive : public wolf::LinguistPipelineExecutive {
+class LinguistExecutive : public wolf::PipelineExecutive {
 public:
     using AsyncCallback =
         std::function<void(srt::Expected<std::unique_ptr<LinguistConvertResult>>)>;

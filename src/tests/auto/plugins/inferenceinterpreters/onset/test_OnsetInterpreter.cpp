@@ -27,8 +27,9 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL,
-                                                       wolf::onset::RULE)) {
+            if (triplet != srt::ContribContractTriplet(OnsetApi::Contract.interfaceId(),
+                                                       OnsetApi::Contract.level(),
+                                                       wolf::onset::Triplet.variant())) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }
@@ -68,14 +69,14 @@ namespace {
 
     std::vector<bool> mark(srt::PackageHandle &handle, const std::vector<std::string> &phonemes) {
         auto *spec = handle.contribution("inference", "onset")->as<srt::InferenceSpec>();
-        OnsetApi::OnsetImportOptions options(spec->triplet().variant());
-        OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
+        OnsetApi::ImportOptions options{};
+        OnsetApi::RuntimeOptions runtime{};
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        OnsetApi::OnsetStartInput input;
+        OnsetApi::StartInput input;
         input.phonemes.push_back(phonemes);
-        auto result = static_cast<OnsetApi::OnsetExecutive *>(executive->get())->start(input);
+        auto result = static_cast<OnsetApi::Executive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto onsets = (*result)->onsets.front();
         executive->reset();

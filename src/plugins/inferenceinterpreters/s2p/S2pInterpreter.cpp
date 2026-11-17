@@ -45,8 +45,8 @@ namespace wolf::s2p {
         class Configuration : public srt::ContribConfiguration {
         public:
             Configuration(std::string variant)
-                : ContribConfiguration(
-                      {S2pApi::API_INTERFACE, S2pApi::API_LEVEL, std::move(variant)}) {
+                : ContribConfiguration({S2pApi::Contract.interfaceId(), S2pApi::Contract.level(),
+                                        std::move(variant)}) {
             }
 
             /// Parsed during Acquire rather than when an executive is created, because the
@@ -102,7 +102,7 @@ namespace wolf::s2p {
         /// variant; the load error if the table cannot be loaded.
         srt::Expected<Table> loadTable(const std::string &variant, const fs::path &file) {
             auto &cache = ResourceCache::instance();
-            if (variant == DICT) {
+            if (variant == DictTriplet.variant()) {
                 auto loaded = cache.acquire<DictionaryTable>(
                     file, DICT_KIND, variant,
                     std::function([](const fs::path &path)
@@ -118,7 +118,7 @@ namespace wolf::s2p {
                 }
                 return Table(loaded.take());
             }
-            if (variant == MAPPING) {
+            if (variant == MappingTriplet.variant()) {
                 auto loaded = cache.acquire<MappingTable>(
                     file, MAPPING_KIND, variant,
                     std::function([](const fs::path &path)
@@ -138,7 +138,7 @@ namespace wolf::s2p {
         }
 
         class Executive
-            : public ExecutiveBase<S2pApi::S2pExecutive, S2pApi::S2pStartInput, S2pApi::S2pResult> {
+            : public ExecutiveBase<S2pApi::Executive, S2pApi::StartInput, S2pApi::Result> {
         public:
             Executive(srt::InferenceSpec &spec, Table table)
                 : ExecutiveBase(spec), m_table(std::move(table)) {
@@ -148,16 +148,16 @@ namespace wolf::s2p {
                 finish();
             }
 
-            srt::Expected<void> initialize(const S2pApi::S2pInitArgs &) override {
+            srt::Expected<void> initialize(const S2pApi::InitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const S2pApi::S2pStartInput &input) override {
+            Batch runBatch(const S2pApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<S2pApi::S2pResult>();
+                auto result = std::make_unique<S2pApi::Result>();
                 result->phonemes.reserve(input.pronunciations.size());
                 for (const auto &pronunciation : input.pronunciations) {
                     // Cancellation is checked between units, so a caller that stops the batch
@@ -196,7 +196,8 @@ namespace wolf::s2p {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<S2pApi::S2pExports>(m_variant);
+        auto result = std::make_unique<S2pApi::Exports>();
+        result->preservesSymbols = m_variant == DirectTriplet.variant();
         result->languages = std::move(read->languages);
         result->phonemes = std::move(read->strings);
         result->openSet = read->openSet;
@@ -205,7 +206,7 @@ namespace wolf::s2p {
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         S2pInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
-        auto file = readFile(spec, m_variant != DIRECT);
+        auto file = readFile(spec, m_variant != DirectTriplet.variant());
         if (!file) {
             return file.takeError();
         }
@@ -225,7 +226,7 @@ namespace wolf::s2p {
         if (auto checked = wolf::requireNoImportOptions(manifestOptions, m_variant); !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::S2pImportOptions(m_variant));
+        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>

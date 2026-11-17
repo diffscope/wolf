@@ -272,9 +272,9 @@ namespace wolf {
         /// effect, and the words not reached are returned in their unconverted form. A caller
         /// distinguishes a cancelled conversion from a completed conversion by querying the
         /// token.
-        srt::Expected<std::unique_ptr<Api::Linguist::L1::LinguistConvertResult>>
+        srt::Expected<std::unique_ptr<Api::Linguist::L1::ConvertResult>>
             convert(const SingerRef &singer, std::string_view language,
-                    const Api::Linguist::L1::LinguistConvertInput &input,
+                    const Api::Linguist::L1::ConvertInput &input,
                     const CancelToken &token = CancelToken());
 
         /// Sets the phonemes that a singer can sing, so that probe() can report coverage.

@@ -10,8 +10,7 @@ namespace wolf::multig2p {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(Api::G2p::L1::API_INTERFACE,
-                                                       Api::G2p::L1::API_LEVEL, VARIANT)) {
+            if (triplet != Triplet) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

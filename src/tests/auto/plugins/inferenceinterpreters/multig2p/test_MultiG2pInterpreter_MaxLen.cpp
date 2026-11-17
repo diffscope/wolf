@@ -44,9 +44,9 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::API_INTERFACE,
-                                                       wolf::Api::G2p::L1::API_LEVEL,
-                                                       wolf::multig2p::VARIANT)) {
+            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::Contract.interfaceId(),
+                                                       wolf::Api::G2p::L1::Contract.level(),
+                                                       wolf::multig2p::Triplet.variant())) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }
@@ -99,7 +99,7 @@ namespace {
     void registerDriver(ds::InferenceDriverFactory &factory, srt::SynthUnit &unit) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
         factory.setPluginPaths(paths);
-        auto *loader = factory.find(OnnxApi::API_NAME);
+        auto *loader = factory.find(OnnxApi::Name);
         if (loader == nullptr) {
             BOOST_FAIL("the ONNX driver plugin should be present in this tree");
         }
@@ -232,17 +232,17 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
+        G2pApi::ImportOptions importOptions{};
+        G2pApi::RuntimeOptions runtimeOptions{};
         runtimeOptions.binding = {LANGUAGE, SCHEME};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
             BOOST_FAIL("the executive should have been created: " + executive.error().toString());
         }
 
-        G2pApi::G2pStartInput input;
+        G2pApi::StartInput input;
         input.lyrics = {lyric};
-        auto result = static_cast<G2pApi::G2pExecutive *>(executive->get())->start(input);
+        auto result = static_cast<G2pApi::Executive *>(executive->get())->start(input);
         if (!result) {
             BOOST_FAIL("the conversion should have run: " + result.error().toString());
         }

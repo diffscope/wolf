@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE(pipeline_routes_languages_and_supervises_created_linguists)
     BOOST_REQUIRE(languages);
     wolf::WolfPipelineExecutive pipeline(tree.singer(), languages.take());
     BOOST_CHECK(pipeline.languages() == std::vector<std::string>({"zxx"}));
-    wolf::Api::Linguist::L1::LinguistRuntimeOptions options;
+    wolf::Api::Linguist::L1::RuntimeOptions options;
     auto linguist = pipeline.createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
     BOOST_CHECK(linguist.value()->parent() == &pipeline);

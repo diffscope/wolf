@@ -14,11 +14,8 @@
 
 namespace wolf::Api::G2p::L1 {
 
-    /// Identifies the grapheme to phonological symbol inference contract.
-    inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.inference.G2P";
-
-    /// Identifies Level 1 of the grapheme to phonological symbol inference contract.
-    inline constexpr int API_LEVEL = 1;
+    /// Identifies the G2p interface contract.
+    inline const srt::ContribContract Contract{"org.openvpi.wolf.inference.G2P", 1};
 
     /// Source of a converted word. The value is diagnostic only. A module that cannot determine
     /// the source, or that did not convert the word, leaves it Unspecified, and callers must not
@@ -52,12 +49,10 @@ namespace wolf::Api::G2p::L1 {
 
     /// Output declaration of one G2P module.
     ///
-    /// Every payload of a multi variant contract carries the variant, because the loader compares
-    /// the whole triple against the declaration that produced the payload.
-    class G2pExports : public srt::ContribExports {
+    /// All implementations of this contract share the same exports identity.
+    class Exports : public srt::ContribExports {
     public:
-        explicit G2pExports(std::string variant)
-            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        Exports() : ContribExports(Contract) {
         }
 
         /// Pairs for which this module produces pronunciations. The list may be empty. An empty
@@ -79,18 +74,16 @@ namespace wolf::Api::G2p::L1 {
 
     /// Level 1 defines no import options vocabulary. An executive is bound to one pair at
     /// creation, and the manifest therefore does not repeat the pair.
-    class G2pImportOptions : public srt::ContribImportOptions {
+    class ImportOptions : public srt::ContribImportOptions {
     public:
-        explicit G2pImportOptions(std::string variant)
-            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        ImportOptions() : ContribImportOptions(Contract) {
         }
     };
 
     /// Settings supplied when a G2P executive is created.
-    class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
+    class RuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
-        explicit G2pRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        RuntimeOptions() : InferenceRuntimeOptions(Contract) {
         }
 
         /// Pair to which this executive is bound for its whole lifetime. Runtime input carries no
@@ -99,23 +92,23 @@ namespace wolf::Api::G2p::L1 {
         Common::L1::LanguageScheme binding;
     };
 
-    class G2pInitArgs : public srt::InferenceInitArgs {
+    class InitArgs : public srt::InferenceInitArgs {
     public:
-        G2pInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
+        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
         }
     };
 
     /// One batch of words to convert.
-    class G2pStartInput : public srt::TaskStartInput {
+    class StartInput : public srt::TaskStartInput {
     public:
-        G2pStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
         }
 
         std::vector<std::string> lyrics;
     };
 
     /// Conversion result of one word. A failed word keeps its position in the batch.
-    struct G2pWordOutput {
+    struct WordOutput {
         std::string pronunciation;
 
         /// Alternatives, the first of which is the main pronunciation.
@@ -126,27 +119,27 @@ namespace wolf::Api::G2p::L1 {
         HitSource hitSource = HitSource::Unspecified;
     };
 
-    class G2pResult : public srt::TaskResult {
+    class Result : public srt::TaskResult {
     public:
-        G2pResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
         }
 
-        std::vector<G2pWordOutput> words;
+        std::vector<WordOutput> words;
     };
 
     /// Executes one G2P module.
     ///
     /// One executive runs at most one conversion at a time, as srt::InferenceExecutive specifies.
     /// Concurrency requires additional executives.
-    class G2pExecutive : public srt::InferenceExecutive {
+    class Executive : public srt::InferenceExecutive {
     public:
-        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<G2pResult>> result)>;
+        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<Result>> result)>;
 
-        virtual srt::Expected<void> initialize(const G2pInitArgs &args) = 0;
+        virtual srt::Expected<void> initialize(const InitArgs &args) = 0;
 
-        virtual srt::Expected<std::unique_ptr<G2pResult>> start(const G2pStartInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<Result>> start(const StartInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const G2pStartInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const StartInput> input,
                                                AsyncCallback callback) = 0;
 
     protected:

@@ -8,7 +8,7 @@ BOOST_AUTO_TEST_CASE(executive_uses_bound_language_and_converts_through_owned_ch
     wolf::LinguistExecutiveImpl executive(tree.linguist());
     BOOST_CHECK_EQUAL(executive.binding().language, "zxx");
     BOOST_CHECK(!executive.g2pContribution().contributionId().empty());
-    wolf::Api::Linguist::L1::LinguistConvertInput input;
+    wolf::Api::Linguist::L1::ConvertInput input;
     input.depth = wolf::Api::Linguist::L1::Depth::Pronunciation;
     input.words.push_back({"word", std::nullopt, std::nullopt});
     auto result = executive.start(input);

@@ -18,7 +18,7 @@
 | 无原生版本字段资源的版本载体 | [linguist-resource-cache.md](linguist-resource-cache.md) §2 | R2、R5 |
 | role 的开放集 | [linguist-domain-contract.md](linguist-domain-contract.md) §5 | R22 |
 | 包身份三方比对与导入选项时机 | synthrt `lib/Core/PackageLoader.cpp` 的 `validatePayloadIdentity`（三方比对）与 `createImportOptions`（导入选项时机） | R23、R24 |
-| 契约头常量 | `include/wolf/Api/**` 的 `API_INTERFACE` / `API_LEVEL` / `API_VARIANT` | R23 |
+| 契约头常量 | `include/wolf/Api/**` 的 `Contract` / `Triplet` | R23 |
 
 ## 2. 骨架与构建 [现状]
 
@@ -119,7 +119,7 @@
 
 **[规范性] R22 role 的命名空间**：以 `linguist/` 开头的 role 名属于本契约族的保留命名空间；Level 1 核心集恒为 `linguist/g2p`、`linguist/s2p`、`linguist/onset`；**新增核心 role 必须递增契约 `level`**，不得以 `configuration` 键或资源 `formatVersion` 承载（L1 的 linguist `configuration` 必须为空 object，见 `WolfLinguistProvider.cpp` 的 `the wolf linguist configuration must be empty at Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](linguist-domain-contract.md) §5「其他」放行，不判加载失败**。validator 对未识别 role 记一条 `srtWarning`（`WolfLinguistProvider.cpp` 中按 `ROLE_G2P` / `ROLE_S2P` / `ROLE_ONSET` 分派的三个分支的 `else`，消息为 `linguist %1 imports the role "%2", which the %3 contract does not bind; the import is ignored`）后放行，**这是承重行为，不是缺陷**，不得改为拒绝。
 
-**[规范性] R23 `level` 判定写成集合成员判定**：不得写成与单一常量的等值比较。[现状：全仓 15 处固定为 L1；其中 `WolfLinguistProvider.cpp` 对 `LinguistApi::API_LEVEL` 的五处比较影响最大。L2 组合被 L1 声库导入时，synthrt 在加载期即获取导入选项（`lib/Core/PackageLoader.cpp` 的 `createImportOptions`），而该处要求三元组完全相等（同文件的 `validatePayloadIdentity`），结果是以 unsupported contract 加载失败，而不是降级]
+**[规范性] R23 `level` 判定写成集合成员判定**：不得写成与单一常量的等值比较。[现状：全仓 15 处固定为 L1；其中 `WolfLinguistProvider.cpp` 对 `LinguistApi::Contract.level()` 的五处比较影响最大。L2 组合被 L1 声库导入时，synthrt 在加载期即获取导入选项（`lib/Core/PackageLoader.cpp` 的 `createImportOptions`），而该处要求三元组完全相等（同文件的 `validatePayloadIdentity`），结果是以 unsupported contract 加载失败，而不是降级]
 
 **[规范性] R24 manifest 与代码的对应关系由构建或测试保证**：`plugin.json` 的 interpreters 条目应由受支持档位集合**生成或比对**，不手工抄写（先例：测试桩 `src/tests/auto/plugins/inferenceinterpreters/stubinference/main.cpp` 按构建条件生成声明）。插件返回的 payload 由框架按三元组比对（synthrt `lib/Core/PackageLoader.cpp` 的 `validatePayloadIdentity`），因此返回值的一致性已有保障，声明与代码的一致性仍需本条保证。[现状：插件手写的 `plugin.json` 与 `create()` 接受的集合之间无自动比对]
 

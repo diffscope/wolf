@@ -12,19 +12,15 @@
 
 namespace wolf::Api::Onset::L1 {
 
-    /// Identifies the phoneme onset inference contract.
-    inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.inference.Onset";
-
-    /// Identifies Level 1 of the phoneme onset inference contract.
-    inline constexpr int API_LEVEL = 1;
+    /// Identifies the Onset interface contract.
+    inline const srt::ContribContract Contract{"org.openvpi.wolf.inference.Onset", 1};
 
     /// Recognition declaration of one Onset module.
     ///
     /// Onset does not take part in notation matching and therefore declares no languages key.
-    class OnsetExports : public srt::ContribExports {
+    class Exports : public srt::ContribExports {
     public:
-        explicit OnsetExports(std::string variant)
-            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        Exports() : ContribExports(Contract) {
         }
 
         /// Phonemes that this module recognizes and matches. This is a recognition set, not an
@@ -33,30 +29,28 @@ namespace wolf::Api::Onset::L1 {
         std::vector<std::string> knownPhonemes;
     };
 
-    class OnsetImportOptions : public srt::ContribImportOptions {
+    class ImportOptions : public srt::ContribImportOptions {
     public:
-        explicit OnsetImportOptions(std::string variant)
-            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        ImportOptions() : ContribImportOptions(Contract) {
         }
     };
 
-    class OnsetRuntimeOptions : public srt::InferenceRuntimeOptions {
+    class RuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
-        explicit OnsetRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        RuntimeOptions() : InferenceRuntimeOptions(Contract) {
         }
     };
 
-    class OnsetInitArgs : public srt::InferenceInitArgs {
+    class InitArgs : public srt::InferenceInitArgs {
     public:
-        OnsetInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
+        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
         }
     };
 
     /// One batch of phoneme sequences.
-    class OnsetStartInput : public srt::TaskStartInput {
+    class StartInput : public srt::TaskStartInput {
     public:
-        OnsetStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
         }
 
         std::vector<std::vector<std::string>> phonemes;
@@ -66,24 +60,23 @@ namespace wolf::Api::Onset::L1 {
     ///
     /// A position that no rule covers is marked false. This value is defined behavior, not an
     /// error, and Level 1 therefore defines no per unit error channel for Onset.
-    class OnsetResult : public srt::TaskResult {
+    class Result : public srt::TaskResult {
     public:
-        OnsetResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
         }
 
         std::vector<std::vector<bool>> onsets;
     };
 
-    class OnsetExecutive : public srt::InferenceExecutive {
+    class Executive : public srt::InferenceExecutive {
     public:
-        using AsyncCallback =
-            std::function<void(srt::Expected<std::unique_ptr<OnsetResult>> result)>;
+        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<Result>> result)>;
 
-        virtual srt::Expected<void> initialize(const OnsetInitArgs &args) = 0;
+        virtual srt::Expected<void> initialize(const InitArgs &args) = 0;
 
-        virtual srt::Expected<std::unique_ptr<OnsetResult>> start(const OnsetStartInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<Result>> start(const StartInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const OnsetStartInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const StartInput> input,
                                                AsyncCallback callback) = 0;
 
     protected:

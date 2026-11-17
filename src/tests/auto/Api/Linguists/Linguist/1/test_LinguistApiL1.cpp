@@ -2,21 +2,21 @@
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
+#include <wolf/Api/Linguists/Linguist/1/LinguistWolfApiL1.h>
 
 namespace Api = wolf::Api::Linguist::L1;
 
 BOOST_AUTO_TEST_CASE(linguist_payloads_identify_one_fixed_contract) {
-    Api::LinguistExports exports;
-    Api::LinguistConfiguration configuration;
-    Api::LinguistImportOptions options;
-    Api::LinguistRuntimeOptions runtime;
+    Api::Exports exports;
+    Api::Wolf::Configuration configuration;
+    Api::ImportOptions options;
+    Api::RuntimeOptions runtime;
     const srt::ContribSpecPayload *payloads[] = {&exports, &configuration, &options, &runtime};
     for (const auto payload : payloads)
-        BOOST_CHECK(payload->triplet() == srt::ContribContractTriplet(Api::API_INTERFACE,
-                                                                      Api::API_LEVEL,
-                                                                      Api::API_VARIANT));
-    Api::LinguistConvertInput input;
-    Api::LinguistConvertResult result;
-    BOOST_CHECK_EQUAL(input.type(), Api::API_INTERFACE);
-    BOOST_CHECK_EQUAL(result.version(), Api::API_LEVEL);
+        BOOST_CHECK(payload->contract() == Api::Contract);
+    BOOST_CHECK(configuration.triplet() == Api::Wolf::Triplet);
+    Api::ConvertInput input;
+    Api::ConvertResult result;
+    BOOST_CHECK_EQUAL(input.type(), Api::Contract.interfaceId());
+    BOOST_CHECK_EQUAL(result.version(), Api::Contract.level());
 }

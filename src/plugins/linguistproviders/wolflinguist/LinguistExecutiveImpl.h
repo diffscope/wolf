@@ -18,9 +18,9 @@ namespace wolf {
     /// corresponding imports, one S2P executive and one Onset executive. Each child is created on
     /// first use through the import role that names it, so a conversion that ends at the
     /// pronunciation layer never creates the S2P and Onset executives.
-    class LinguistExecutiveImpl : public ExecutiveBase<Api::Linguist::L1::LinguistExecutive,
-                                                       Api::Linguist::L1::LinguistConvertInput,
-                                                       Api::Linguist::L1::LinguistConvertResult> {
+    class LinguistExecutiveImpl
+        : public ExecutiveBase<Api::Linguist::L1::Executive, Api::Linguist::L1::ConvertInput,
+                               Api::Linguist::L1::ConvertResult> {
     public:
         explicit LinguistExecutiveImpl(LinguistSpec &spec);
         ~LinguistExecutiveImpl();
@@ -39,7 +39,7 @@ namespace wolf {
 
         /// Runs one conversion. The ExecutiveTask behind this executive sets the task state and
         /// owns the worker thread; this function performs only the conversion.
-        Batch runBatch(const Api::Linguist::L1::LinguistConvertInput &input) override;
+        Batch runBatch(const Api::Linguist::L1::ConvertInput &input) override;
 
         /// Forwards a stop request to the existing members. Each stage receives the whole batch in
         /// one call, so a stop request that is not forwarded takes effect only after that call
@@ -70,24 +70,24 @@ namespace wolf {
         template <class Options, class Executive>
         srt::Expected<Executive *> createMember(std::string_view role);
 
-        srt::Expected<Api::G2p::L1::G2pExecutive *> g2p();
-        srt::Expected<Api::S2p::L1::S2pExecutive *> s2p();
+        srt::Expected<Api::G2p::L1::Executive *> g2p();
+        srt::Expected<Api::S2p::L1::Executive *> s2p();
 
         /// Returns the Onset executive and creates it on first use.
         ///
         /// \return nullptr if the composition declares no onset import, which is valid; every
         /// position is then marked as not an onset. An error if the executive cannot be created.
         /// Otherwise, the Onset executive.
-        srt::Expected<Api::Onset::L1::OnsetExecutive *> onset();
+        srt::Expected<Api::Onset::L1::Executive *> onset();
 
         Api::Common::L1::LanguageScheme m_binding;
         srt::ContribLocator m_g2pContribution;
 
         // Atomic because stop() may be called on another thread while a conversion is creating
         // the members, and stop() must reach every member that already exists.
-        std::atomic<Api::G2p::L1::G2pExecutive *> m_g2p = nullptr;
-        std::atomic<Api::S2p::L1::S2pExecutive *> m_s2p = nullptr;
-        std::atomic<Api::Onset::L1::OnsetExecutive *> m_onset = nullptr;
+        std::atomic<Api::G2p::L1::Executive *> m_g2p = nullptr;
+        std::atomic<Api::S2p::L1::Executive *> m_s2p = nullptr;
+        std::atomic<Api::Onset::L1::Executive *> m_onset = nullptr;
     };
 
 }

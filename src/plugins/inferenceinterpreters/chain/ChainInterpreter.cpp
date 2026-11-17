@@ -81,8 +81,7 @@ namespace wolf::chain {
 
         class Configuration : public srt::ContribConfiguration {
         public:
-            Configuration()
-                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
+            Configuration() : ContribConfiguration(Triplet) {
             }
 
             std::vector<Step> steps;
@@ -147,7 +146,7 @@ namespace wolf::chain {
 
         srt::Expected<std::shared_ptr<const ChainDictionary>> loadDictionary(const fs::path &path) {
             auto loaded = ResourceCache::instance().acquire<ChainDictionary>(
-                path, DICT_KIND, VARIANT,
+                path, DICT_KIND, Triplet.variant(),
                 std::function([](const fs::path &resolved)
                                   -> srt::Expected<std::shared_ptr<const ChainDictionary>> {
                     auto parsed = ChainDictionary::load(resolved);
@@ -416,8 +415,7 @@ namespace wolf::chain {
                 // Every registered validator receives every contribution in the transaction, so
                 // the interface, level and variant must match before the configuration is cast to
                 // the type of this plugin.
-                if (spec.triplet() != srt::ContribContractTriplet(G2pApi::API_INTERFACE,
-                                                                  G2pApi::API_LEVEL, VARIANT)) {
+                if (spec.triplet() != Triplet) {
                     return {};
                 }
                 const auto *configuration =
@@ -440,8 +438,8 @@ namespace wolf::chain {
                                           "the import for role " + step.role + " is not bound");
                     }
                     const auto &target = import->binding()->target();
-                    if (target.triplet().interfaceId() != G2pApi::API_INTERFACE ||
-                        target.triplet().level() != G2pApi::API_LEVEL) {
+                    if (target.triplet().interfaceId() != G2pApi::Contract.interfaceId() ||
+                        target.triplet().level() != G2pApi::Contract.level()) {
                         return srt::Error(srt::Error::InvalidFormat,
                                           "the model step role " + step.role + " is bound to " +
                                               target.triplet().interfaceId() +
@@ -453,7 +451,7 @@ namespace wolf::chain {
         };
 
         class Executive
-            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+            : public ExecutiveBase<G2pApi::Executive, G2pApi::StartInput, G2pApi::Result> {
         public:
             Executive(srt::InferenceSpec &spec, const Configuration *configuration,
                       Api::Common::L1::LanguageScheme binding)
@@ -465,7 +463,7 @@ namespace wolf::chain {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::InitArgs &) override {
                 return {};
             }
 
@@ -481,7 +479,7 @@ namespace wolf::chain {
             /// guarded and the backends are stopped once the guard is released: a backend may
             /// return through this executive while its own stop runs.
             void onStop() override {
-                std::vector<G2pApi::G2pExecutive *> backends;
+                std::vector<G2pApi::Executive *> backends;
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     backends.reserve(m_backends.size());
@@ -497,7 +495,7 @@ namespace wolf::chain {
             }
 
         protected:
-            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+            Batch runBatch(const G2pApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
                 std::vector<ChainWord> words;
                 words.reserve(input.lyrics.size());
@@ -567,11 +565,11 @@ namespace wolf::chain {
             ///
             /// Also called if a conversion stops partway, so that the caller receives the partial
             /// result of the chain rather than an error.
-            static std::unique_ptr<G2pApi::G2pResult> collect(std::vector<ChainWord> &words) {
-                auto result = std::make_unique<G2pApi::G2pResult>();
+            static std::unique_ptr<G2pApi::Result> collect(std::vector<ChainWord> &words) {
+                auto result = std::make_unique<G2pApi::Result>();
                 result->words.reserve(words.size());
                 for (auto &word : words) {
-                    G2pApi::G2pWordOutput output;
+                    G2pApi::WordOutput output;
                     output.mode = word.mode;
                     output.error = word.error;
                     output.hitSource = word.hitSource;
@@ -720,10 +718,9 @@ namespace wolf::chain {
                 return {};
             }
 
-            static void convertRun(G2pApi::G2pExecutive *backend,
-                                   const std::vector<std::size_t> &run,
+            static void convertRun(G2pApi::Executive *backend, const std::vector<std::size_t> &run,
                                    std::vector<ChainWord> &words) {
-                G2pApi::G2pStartInput request;
+                G2pApi::StartInput request;
                 request.lyrics.reserve(run.size());
                 for (const auto index : run) {
                     request.lyrics.push_back(words[index].text);
@@ -783,7 +780,7 @@ namespace wolf::chain {
                 }
             }
 
-            srt::Expected<G2pApi::G2pExecutive *> resolveBackend(const std::string &role) {
+            srt::Expected<G2pApi::Executive *> resolveBackend(const std::string &role) {
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     const auto it = m_backends.find(role);
@@ -796,13 +793,13 @@ namespace wolf::chain {
                     return srt::Error(srt::Error::InvalidFormat,
                                       "the model step role " + role + " is not bound");
                 }
-                G2pApi::G2pRuntimeOptions options(import->binding()->target().triplet().variant());
+                G2pApi::RuntimeOptions options{};
                 options.binding = m_binding;
                 auto child = createChild(role, options);
                 if (!child) {
                     return child.takeError();
                 }
-                auto *backend = static_cast<G2pApi::G2pExecutive *>(child.take());
+                auto *backend = static_cast<G2pApi::Executive *>(child.take());
                 {
                     std::lock_guard<std::mutex> guard(m_backendsMutex);
                     m_backends.emplace(role, backend);
@@ -814,7 +811,7 @@ namespace wolf::chain {
             Api::Common::L1::LanguageScheme m_binding;
             /// Guards \c m_backends: the map is filled while a batch runs, and read by onStop().
             std::mutex m_backendsMutex;
-            std::map<std::string, G2pApi::G2pExecutive *> m_backends;
+            std::map<std::string, G2pApi::Executive *> m_backends;
         };
 
     }
@@ -832,7 +829,7 @@ namespace wolf::chain {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
+        auto result = std::make_unique<G2pApi::Exports>();
         result->languages = std::move(read->languages);
         result->symbols = std::move(read->strings);
         result->openSet = read->openSet;
@@ -880,10 +877,11 @@ namespace wolf::chain {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         ChainInterpreter::createImportOptions(const srt::ContribSpec &,
                                               const srt::JsonValue &manifestOptions) const {
-        if (auto checked = wolf::requireNoImportOptions(manifestOptions, VARIANT); !checked) {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, Triplet.variant());
+            !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(VARIANT));
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -895,8 +893,7 @@ namespace wolf::chain {
             return srt::Error(srt::Error::InvalidFormat,
                               "the chain module was imported without its configuration");
         }
-        const auto &binding =
-            static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
+        const auto &binding = static_cast<const G2pApi::RuntimeOptions &>(runtimeOptions).binding;
         return std::unique_ptr<srt::InferenceExecutive>(
             new Executive(spec, configuration, binding));
     }

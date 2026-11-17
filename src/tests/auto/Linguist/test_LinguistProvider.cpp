@@ -12,6 +12,8 @@
 
 #include "TestSupport.h"
 
+#include <wolf/Api/Linguists/Linguist/1/LinguistWolfApiL1.h>
+
 namespace fs = std::filesystem;
 namespace LinguistApi = wolf::Api::Linguist::L1;
 
@@ -36,8 +38,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistProvider_CreatesSupportedContract) {
     auto plugin = static_cast<wolf::LinguistProviderPlugin *>(loader.plugin());
     BOOST_REQUIRE(plugin != nullptr);
 
-    auto result = plugin->create(
-        {LinguistApi::API_INTERFACE, LinguistApi::API_LEVEL, LinguistApi::API_VARIANT});
+    auto result =
+        plugin->create({LinguistApi::Contract.interfaceId(), LinguistApi::Contract.level(),
+                        LinguistApi::Wolf::Triplet.variant()});
     BOOST_REQUIRE(result);
     auto interpreter = result.take();
     BOOST_CHECK(interpreter->as<wolf::LinguistProvider>() != nullptr);
@@ -47,8 +50,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistProvider_CreatesSupportedContract) {
     BOOST_REQUIRE_EQUAL(validators->size(), 1u);
     BOOST_CHECK((*validators)[0] != nullptr);
 
-    auto unsupported = plugin->create(
-        {LinguistApi::API_INTERFACE, LinguistApi::API_LEVEL + 1, LinguistApi::API_VARIANT});
+    auto unsupported =
+        plugin->create({LinguistApi::Contract.interfaceId(), LinguistApi::Contract.level() + 1,
+                        LinguistApi::Wolf::Triplet.variant()});
     BOOST_CHECK(!unsupported);
 }
 

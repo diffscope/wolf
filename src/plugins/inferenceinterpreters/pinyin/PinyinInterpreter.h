@@ -5,9 +5,11 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
+
 namespace wolf::pinyin {
 
-    inline constexpr char VARIANT[] = "algo-pinyin";
+    inline const srt::ContribContractTriplet Triplet{Api::G2p::L1::Contract, "algo-pinyin"};
 
     /// Interprets G2P modules of the algo-pinyin variant, which convert through cpp-pinyin.
     class PinyinInterpreter : public srt::InferenceInterpreter {

@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_WalksTheExecutiveTree) {
     auto *wolfPipeline = (*pipeline)->as<LinguistApi::WolfPipelineExecutive>();
     BOOST_REQUIRE(wolfPipeline != nullptr);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist = wolfPipeline->createLinguist("zxx", options);
     if (!linguist) {
         BOOST_FAIL("the linguist executive should have been created: " +
@@ -113,18 +113,18 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_ConvertsThroughTheChain) {
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Onsets;
     input.words.push_back({"123", std::nullopt, std::nullopt});
     input.words.push_back({",", std::nullopt, std::nullopt});
 
     // A word whose phoneme layer the user pinned bypasses both conversion stages.
-    LinguistApi::LinguistWordInput pinned;
+    LinguistApi::WordInput pinned;
     pinned.lyric = "x";
     pinned.locked = LinguistApi::LockedPhonemes{
         {"a",  "b"  },
@@ -172,15 +172,15 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresThePhonemeDepthForAPin
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Pronunciation;
     input.words.push_back({"123", std::nullopt, std::nullopt});
-    LinguistApi::LinguistWordInput pinned;
+    LinguistApi::WordInput pinned;
     pinned.lyric = "x";
     pinned.locked = LinguistApi::LockedPhonemes{
         {"a",  "b"  },
@@ -217,14 +217,14 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresTheOnsetDepthForAPinne
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Phonemes;
-    LinguistApi::LinguistWordInput pinned;
+    LinguistApi::WordInput pinned;
     pinned.lyric = "x";
     pinned.locked = LinguistApi::LockedPhonemes{
         {"a",  "b"  },
@@ -258,12 +258,12 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_StopsAtRequestedDepth) {
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Pronunciation;
     input.words.push_back({"42", std::nullopt, std::nullopt});
 
@@ -296,12 +296,12 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("zxx", options);
     BOOST_REQUIRE(linguist);
 
-    auto input = std::make_shared<LinguistApi::LinguistConvertInput>();
+    auto input = std::make_shared<LinguistApi::ConvertInput>();
     input->depth = LinguistApi::Depth::Onsets;
     input->words.push_back({"1", std::nullopt, std::nullopt});
 
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
     // The callback delays its completion so that the running state is observable rather than
     // the outcome of a race.
     auto started = (*linguist)->startAsync(
-        input, [&](srt::Expected<std::unique_ptr<LinguistApi::LinguistConvertResult>> result) {
+        input, [&](srt::Expected<std::unique_ptr<LinguistApi::ConvertResult>> result) {
             converted = result.operator bool();
             std::this_thread::sleep_for(std::chrono::milliseconds(60));
             finished = true;
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
 
     // A second execution while the first is running is rejected; it is neither queued nor run.
     auto second = (*linguist)->startAsync(
-        input, [](srt::Expected<std::unique_ptr<LinguistApi::LinguistConvertResult>>) {});
+        input, [](srt::Expected<std::unique_ptr<LinguistApi::ConvertResult>>) {});
     BOOST_CHECK_MESSAGE(!second, "a second concurrent execution should have been rejected");
 
     // waitForFinished() blocks until the callback has completed.
@@ -357,12 +357,12 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RefusesAShortBatch) {
     auto pipeline = extension->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
 
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("nld", options);
     BOOST_REQUIRE(linguist);
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Onsets;
     input.words.push_back({"one", std::nullopt, std::nullopt});
     input.words.push_back({"two", std::nullopt, std::nullopt});

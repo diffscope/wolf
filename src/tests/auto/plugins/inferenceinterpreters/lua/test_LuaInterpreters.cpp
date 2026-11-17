@@ -33,16 +33,16 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet.variant() != wolf::lua::VARIANT) {
+            if (triplet.variant() != wolf::lua::S2pTriplet.variant()) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported variant: " + triplet.variant());
             }
-            if (triplet.interfaceId() == S2pApi::API_INTERFACE &&
-                triplet.level() == S2pApi::API_LEVEL) {
+            if (triplet.interfaceId() == S2pApi::Contract.interfaceId() &&
+                triplet.level() == S2pApi::Contract.level()) {
                 return std::unique_ptr<srt::ContribInterpreter>(new wolf::lua::S2pInterpreter());
             }
-            if (triplet.interfaceId() == OnsetApi::API_INTERFACE &&
-                triplet.level() == OnsetApi::API_LEVEL) {
+            if (triplet.interfaceId() == OnsetApi::Contract.interfaceId() &&
+                triplet.level() == OnsetApi::Contract.level()) {
                 return std::unique_ptr<srt::ContribInterpreter>(new wolf::lua::OnsetInterpreter());
             }
             return srt::Error(srt::Error::InvalidArgument, "unsupported scripted contract");
@@ -84,14 +84,14 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "m")->as<srt::InferenceSpec>();
-        S2pApi::S2pImportOptions options(spec->triplet().variant());
-        S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
+        S2pApi::ImportOptions options{};
+        S2pApi::RuntimeOptions runtime{};
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        S2pApi::S2pStartInput input;
+        S2pApi::StartInput input;
         input.pronunciations.push_back(pronunciation);
-        auto result = static_cast<S2pApi::S2pExecutive *>(executive->get())->start(input);
+        auto result = static_cast<S2pApi::Executive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto phonemes = (*result)->phonemes.front();
         executive->reset();
@@ -100,14 +100,14 @@ namespace {
 
     std::vector<bool> mark(srt::PackageHandle &handle, const std::vector<std::string> &phonemes) {
         auto *spec = handle.contribution("inference", "m")->as<srt::InferenceSpec>();
-        OnsetApi::OnsetImportOptions options(spec->triplet().variant());
-        OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
+        OnsetApi::ImportOptions options{};
+        OnsetApi::RuntimeOptions runtime{};
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        OnsetApi::OnsetStartInput input;
+        OnsetApi::StartInput input;
         input.phonemes.push_back(phonemes);
-        auto result = static_cast<OnsetApi::OnsetExecutive *>(executive->get())->start(input);
+        auto result = static_cast<OnsetApi::Executive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto onsets = (*result)->onsets.front();
         executive->reset();
@@ -281,14 +281,14 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    OnsetApi::OnsetImportOptions options(spec->triplet().variant());
-    OnsetApi::OnsetRuntimeOptions runtime(spec->triplet().variant());
+    OnsetApi::ImportOptions options{};
+    OnsetApi::RuntimeOptions runtime{};
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
 
-    OnsetApi::OnsetStartInput input;
+    OnsetApi::StartInput input;
     input.phonemes.push_back({"a", "b", "c"});
-    auto result = static_cast<OnsetApi::OnsetExecutive *>(executive->get())->start(input);
+    auto result = static_cast<OnsetApi::Executive *>(executive->get())->start(input);
     BOOST_REQUIRE(!result);
     BOOST_CHECK(result.error().toString().find("1 flags for 3 phonemes") != std::string::npos);
     executive->reset();
@@ -308,11 +308,11 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->triplet().variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
+    S2pApi::ImportOptions options{};
+    S2pApi::RuntimeOptions runtime{};
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
+    auto *s2p = static_cast<S2pApi::Executive *>(executive->get());
 
     // Stops the script after it enters the running state and a short delay elapses. test_PipeChain
     // explains why the wait depends on the state rather than on a delay alone.
@@ -325,7 +325,7 @@ end
         (void) s2p->stop();
     });
 
-    S2pApi::S2pStartInput input;
+    S2pApi::StartInput input;
     input.pronunciations.push_back("anything");
     auto result = s2p->start(input);
     stopper.join();
@@ -353,11 +353,11 @@ end
     BOOST_REQUIRE(handle);
 
     auto *spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->triplet().variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
+    S2pApi::ImportOptions options{};
+    S2pApi::RuntimeOptions runtime{};
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto *s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
+    auto *s2p = static_cast<S2pApi::Executive *>(executive->get());
 
     // Stops the script after it enters the running state and a short delay elapses. test_PipeChain
     // explains why the wait depends on the state rather than on a delay alone.
@@ -370,7 +370,7 @@ end
         (void) s2p->stop();
     });
 
-    S2pApi::S2pStartInput input;
+    S2pApi::StartInput input;
     input.pronunciations.push_back("done");
     input.pronunciations.push_back("loop");
     auto result = s2p->start(input);
@@ -399,15 +399,15 @@ end
     BOOST_REQUIRE(handle);
 
     auto spec = handle->contribution("inference", "m")->as<srt::InferenceSpec>();
-    S2pApi::S2pImportOptions options(spec->triplet().variant());
-    S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
+    S2pApi::ImportOptions options{};
+    S2pApi::RuntimeOptions runtime{};
     auto executive = spec->createInference(options, runtime);
     BOOST_REQUIRE(executive);
-    auto s2p = static_cast<S2pApi::S2pExecutive *>(executive->get());
+    auto s2p = static_cast<S2pApi::Executive *>(executive->get());
 
     (void) s2p->stop();
 
-    S2pApi::S2pStartInput input;
+    S2pApi::StartInput input;
     input.pronunciations.push_back("a");
     auto cancelled = s2p->start(input);
     BOOST_REQUIRE(cancelled);

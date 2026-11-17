@@ -53,8 +53,7 @@ namespace wolf::pinyin {
 
         class Configuration : public srt::ContribConfiguration {
         public:
-            Configuration()
-                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
+            Configuration() : ContribConfiguration(Triplet) {
             }
 
             fs::path dictRoot;
@@ -62,7 +61,7 @@ namespace wolf::pinyin {
         };
 
         class Executive
-            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+            : public ExecutiveBase<G2pApi::Executive, G2pApi::StartInput, G2pApi::Result> {
         public:
             Executive(srt::InferenceSpec &spec, std::unique_ptr<Engine> engine)
                 : ExecutiveBase(spec), m_engine(std::move(engine)) {
@@ -72,14 +71,14 @@ namespace wolf::pinyin {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::InitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+            Batch runBatch(const G2pApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
                 // The input rules of the contract are applied first: a word that the rules classify
                 // as skipped or invalid never reaches the engine, and it also splits the run of
@@ -107,7 +106,7 @@ namespace wolf::pinyin {
                 }
                 offsets.push_back(characters.size());
 
-                auto result = std::make_unique<G2pApi::G2pResult>();
+                auto result = std::make_unique<G2pApi::Result>();
                 // Each convertible run is passed to the engine as a whole, because the engine uses
                 // adjacency: the same two characters can receive different readings when converted
                 // together and when converted separately. Cancellation is checked before the
@@ -149,13 +148,13 @@ namespace wolf::pinyin {
                 for (std::size_t i = 0; i < input.lyrics.size(); ++i) {
                     switch (verdicts[i]) {
                         case LyricVerdict::Skip: {
-                            G2pApi::G2pWordOutput word;
+                            G2pApi::WordOutput word;
                             word.mode = G2pApi::Mode::Skip;
                             result->words.push_back(std::move(word));
                             break;
                         }
                         case LyricVerdict::Invalid: {
-                            G2pApi::G2pWordOutput word;
+                            G2pApi::WordOutput word;
                             word.pronunciation = input.lyrics[i];
                             word.error = G2pApi::Error::InvalidInput;
                             result->words.push_back(std::move(word));
@@ -180,9 +179,9 @@ namespace wolf::pinyin {
             /// \return A word with the error PhonemeGenerationFailed if the word has no characters
             /// or if any character has no reading; otherwise the converted word with its
             /// candidates.
-            static G2pApi::G2pWordOutput assemble(const std::vector<CharacterResult> &converted,
-                                                  std::size_t begin, std::size_t end) {
-                G2pApi::G2pWordOutput word;
+            static G2pApi::WordOutput assemble(const std::vector<CharacterResult> &converted,
+                                               std::size_t begin, std::size_t end) {
+                G2pApi::WordOutput word;
                 word.mode = G2pApi::Mode::Convert;
                 if (begin == end) {
                     word.error = G2pApi::Error::PhonemeGenerationFailed;
@@ -229,7 +228,7 @@ namespace wolf::pinyin {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
+        auto result = std::make_unique<G2pApi::Exports>();
         result->languages = std::move(read->languages);
         result->symbols = std::move(read->strings);
         result->openSet = read->openSet;
@@ -307,10 +306,11 @@ namespace wolf::pinyin {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         PinyinInterpreter::createImportOptions(const srt::ContribSpec &,
                                                const srt::JsonValue &manifestOptions) const {
-        if (auto checked = wolf::requireNoImportOptions(manifestOptions, VARIANT); !checked) {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, Triplet.variant());
+            !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(VARIANT));
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -322,8 +322,7 @@ namespace wolf::pinyin {
             return srt::Error(srt::Error::InvalidFormat,
                               "the pinyin module was imported without its configuration");
         }
-        const auto &binding =
-            static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
+        const auto &binding = static_cast<const G2pApi::RuntimeOptions &>(runtimeOptions).binding;
         for (const auto &entry : configuration->languageMap) {
             if (entry.pair == binding) {
                 auto engine =

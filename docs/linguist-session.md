@@ -150,9 +150,9 @@ namespace wolf {
 
         /// 一次转换。深度、逐词锁定与逐词输出沿用 L4 的既有形状。
         /// 取消不是错误：结果包含取消生效前完成的词，调用方通过令牌区分取消与完成。
-        srt::Expected<std::unique_ptr<Api::Linguist::L1::LinguistConvertResult>>
+        srt::Expected<std::unique_ptr<Api::Linguist::L1::ConvertResult>>
             convert(const SingerRef &singer, std::string_view language,
-                    const Api::Linguist::L1::LinguistConvertInput &input,
+                    const Api::Linguist::L1::ConvertInput &input,
                     const CancelToken &token = CancelToken());
 
         /// 告知会话一个歌手能演唱的音素，供 probe() 计算覆盖度（A70）。

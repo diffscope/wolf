@@ -5,9 +5,13 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/S2p/1/S2pApiL1.h>
+#include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
+
 namespace wolf::lua {
 
-    inline constexpr char VARIANT[] = "lua";
+    inline const srt::ContribContractTriplet S2pTriplet{Api::S2p::L1::Contract, "lua"};
+    inline const srt::ContribContractTriplet OnsetTriplet{Api::Onset::L1::Contract, "lua"};
 
     /// Interprets S2P modules of the lua variant.
     class S2pInterpreter : public srt::InferenceInterpreter {

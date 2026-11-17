@@ -5,9 +5,11 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
+
 namespace wolf::chain {
 
-    inline constexpr char VARIANT[] = "pipe-chain";
+    inline const srt::ContribContractTriplet Triplet{Api::G2p::L1::Contract, "pipe-chain"};
 
     /// Interprets G2P modules of the pipe-chain variant, which run their steps in order.
     class ChainInterpreter : public srt::InferenceInterpreter {

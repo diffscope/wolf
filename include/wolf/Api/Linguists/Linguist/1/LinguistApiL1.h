@@ -18,7 +18,7 @@
 #include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
 // This is the only include from Api into the Linguist layer, and it is intentional. The inference
 // contracts under Api/Inferences depend on synthrt's inference category alone, but this contract is
-// defined on wolf's linguist category. LinguistExecutive derives from the executive base of that
+// defined on wolf's linguist category. Executive derives from the executive base of that
 // category, which carries the LinguistSpec that created the executive. Moving the base into Api
 // would move a public class out of a header that hosts already include without changing any
 // dependency.
@@ -27,9 +27,8 @@
 
 namespace wolf::Api::Linguist::L1 {
 
-    inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.linguist.WolfLinguist";
-    inline constexpr char API_VARIANT[] = "wolf";
-    inline constexpr int API_LEVEL = 1;
+    /// Identifies the Linguist interface contract.
+    inline const srt::ContribContract Contract{"org.openvpi.wolf.linguist.WolfLinguist", 1};
 
     /// \name Import roles
     ///
@@ -47,9 +46,9 @@ namespace wolf::Api::Linguist::L1 {
     /// \}
 
     /// The phoneme inventory declared by one linguist composition.
-    class LinguistExports : public srt::ContribExports {
+    class Exports : public srt::ContribExports {
     public:
-        LinguistExports() : ContribExports({API_INTERFACE, API_LEVEL, API_VARIANT}) {
+        Exports() : ContribExports(Contract) {
         }
 
         std::vector<std::string> phonemes;
@@ -64,27 +63,22 @@ namespace wolf::Api::Linguist::L1 {
         bool openSet = false;
     };
 
-    /// The wolf variant configuration for a linguist composition.
-    class LinguistConfiguration : public srt::ContribConfiguration {
-    public:
-        LinguistConfiguration() : ContribConfiguration({API_INTERFACE, API_LEVEL, API_VARIANT}) {
-        }
-    };
+
 
     /// Options supplied when another contribution imports a linguist composition.
     ///
     /// Level 1 defines no vocabulary. The composition already declares its pair, and the import
     /// therefore does not repeat it.
-    class LinguistImportOptions : public srt::ContribImportOptions {
+    class ImportOptions : public srt::ContribImportOptions {
     public:
-        LinguistImportOptions() : ContribImportOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
+        ImportOptions() : ContribImportOptions(Contract) {
         }
     };
 
     /// Supplies runtime settings when a linguist executive is created.
-    class LinguistRuntimeOptions : public srt::ContribRuntimeOptions {
+    class RuntimeOptions : public srt::ContribRuntimeOptions {
     public:
-        LinguistRuntimeOptions() : ContribRuntimeOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
+        RuntimeOptions() : ContribRuntimeOptions(Contract) {
         }
     };
 
@@ -129,24 +123,24 @@ namespace wolf::Api::Linguist::L1 {
     ///
     /// A pinned layer is expressed by the presence of the optional instead of a companion flag,
     /// which distinguishes an unpinned layer from a layer pinned to an empty value.
-    struct LinguistWordInput {
+    struct WordInput {
         std::string lyric;
         std::optional<std::string> pronunciation;
         std::optional<LockedPhonemes> locked;
     };
 
-    class LinguistConvertInput : public srt::TaskStartInput {
+    class ConvertInput : public srt::TaskStartInput {
     public:
-        LinguistConvertInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        ConvertInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
         }
 
-        std::vector<LinguistWordInput> words;
+        std::vector<WordInput> words;
         Depth depth = Depth::Onsets;
     };
 
-    /// Conversion result of one word. See G2p::L1::G2pWordOutput: a failed word keeps its position
+    /// Conversion result of one word. See G2p::L1::WordOutput: a failed word keeps its position
     /// in the batch.
-    struct LinguistWordOutput {
+    struct WordOutput {
         std::string pronunciation;
         std::vector<std::string> candidates;
 
@@ -160,12 +154,12 @@ namespace wolf::Api::Linguist::L1 {
         HitStage hitStage = HitStage::Unspecified;
     };
 
-    class LinguistConvertResult : public srt::TaskResult {
+    class ConvertResult : public srt::TaskResult {
     public:
-        LinguistConvertResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        ConvertResult() : TaskResult(Contract.interfaceId(), Contract.level()) {
         }
 
-        std::vector<LinguistWordOutput> words;
+        std::vector<WordOutput> words;
     };
 
     /// Owns the runtime activity of one linguist contribution.
@@ -191,17 +185,16 @@ namespace wolf::Api::Linguist::L1 {
     /// displays them instead of discarding them. A partially computed analysis result is not a
     /// shorter correct result, and an error is therefore appropriate for analysis executives but
     /// not for linguist executives.
-    class LinguistExecutive : public wolf::LinguistPipelineExecutive {
+    class Executive : public wolf::LinguistPipelineExecutive {
     public:
         using AsyncCallback =
-            std::function<void(srt::Expected<std::unique_ptr<LinguistConvertResult>> result)>;
+            std::function<void(srt::Expected<std::unique_ptr<ConvertResult>> result)>;
 
         /// The contract defines no initialize(), because every binding of this executive is fixed
         /// at creation and Level 1 defines no initialization arguments.
-        virtual srt::Expected<std::unique_ptr<LinguistConvertResult>>
-            start(const LinguistConvertInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<ConvertResult>> start(const ConvertInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const LinguistConvertInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const ConvertInput> input,
                                                AsyncCallback callback) = 0;
 
         virtual srt::ITask::State state() const noexcept = 0;
@@ -224,8 +217,7 @@ namespace wolf::Api::Linguist::L1 {
     /// Supplies runtime settings when the wolf linguist pipeline is created.
     class WolfPipelineRuntimeOptions : public srt::SingerPipelineRuntimeOptions {
     public:
-        WolfPipelineRuntimeOptions()
-            : SingerPipelineRuntimeOptions({API_INTERFACE, API_LEVEL, API_VARIANT}) {
+        WolfPipelineRuntimeOptions() : SingerPipelineRuntimeOptions(Contract) {
         }
     };
 
@@ -250,9 +242,8 @@ namespace wolf::Api::Linguist::L1 {
         /// accumulates executives, together with their dictionaries and models, for the lifetime of
         /// the pipeline. createOwnedLinguist() is preferred because it expresses the ownership in
         /// the type.
-        virtual srt::Expected<LinguistExecutive *>
-            createLinguist(std::string_view language,
-                           const LinguistRuntimeOptions &runtimeOptions) = 0;
+        virtual srt::Expected<Executive *> createLinguist(std::string_view language,
+                                                          const RuntimeOptions &runtimeOptions) = 0;
 
         /// Creates the executive for one language and hands its ownership to the caller.
         ///
@@ -260,14 +251,13 @@ namespace wolf::Api::Linguist::L1 {
         /// and destroys it on destruction. The pointer must be released before this pipeline is
         /// destroyed, because destroying the pipeline destroys every attached executive, and a
         /// pointer that outlives the pipeline would delete an executive a second time.
-        srt::Expected<std::unique_ptr<LinguistExecutive>>
-            createOwnedLinguist(std::string_view language,
-                                const LinguistRuntimeOptions &runtimeOptions) {
+        srt::Expected<std::unique_ptr<Executive>>
+            createOwnedLinguist(std::string_view language, const RuntimeOptions &runtimeOptions) {
             auto created = createLinguist(language, runtimeOptions);
             if (!created) {
                 return created.takeError();
             }
-            return std::unique_ptr<LinguistExecutive>(created.take());
+            return std::unique_ptr<Executive>(created.take());
         }
 
     protected:
@@ -329,10 +319,10 @@ namespace wolf::Api::Linguist::L1 {
         ///
         /// A composition reaches phonemes through one S2P step. A member that converts the symbols
         /// produces a phoneme layer that differs from its input, and the pronunciation is then a
-        /// layer of its own. A member that copies the symbols (see S2p::L1::VARIANT_DIRECT)
-        /// produces the phoneme layer without adding one, and so does a composition without an S2P
-        /// member, whose reachable layers end at the pronunciation. The symbols of the deepest
-        /// reachable layer are the phoneme layer in every case.
+        /// layer of its own. A member that declares the S2p::L1::Exports::preservesSymbols
+        /// capability produces the phoneme layer without adding one, and so does a composition
+        /// without an S2P member, whose reachable layers end at the pronunciation. The symbols of
+        /// the deepest reachable layer are the phoneme layer in every case.
         ///
         /// A host uses this to know whether a word has a pronunciation to show next to its
         /// phonemes, or whether the two hold the same symbols. The value is read from the
@@ -358,7 +348,7 @@ namespace wolf::Api::Linguist::L1 {
         /// linguist belongs either to that package or to one of those dependencies. A pointer kept
         /// past the last handle, or across an unload of the package of the singer, is dangling.
         /// Callers that require the values for longer copy them, as the session catalog does.
-        virtual const LinguistExports *exports(std::string_view language) const = 0;
+        virtual const Exports *exports(std::string_view language) const = 0;
 
     protected:
         using SingerPipelineExtension::SingerPipelineExtension;
@@ -376,6 +366,8 @@ namespace srt {
 }
 
 namespace wolf::Api::Linguist::L1 {
+
+
 
     // Defined after the traits specialization above, which the lookup instantiates.
     inline WolfPipelineExtension *WolfPipelineExtension::from(const srt::SingerSpec &singer) {

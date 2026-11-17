@@ -30,11 +30,19 @@
 #include <linguistutil/ContractValues.h>
 #include <linguistutil/ManifestValues.h>
 
+#include <wolf/Api/Linguists/Linguist/1/LinguistWolfApiL1.h>
+
 namespace fs = std::filesystem;
 
 namespace wolf {
 
     namespace LinguistApi = Api::Linguist::L1;
+
+    bool detail::isCompatibleRoleTarget(const srt::ContribLocator &locator,
+                                        const srt::ContribContractTriplet &triplet,
+                                        const srt::ContribContract &expected) {
+        return locator.category() == srt::InferenceCategory::NAME && triplet.contract() == expected;
+    }
 
     namespace {
 
@@ -46,9 +54,7 @@ namespace wolf {
 
             srt::Expected<std::unique_ptr<srt::ContribExecutive>>
                 create(const srt::ContribRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.triplet() !=
-                    srt::ContribContractTriplet(LinguistApi::API_INTERFACE, LinguistApi::API_LEVEL,
-                                                LinguistApi::API_VARIANT)) {
+                if (runtimeOptions.contract() != LinguistApi::Contract) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
                         "linguist runtime options have an incompatible contract identity");
@@ -79,9 +85,7 @@ namespace wolf {
             }
             const auto &target = item.binding()->target();
             return target.locator().category() == LINGUIST_CATEGORY &&
-                   target.triplet() == srt::ContribContractTriplet(LinguistApi::API_INTERFACE,
-                                                                   LinguistApi::API_LEVEL,
-                                                                   LinguistApi::API_VARIANT);
+                   target.triplet() == LinguistApi::Wolf::Triplet;
         }
 
         /// Validates one entry of the language map of a singer against the contribution that the
@@ -106,9 +110,7 @@ namespace wolf {
                                   "singer language " + entry.language +
                                       " names an import that is not a linguist contribution");
             }
-            if (target.triplet() != srt::ContribContractTriplet(LinguistApi::API_INTERFACE,
-                                                                LinguistApi::API_LEVEL,
-                                                                LinguistApi::API_VARIANT)) {
+            if (target.triplet() != LinguistApi::Wolf::Triplet) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "singer linguist import has an incompatible contract identity");
             }
@@ -161,14 +163,15 @@ namespace wolf {
         }
 
         srt::Expected<void> validateLinguistRole(const srt::ContribImport &item,
-                                                 std::string_view expectedInterface) {
+                                                 const srt::ContribContract &expected) {
             if (!item.binding()) {
                 return srt::Error(srt::Error::InvalidFormat,
                                   "linguist import has no prepared binding");
             }
-            if (item.binding()->target().triplet().interfaceId() != expectedInterface) {
+            const auto &target = item.binding()->target();
+            if (!detail::isCompatibleRoleTarget(target.locator(), target.triplet(), expected)) {
                 return srt::Error(srt::Error::InvalidFormat,
-                                  "linguist import role targets an incompatible interface");
+                                  "linguist import role targets an incompatible contract");
             }
             if (!item.executiveFactory()) {
                 return srt::Error(srt::Error::FeatureNotSupported,
@@ -187,31 +190,28 @@ namespace wolf {
                     bool hasG2p = false;
                     for (const auto &item : spec.imports()) {
                         if (item.role() == LinguistApi::ROLE_G2P) {
-                            if (auto result =
-                                    validateLinguistRole(item, Api::G2p::L1::API_INTERFACE);
+                            if (auto result = validateLinguistRole(item, Api::G2p::L1::Contract);
                                 !result) {
                                 return result.takeError();
                             }
-                            if (auto result = validateLanguageMatch<Api::G2p::L1::G2pExports>(
+                            if (auto result = validateLanguageMatch<Api::G2p::L1::Exports>(
                                     item.binding()->target(), pair, LinguistApi::ROLE_G2P);
                                 !result) {
                                 return result.takeError();
                             }
                             hasG2p = true;
                         } else if (item.role() == LinguistApi::ROLE_S2P) {
-                            if (auto result =
-                                    validateLinguistRole(item, Api::S2p::L1::API_INTERFACE);
+                            if (auto result = validateLinguistRole(item, Api::S2p::L1::Contract);
                                 !result) {
                                 return result.takeError();
                             }
-                            if (auto result = validateLanguageMatch<Api::S2p::L1::S2pExports>(
+                            if (auto result = validateLanguageMatch<Api::S2p::L1::Exports>(
                                     item.binding()->target(), pair, LinguistApi::ROLE_S2P);
                                 !result) {
                                 return result.takeError();
                             }
                         } else if (item.role() == LinguistApi::ROLE_ONSET) {
-                            if (auto result =
-                                    validateLinguistRole(item, Api::Onset::L1::API_INTERFACE);
+                            if (auto result = validateLinguistRole(item, Api::Onset::L1::Contract);
                                 !result) {
                                 return result.takeError();
                             }
@@ -224,7 +224,8 @@ namespace wolf {
                             logCategory().srtWarning(
                                 "linguist %1 imports the role \"%2\", which the %3 contract "
                                 "does not bind; the import is ignored",
-                                spec.locator().toString(), item.role(), LinguistApi::API_INTERFACE);
+                                spec.locator().toString(), item.role(),
+                                LinguistApi::Contract.interfaceId());
                         }
                     }
                     // Only the g2p role is required. A composition without linguist/s2p is valid
@@ -296,15 +297,15 @@ namespace wolf {
                                     ? LinguistApi::Depth::Onsets
                                     : LinguistApi::Depth::Phonemes;
                         if (const auto *binding = s2p->binding()) {
-                            separateLayer = !Api::S2p::L1::variantKeepsSymbols(
-                                binding->target().triplet().variant());
+                            const auto exports = binding->target().exports();
+                            separateLayer =
+                                !exports || !exports->as<Api::S2p::L1::Exports>()->preservesSymbols;
                         }
                     }
                     m_depths.emplace(entry.language, depth);
                     m_layers.emplace(entry.language, separateLayer);
                     if (auto values = target.exports()) {
-                        m_exports.emplace(entry.language,
-                                          values->as<LinguistApi::LinguistExports>());
+                        m_exports.emplace(entry.language, values->as<LinguistApi::Exports>());
                     }
                 }
             }
@@ -353,16 +354,14 @@ namespace wolf {
                 return it != m_layers.end() && it->second;
             }
 
-            const LinguistApi::LinguistExports *exports(std::string_view language) const override {
+            const LinguistApi::Exports *exports(std::string_view language) const override {
                 const auto it = m_exports.find(std::string(language));
                 return it == m_exports.end() ? nullptr : it->second;
             }
 
             srt::Expected<std::unique_ptr<srt::SingerPipelineExecutive>>
                 createPipeline(const srt::SingerPipelineRuntimeOptions &runtimeOptions) override {
-                if (runtimeOptions.triplet() !=
-                    srt::ContribContractTriplet(LinguistApi::API_INTERFACE, LinguistApi::API_LEVEL,
-                                                LinguistApi::API_VARIANT)) {
+                if (runtimeOptions.contract() != LinguistApi::Contract) {
                     return srt::Error(
                         srt::Error::InvalidArgument,
                         "wolf pipeline options have an incompatible contract identity");
@@ -383,7 +382,7 @@ namespace wolf {
             /// package of the singer keeps its resolved dependencies loaded, and this extension is
             /// owned by the spec of the singer, so every referenced object outlives this
             /// extension.
-            std::map<std::string, const LinguistApi::LinguistExports *> m_exports;
+            std::map<std::string, const LinguistApi::Exports *> m_exports;
         };
 
     }
@@ -434,13 +433,11 @@ namespace wolf {
         if (auto checked = requireNoImportOptions(manifestOptions, "linguist"); !checked) {
             return checked.takeError();
         }
-        if (target.triplet() != srt::ContribContractTriplet(LinguistApi::API_INTERFACE,
-                                                            LinguistApi::API_LEVEL,
-                                                            LinguistApi::API_VARIANT)) {
+        if (target.triplet() != LinguistApi::Wolf::Triplet) {
             return srt::Error(srt::Error::InvalidArgument,
                               "linguist import target has an unsupported contract");
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new LinguistApi::LinguistImportOptions());
+        return std::unique_ptr<srt::ContribImportOptions>(new LinguistApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::ContribExecutiveFactory>>
@@ -456,7 +453,7 @@ namespace wolf {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<LinguistApi::LinguistExports>();
+        auto result = std::make_unique<LinguistApi::Exports>();
         result->phonemes = std::move(read->strings);
         result->openSet = read->openSet;
         return std::unique_ptr<srt::ContribExports>(std::move(result));
@@ -472,7 +469,7 @@ namespace wolf {
             return srt::Error(srt::Error::InvalidFormat,
                               "the wolf linguist configuration must be empty at Level 1");
         }
-        return std::unique_ptr<srt::ContribConfiguration>(new LinguistApi::LinguistConfiguration());
+        return std::unique_ptr<srt::ContribConfiguration>(new LinguistApi::Wolf::Configuration());
     }
 
 }

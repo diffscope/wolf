@@ -39,9 +39,9 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::API_INTERFACE,
-                                                       wolf::Api::G2p::L1::API_LEVEL,
-                                                       wolf::multig2p::VARIANT)) {
+            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::Contract.interfaceId(),
+                                                       wolf::Api::G2p::L1::Contract.level(),
+                                                       wolf::multig2p::Triplet.variant())) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }
@@ -88,7 +88,7 @@ namespace {
                         const fs::path &runtimeDir = fs::path(WOLF_TEST_ONNXRUNTIME_DIR)) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
         factory.setPluginPaths(paths);
-        auto *loader = factory.find(OnnxApi::API_NAME);
+        auto *loader = factory.find(OnnxApi::Name);
         if (loader == nullptr) {
             BOOST_TEST_MESSAGE("no ONNX driver plugin present");
             return false;
@@ -131,7 +131,7 @@ namespace {
         return staged;
     }
 
-    std::vector<LinguistApi::LinguistWordOutput>
+    std::vector<LinguistApi::WordOutput>
         convert(srt::SynthUnit &unit, const std::string &language,
                 const std::vector<std::string> &lyrics,
                 LinguistApi::Depth depth = LinguistApi::Depth::Phonemes) {
@@ -149,14 +149,14 @@ namespace {
             base->as<LinguistApi::WolfPipelineExtension>()->createPipeline(pipelineOptions);
         BOOST_REQUIRE(pipeline);
 
-        LinguistApi::LinguistRuntimeOptions options;
+        LinguistApi::RuntimeOptions options;
         auto linguist = (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist(
             language, options);
         if (!linguist) {
             BOOST_FAIL("the linguist should have been created: " + linguist.error().toString());
         }
 
-        LinguistApi::LinguistConvertInput input;
+        LinguistApi::ConvertInput input;
         input.depth = depth;
         for (const auto &lyric : lyrics) {
             input.words.push_back({lyric, std::nullopt, std::nullopt});
@@ -191,8 +191,8 @@ namespace {
         std::unique_ptr<srt::InferenceExecutive> executive;
 
         /// Returns the contract type of the executive, which is what start() and state() need.
-        G2pApi::G2pExecutive *get() const {
-            return static_cast<G2pApi::G2pExecutive *>(executive.get());
+        G2pApi::Executive *get() const {
+            return static_cast<G2pApi::Executive *>(executive.get());
         }
     };
 
@@ -214,8 +214,8 @@ namespace {
         auto *spec = contribution->as<srt::InferenceSpec>();
         BOOST_REQUIRE(spec != nullptr);
 
-        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
+        G2pApi::ImportOptions importOptions{};
+        G2pApi::RuntimeOptions runtimeOptions{};
         runtimeOptions.binding = {language, scheme};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         if (!executive) {
@@ -496,7 +496,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RunsOnARuntimeTheHostDeployed) {
         BOOST_REQUIRE(registerDriver(factory, unit, staged));
 
         // The driver reports the library that it opened, which must be the library just deployed.
-        auto *service = unit.runtimeService(ds::InferenceDriverPlugin::IID, OnnxApi::API_NAME);
+        auto *service = unit.runtimeService(ds::InferenceDriverPlugin::IID, OnnxApi::Name);
         BOOST_REQUIRE(service != nullptr);
         const auto *extension = service->as<ds::InferenceDriver>()->extension();
         BOOST_REQUIRE(extension != nullptr);
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchWhenTheBackendCannotB
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", CHAIN, UNMAPPED_LANGUAGE,
                            UNMAPPED_SCHEME);
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"hello"};
     auto result = chain.get()->start(input);
 
@@ -551,7 +551,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RefusesTheBatchWithoutAFallbackToo
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", STRICT,
                            UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"wasser"};
     auto result = chain.get()->start(input);
 
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenNoWordNeedsTheBackend)
     auto chain = bindChain(unit, wolf::test::fixtureRoot() / "lang-model", CHAIN, UNMAPPED_LANGUAGE,
                            UNMAPPED_SCHEME);
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"", "   ", "two words"};
     auto result = chain.get()->start(input);
 
@@ -605,7 +605,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenTheDictionaryCoveredEv
     configure(unit);
     auto chain = bindChain(unit, root, "g2p", UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"a"};
     auto result = chain.get()->start(input);
 
@@ -632,7 +632,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchForOneWordTheDictiona
     configure(unit);
     auto chain = bindChain(unit, root, "g2p", UNMAPPED_LANGUAGE, UNMAPPED_SCHEME);
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"a", "b"};
     auto result = chain.get()->start(input);
 

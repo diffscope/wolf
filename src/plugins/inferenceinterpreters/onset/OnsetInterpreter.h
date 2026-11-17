@@ -5,9 +5,11 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/Onset/1/OnsetApiL1.h>
+
 namespace wolf::onset {
 
-    inline constexpr char RULE[] = "rule";
+    inline const srt::ContribContractTriplet Triplet{Api::Onset::L1::Contract, "rule"};
 
     /// Interprets Onset modules of the rule variant, which mark onsets from a rule file.
     class OnsetInterpreter : public srt::InferenceInterpreter {

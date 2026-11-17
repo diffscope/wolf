@@ -33,9 +33,9 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::API_INTERFACE,
-                                                       wolf::Api::G2p::L1::API_LEVEL,
-                                                       wolf::pinyin::VARIANT)) {
+            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::Contract.interfaceId(),
+                                                       wolf::Api::G2p::L1::Contract.level(),
+                                                       wolf::pinyin::Triplet.variant())) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }
@@ -57,10 +57,10 @@ namespace {
     }
 
     /// Converts one batch of lyrics through a language declared by a singer.
-    std::vector<LinguistApi::LinguistWordOutput> convert(srt::SynthUnit &unit,
-                                                         const std::string &singerPackage,
-                                                         const std::string &language,
-                                                         const std::vector<std::string> &lyrics) {
+    std::vector<LinguistApi::WordOutput> convert(srt::SynthUnit &unit,
+                                                 const std::string &singerPackage,
+                                                 const std::string &language,
+                                                 const std::vector<std::string> &lyrics) {
         auto handle =
             unit.openPackage(wolf::test::fixtureRoot() / singerPackage, srt::SynthUnit::Load);
         if (!handle) {
@@ -73,14 +73,14 @@ namespace {
         auto pipeline = extension->createPipeline(pipelineOptions);
         BOOST_REQUIRE(pipeline);
 
-        LinguistApi::LinguistRuntimeOptions options;
+        LinguistApi::RuntimeOptions options;
         auto linguist = (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist(
             language, options);
         if (!linguist) {
             BOOST_FAIL("the linguist should have been created: " + linguist.error().toString());
         }
 
-        LinguistApi::LinguistConvertInput input;
+        LinguistApi::ConvertInput input;
         input.depth = LinguistApi::Depth::Pronunciation;
         for (const auto &lyric : lyrics) {
             input.words.push_back({lyric, std::nullopt, std::nullopt});
@@ -140,13 +140,13 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BuildsEnginesConcurrently) {
     std::atomic<int> wrong{0};
     const auto run = [&](const char *language, const char *expected) {
         for (int round = 0; round < ROUNDS; ++round) {
-            LinguistApi::LinguistRuntimeOptions options;
+            LinguistApi::RuntimeOptions options;
             auto linguist = wolfPipeline->createLinguist(language, options);
             if (!linguist) {
                 ++wrong;
                 return;
             }
-            LinguistApi::LinguistConvertInput input;
+            LinguistApi::ConvertInput input;
             input.depth = LinguistApi::Depth::Pronunciation;
             input.words.push_back({"\xE4\xB8\xAD", std::nullopt, std::nullopt});
             auto result = (*linguist)->start(input);
@@ -217,15 +217,15 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BreaksRunsWhenCalledDirectly) {
     // the arrow operator accesses the stored pointer, so calling reset() through it destroys the
     // executive instead of preparing it for another batch.
     const auto convertWords = [&](const std::vector<std::string> &lyrics) {
-        G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
-        G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
+        G2pApi::ImportOptions importOptions{};
+        G2pApi::RuntimeOptions runtimeOptions{};
         runtimeOptions.binding = {"cmn", "pinyin"};
         auto executive = spec->createInference(importOptions, runtimeOptions);
         BOOST_REQUIRE(executive);
 
-        G2pApi::G2pStartInput input;
+        G2pApi::StartInput input;
         input.lyrics = lyrics;
-        auto result = static_cast<G2pApi::G2pExecutive *>(executive->get())->start(input);
+        auto result = static_cast<G2pApi::Executive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         return (*result)->words;
     };

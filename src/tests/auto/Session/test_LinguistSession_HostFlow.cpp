@@ -119,7 +119,7 @@ namespace {
             if (m_failed.count(language) != 0) {
                 return false;
             }
-            LinguistApi::LinguistRuntimeOptions options;
+            LinguistApi::RuntimeOptions options;
             auto created = m_pipeline->as<LinguistApi::WolfPipelineExecutive>()->createLinguist(
                 language, options);
             if (!created) {
@@ -203,10 +203,10 @@ namespace {
                     continue;
                 }
 
-                LinguistApi::LinguistConvertInput input;
+                LinguistApi::ConvertInput input;
                 input.depth = depth;
                 for (const auto position : positions) {
-                    LinguistApi::LinguistWordInput word;
+                    LinguistApi::WordInput word;
                     // Trailing syllable markers are project notation on an ordinary word, so they
                     // are removed before the word is sent, and the word itself still converts.
                     word.lyric = notes[position].lyric;
@@ -250,7 +250,7 @@ namespace {
         std::optional<srt::PackageHandle> m_package;
         LinguistApi::WolfPipelineExtension *m_extension = nullptr;
         std::unique_ptr<srt::SingerPipelineExecutive> m_pipeline;
-        std::map<std::string, LinguistApi::LinguistExecutive *> m_ready;
+        std::map<std::string, LinguistApi::Executive *> m_ready;
         std::set<std::string> m_failed;
         int m_creations = 0;
     };
@@ -478,7 +478,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession)
 
     // Stage A. SP is sent with the other words; the session converts it and never passes it to
     // the language.
-    LinguistApi::LinguistConvertInput first;
+    LinguistApi::ConvertInput first;
     first.depth = LinguistApi::Depth::Pronunciation;
     for (const auto *lyric : {"\xE6\x88\x91", "\xE5\x94\xB1", "SP"}) {
         first.words.push_back({lyric, std::nullopt, std::nullopt});
@@ -497,7 +497,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession)
     BOOST_CHECK(session.probe(singer, "cmn").readiness == wolf::Readiness::Ready);
 
     // Stage B, with the edit of the user passed as a pinned pronunciation.
-    LinguistApi::LinguistConvertInput second;
+    LinguistApi::ConvertInput second;
     second.depth = LinguistApi::Depth::Onsets;
     second.words.push_back({"\xE6\x88\x91", std::string("wo"), std::nullopt});
     second.words.push_back({"\xE5\x94\xB1", std::string("chang"), std::nullopt});
@@ -519,7 +519,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession)
     BOOST_CHECK(words[2].onsets[0]);
 
     // The other language, from the other package, converts on the same session.
-    LinguistApi::LinguistConvertInput cantonese;
+    LinguistApi::ConvertInput cantonese;
     cantonese.depth = LinguistApi::Depth::Onsets;
     cantonese.words.push_back({"\xE6\xAD\x8C", std::nullopt, std::nullopt});
     auto yue = session.convert(singer, "yue", cantonese);

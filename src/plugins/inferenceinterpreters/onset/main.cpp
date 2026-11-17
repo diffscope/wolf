@@ -10,8 +10,7 @@ namespace wolf::onset {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(Api::Onset::L1::API_INTERFACE,
-                                                       Api::Onset::L1::API_LEVEL, RULE)) {
+            if (triplet != Triplet) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

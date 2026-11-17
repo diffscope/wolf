@@ -5,9 +5,11 @@
 
 #include <synthrt/SVS/InferenceInterpreter.h>
 
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
+
 namespace wolf::multig2p {
 
-    inline constexpr char VARIANT[] = "multig2p-onnx";
+    inline const srt::ContribContractTriplet Triplet{Api::G2p::L1::Contract, "multig2p-onnx"};
 
     /// Interprets G2P modules of the multig2p-onnx variant, which run the shared model
     /// backend through the ONNX driver.

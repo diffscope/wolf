@@ -284,7 +284,7 @@ namespace wolf::Api::Common::L1 {
 
 | 类 | 基类 | 承载 |
 | :-- | :-- | :-- |
-| `G2pExports` | `srt::ContribExports` | §3.1 |
+| `Exports` | `srt::ContribExports` | §3.1 |
 | `G2pImportOptions` | `srt::ContribImportOptions` | 空（§3.2） |
 | `G2pRuntimeOptions` | `srt::InferenceRuntimeOptions` | 绑定 `(language, scheme)` |
 | `G2pInitArgs` | `srt::InferenceInitArgs` | 与变体无关的初始化参数 |
@@ -300,23 +300,20 @@ namespace wolf::Api::Common::L1 {
 
 ```cpp
 // synthrt/lib/SVS/InferenceContrib.cpp
-if (runtimeOptions.triplet() != target.triplet()) { … }   // 变体也在三元组里
+if (runtimeOptions.contract() != target.triplet().contract()) { … }
 ```
 
-G2P / S2P / Onset 都是**多变体契约**，因此其 `RuntimeOptions` 类**不得**像 dsinfer 的单变体契约那样硬编码 `API_VARIANT`：
+G2P、S2P、Onset 的 RuntimeOptions 只保存 Contract。宿主可以为同一契约下的不同变体复用同一种 options，无需读取目标 variant。
 
 ```cpp
-class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
+class RuntimeOptions : public srt::InferenceRuntimeOptions {
 public:
-    // 变体由调用方按目标 spec 的 triplet().variant() 传入，不得硬编码。
-    explicit G2pRuntimeOptions(std::string variant)
-        : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {}
-
-    Common::L1::LanguageScheme binding;   // 该执行体绑定的二元组
+    RuntimeOptions() : InferenceRuntimeOptions(Contract) {}
+    Common::L1::LanguageScheme binding;
 };
 ```
 
-调用方（组合 provider）从 import 的目标 spec 读取 `triplet().variant()` 构造该对象。该约束由框架的比对逻辑决定，不是风格选择。
+configuration 仍由具体变体定义，加载器比较完整三元组。
 
 ### 6.4 与运行时的边界
 

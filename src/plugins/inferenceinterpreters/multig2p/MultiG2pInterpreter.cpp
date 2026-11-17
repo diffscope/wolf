@@ -53,8 +53,7 @@ namespace wolf::multig2p {
 
         class Configuration : public srt::ContribConfiguration {
         public:
-            Configuration()
-                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
+            Configuration() : ContribConfiguration(Triplet) {
             }
 
             std::shared_ptr<const Bundle> bundle;
@@ -68,7 +67,7 @@ namespace wolf::multig2p {
         };
 
         class Executive
-            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+            : public ExecutiveBase<G2pApi::Executive, G2pApi::StartInput, G2pApi::Result> {
         public:
             Executive(srt::InferenceSpec &spec, const Configuration *configuration,
                       std::unique_ptr<Decoder> decoder, std::string languageRef,
@@ -82,16 +81,16 @@ namespace wolf::multig2p {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::InitArgs &) override {
                 return {};
             }
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
         protected:
-            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+            Batch runBatch(const G2pApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<G2pApi::G2pResult>();
+                auto result = std::make_unique<G2pApi::Result>();
                 result->words.resize(input.lyrics.size());
 
                 // No driver is available in this process. The contract defines a word-level error
@@ -191,7 +190,7 @@ namespace wolf::multig2p {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
+        auto result = std::make_unique<G2pApi::Exports>();
         result->languages = std::move(read->languages);
         result->symbols = std::move(read->strings);
         result->openSet = read->openSet;
@@ -271,7 +270,7 @@ namespace wolf::multig2p {
         result->directory = spec.declarationPath().parent_path();
         auto &cache = ResourceCache::instance();
         auto bundle = cache.acquire<Bundle>(
-            result->directory / "bundle.json", BUNDLE_KIND, VARIANT,
+            result->directory / "bundle.json", BUNDLE_KIND, Triplet.variant(),
             std::function([](const fs::path &path) -> srt::Expected<std::shared_ptr<const Bundle>> {
                 auto parsed = Bundle::load(path);
                 if (!parsed) {
@@ -297,7 +296,7 @@ namespace wolf::multig2p {
         }
 
         auto vocabulary = cache.acquire<Vocabulary>(
-            result->directory / "vocabulary.json", VOCABULARY_KIND, VARIANT,
+            result->directory / "vocabulary.json", VOCABULARY_KIND, Triplet.variant(),
             std::function(
                 [](const fs::path &path) -> srt::Expected<std::shared_ptr<const Vocabulary>> {
                     auto parsed = Vocabulary::load(path);
@@ -328,10 +327,11 @@ namespace wolf::multig2p {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         MultiG2pInterpreter::createImportOptions(const srt::ContribSpec &,
                                                  const srt::JsonValue &manifestOptions) const {
-        if (auto checked = wolf::requireNoImportOptions(manifestOptions, VARIANT); !checked) {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, Triplet.variant());
+            !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(VARIANT));
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -343,8 +343,7 @@ namespace wolf::multig2p {
             return srt::Error(srt::Error::InvalidFormat,
                               "the multig2p module was imported without its configuration");
         }
-        const auto &binding =
-            static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
+        const auto &binding = static_cast<const G2pApi::RuntimeOptions &>(runtimeOptions).binding;
 
         const MappedLanguage *mapped = nullptr;
         for (const auto &entry : configuration->languageMap) {

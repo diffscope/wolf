@@ -35,15 +35,14 @@ namespace wolf::onset {
 
         class Configuration : public srt::ContribConfiguration {
         public:
-            Configuration()
-                : ContribConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, RULE}) {
+            Configuration() : ContribConfiguration(Triplet) {
             }
 
             std::shared_ptr<const RuleTable> table;
         };
 
-        class Executive : public ExecutiveBase<OnsetApi::OnsetExecutive, OnsetApi::OnsetStartInput,
-                                               OnsetApi::OnsetResult> {
+        class Executive
+            : public ExecutiveBase<OnsetApi::Executive, OnsetApi::StartInput, OnsetApi::Result> {
         public:
             Executive(srt::InferenceSpec &spec, std::shared_ptr<const RuleTable> table)
                 : ExecutiveBase(spec), m_table(std::move(table)) {
@@ -53,14 +52,14 @@ namespace wolf::onset {
                 finish();
             }
 
-            srt::Expected<void> initialize(const OnsetApi::OnsetInitArgs &) override {
+            srt::Expected<void> initialize(const OnsetApi::InitArgs &) override {
                 return {};
             }
 
         protected:
-            Batch runBatch(const OnsetApi::OnsetStartInput &input) override {
+            Batch runBatch(const OnsetApi::StartInput &input) override {
                 // See ExecutiveBase: a stop request on entry cancels this batch.
-                auto result = std::make_unique<OnsetApi::OnsetResult>();
+                auto result = std::make_unique<OnsetApi::Result>();
                 result->onsets.reserve(input.phonemes.size());
                 for (const auto &sequence : input.phonemes) {
                     // Cancellation is checked between words, so a caller that stops the batch
@@ -86,7 +85,7 @@ namespace wolf::onset {
         if (!read) {
             return read.takeError();
         }
-        auto result = std::make_unique<OnsetApi::OnsetExports>(RULE);
+        auto result = std::make_unique<OnsetApi::Exports>();
         result->knownPhonemes = std::move(read->strings);
         return std::unique_ptr<srt::ContribExports>(std::move(result));
     }
@@ -121,7 +120,7 @@ namespace wolf::onset {
         // The rule file is parsed during Acquire, so a malformed rule file fails the
         // package load rather than the first sequence that uses the rules.
         auto table = ResourceCache::instance().acquire<RuleTable>(
-            file.lexically_normal(), RULE_KIND, RULE,
+            file.lexically_normal(), RULE_KIND, Triplet.variant(),
             std::function(
                 [](const fs::path &path) -> srt::Expected<std::shared_ptr<const RuleTable>> {
                     auto parsed = RuleTable::load(path);
@@ -141,10 +140,11 @@ namespace wolf::onset {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         OnsetInterpreter::createImportOptions(const srt::ContribSpec &,
                                               const srt::JsonValue &manifestOptions) const {
-        if (auto checked = wolf::requireNoImportOptions(manifestOptions, RULE); !checked) {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, Triplet.variant());
+            !checked) {
             return checked.takeError();
         }
-        return std::unique_ptr<srt::ContribImportOptions>(new OnsetApi::OnsetImportOptions(RULE));
+        return std::unique_ptr<srt::ContribImportOptions>(new OnsetApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>

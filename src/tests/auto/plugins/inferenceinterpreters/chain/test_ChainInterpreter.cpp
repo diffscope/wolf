@@ -34,9 +34,9 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::API_INTERFACE,
-                                                       wolf::Api::G2p::L1::API_LEVEL,
-                                                       wolf::chain::VARIANT)) {
+            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::Contract.interfaceId(),
+                                                       wolf::Api::G2p::L1::Contract.level(),
+                                                       wolf::chain::Triplet.variant())) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }
@@ -51,9 +51,9 @@ namespace {
         wolf::test::configure(unit, {wolf::test::fixtureRoot()});
     }
 
-    std::vector<LinguistApi::LinguistWordOutput> convert(srt::SynthUnit &unit,
-                                                         const std::vector<std::string> &lyrics,
-                                                         const std::string &language = "eng") {
+    std::vector<LinguistApi::WordOutput> convert(srt::SynthUnit &unit,
+                                                 const std::vector<std::string> &lyrics,
+                                                 const std::string &language = "eng") {
         auto handle =
             unit.openPackage(wolf::test::fixtureRoot() / "singer-chain", srt::SynthUnit::Load);
         if (!handle) {
@@ -68,12 +68,12 @@ namespace {
         auto pipeline = extension->createPipeline(pipelineOptions);
         BOOST_REQUIRE(pipeline);
 
-        LinguistApi::LinguistRuntimeOptions options;
+        LinguistApi::RuntimeOptions options;
         auto linguist = (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist(
             language, options);
         BOOST_REQUIRE(linguist);
 
-        LinguistApi::LinguistConvertInput input;
+        LinguistApi::ConvertInput input;
         input.depth = LinguistApi::Depth::Pronunciation;
         for (const auto &lyric : lyrics) {
             input.words.push_back({lyric, std::nullopt, std::nullopt});
@@ -183,14 +183,14 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ForwardsAStopToItsBackend) {
     auto *spec = handle->contribution("inference", "g2p")->as<srt::InferenceSpec>();
     BOOST_REQUIRE(spec != nullptr);
 
-    G2pApi::G2pImportOptions importOptions(spec->triplet().variant());
-    G2pApi::G2pRuntimeOptions runtimeOptions(spec->triplet().variant());
+    G2pApi::ImportOptions importOptions{};
+    G2pApi::RuntimeOptions runtimeOptions{};
     runtimeOptions.binding = {"eng", "arpabet"};
     auto executive = spec->createInference(importOptions, runtimeOptions);
     BOOST_REQUIRE_MESSAGE(static_cast<bool>(executive), wolf::test::why(executive));
-    auto *chain = static_cast<G2pApi::G2pExecutive *>(executive->get());
+    auto *chain = static_cast<G2pApi::Executive *>(executive->get());
 
-    G2pApi::G2pStartInput input;
+    G2pApi::StartInput input;
     input.lyrics = {"hello"};
 
     // The request arrives while the batch is inside the backend, which is the only moment the chain
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_StopReachesTheRunningStage) {
     LinguistApi::WolfPipelineRuntimeOptions pipelineOptions;
     auto pipeline = base->as<LinguistApi::WolfPipelineExtension>()->createPipeline(pipelineOptions);
     BOOST_REQUIRE(pipeline);
-    LinguistApi::LinguistRuntimeOptions options;
+    LinguistApi::RuntimeOptions options;
     auto linguist =
         (*pipeline)->as<LinguistApi::WolfPipelineExecutive>()->createLinguist("nld", options);
     BOOST_REQUIRE(linguist);
@@ -414,7 +414,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_StopReachesTheRunningStage) {
     });
 
     // The phoneme stage of this language is a script that does not return for this word.
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Phonemes;
     input.words.push_back({"loop", std::nullopt, std::nullopt});
     auto result = executive->start(input);
@@ -458,7 +458,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
         token.cancel();
     });
 
-    LinguistApi::LinguistConvertInput input;
+    LinguistApi::ConvertInput input;
     input.depth = LinguistApi::Depth::Phonemes;
     input.words.push_back({"loop", std::nullopt, std::nullopt});
     const auto started = std::chrono::steady_clock::now();
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
     BOOST_CHECK_LT(std::chrono::duration<double>(elapsed).count(), 10.0);
 
     // The session is still usable for the same language afterwards.
-    LinguistApi::LinguistConvertInput next;
+    LinguistApi::ConvertInput next;
     next.depth = LinguistApi::Depth::Pronunciation;
     next.words.push_back({"x", std::nullopt, std::nullopt});
     BOOST_CHECK(session.convert(singer, "nld", next));

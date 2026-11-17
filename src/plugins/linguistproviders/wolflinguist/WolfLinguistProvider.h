@@ -4,9 +4,25 @@
 #include <memory>
 #include <vector>
 
+#include <synthrt/Core/ContribContract.h>
+#include <synthrt/Core/ContribLocator.h>
+
 #include <wolf/Linguist/LinguistProvider.h>
 
 namespace wolf {
+
+    namespace detail {
+
+        /// Returns whether \a triplet is an inference contract that a linguist role can bind.
+        ///
+        /// The role types consumed by a linguist are Level 1 inference executives. Matching only
+        /// \c interfaceId would accept a later level and then convert the unrelated executive to
+        /// the Level 1 type.
+        bool isCompatibleRoleTarget(const srt::ContribLocator &locator,
+                                    const srt::ContribContractTriplet &triplet,
+                                    const srt::ContribContract &expected);
+
+    }
 
     class WolfLinguistProvider : public LinguistProvider {
     public:

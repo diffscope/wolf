@@ -19,13 +19,11 @@ namespace wolf {
         return m_handles;
     }
 
-    srt::Expected<Api::Linguist::L1::LinguistExecutive *> WolfPipelineExecutive::createLinguist(
-        std::string_view language,
-        const Api::Linguist::L1::LinguistRuntimeOptions &runtimeOptions) {
-        const auto entry = std::find_if(m_languages.entries.begin(), m_languages.entries.end(),
-                                        [&](const SingerLanguage &candidate) {
-                                            return candidate.language == language;
-                                        });
+    srt::Expected<Api::Linguist::L1::Executive *> WolfPipelineExecutive::createLinguist(
+        std::string_view language, const Api::Linguist::L1::RuntimeOptions &runtimeOptions) {
+        const auto entry = std::find_if(
+            m_languages.entries.begin(), m_languages.entries.end(),
+            [&](const SingerLanguage &candidate) { return candidate.language == language; });
         if (entry == m_languages.entries.end()) {
             return srt::Error(srt::Error::InvalidArgument,
                               "the singer does not declare the language " + std::string(language));
@@ -36,7 +34,7 @@ namespace wolf {
         if (!child) {
             return child.takeError();
         }
-        return static_cast<Api::Linguist::L1::LinguistExecutive *>(child.take());
+        return static_cast<Api::Linguist::L1::Executive *>(child.take());
     }
 
 }

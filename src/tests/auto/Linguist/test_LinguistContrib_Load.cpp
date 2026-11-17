@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_LoadsPassthroughPackage) {
     // Load, unlike DataOnly, interprets exports through the selected provider.
     const auto *exports = spec->exports();
     BOOST_REQUIRE(exports != nullptr);
-    const auto *linguistExports = exports->as<wolf::Api::Linguist::L1::LinguistExports>();
+    const auto *linguistExports = exports->as<wolf::Api::Linguist::L1::Exports>();
     BOOST_CHECK(linguistExports->phonemes.empty());
     // An empty list and an open set are distinct statements. This language returns the word
     // unchanged, so the list is empty because the output set cannot be enumerated, not because the
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_OpenSetDefaultsToClosed) {
     }
     auto *spec = handle->contribution(wolf::LINGUIST_CATEGORY, "deu");
     BOOST_REQUIRE(spec != nullptr);
-    const auto *exports = spec->exports()->as<wolf::Api::Linguist::L1::LinguistExports>();
+    const auto *exports = spec->exports()->as<wolf::Api::Linguist::L1::Exports>();
     BOOST_REQUIRE(exports != nullptr);
     BOOST_CHECK(!exports->openSet);
 }

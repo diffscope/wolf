@@ -51,8 +51,8 @@ namespace wolf {
         /// The catalog and the list of unmounted singers share this function, because both must
         /// resolve the same reference identically.
         template <class Entries>
-        auto findByRef(const Entries &entries, const SingerRef &singer,
-                       bool &ambiguous) -> decltype(&*std::begin(entries)) {
+        auto findByRef(const Entries &entries, const SingerRef &singer, bool &ambiguous)
+            -> decltype(&*std::begin(entries)) {
             ambiguous = false;
             decltype(&*std::begin(entries)) found = nullptr;
             for (const auto &entry : entries) {
@@ -132,12 +132,12 @@ namespace wolf {
         std::mutex mutex;
         std::condition_variable stopped;
         bool cancelled = false;
-        std::set<LinguistApi::LinguistExecutive *> running;
+        std::set<LinguistApi::Executive *> running;
 
         /// Executives on which a cancel() is currently calling stop(), one entry per call in
         /// progress. retire() waits until an executive leaves this set, because the session may
         /// destroy an executive as soon as it is retired, and stop() is called outside the lock.
-        std::multiset<LinguistApi::LinguistExecutive *> stopping;
+        std::multiset<LinguistApi::Executive *> stopping;
 
         /// Enrols one executive for the duration of a conversion.
         ///
@@ -145,7 +145,7 @@ namespace wolf {
         /// start. Returning false here, instead of calling stop() and starting, ensures that a
         /// cancellation before the batch takes effect. Otherwise the executive would consume the
         /// request and run the whole chain.
-        bool enrol(LinguistApi::LinguistExecutive *executive) {
+        bool enrol(LinguistApi::Executive *executive) {
             std::lock_guard<std::mutex> guard(mutex);
             if (cancelled) {
                 return false;
@@ -157,7 +157,7 @@ namespace wolf {
         /// Withdraws one executive and waits while a cancel() is still stopping it. Only the
         /// conversion that holds that executive waits. enrol(), cancelled() and retire() for every
         /// other executive proceed.
-        void retire(LinguistApi::LinguistExecutive *executive) {
+        void retire(LinguistApi::Executive *executive) {
             std::unique_lock<std::mutex> lock(mutex);
             running.erase(executive);
             stopped.wait(lock, [&] { return stopping.count(executive) == 0; });
@@ -178,7 +178,7 @@ namespace wolf {
         // enrol() and retire() on this token, and with them every conversion that shares the
         // token. The snapshot is registered in stopping first, so that no executive in it can be
         // retired, and therefore destroyed, while stop() is still running on it.
-        std::vector<LinguistApi::LinguistExecutive *> snapshot;
+        std::vector<LinguistApi::Executive *> snapshot;
         {
             std::lock_guard<std::mutex> guard(m_impl->mutex);
             m_impl->cancelled = true;
@@ -214,8 +214,7 @@ namespace wolf {
         struct Slot {
             srt::PackageHandle package;
             std::unique_ptr<srt::SingerPipelineExecutive> pipeline;
-            std::map<std::string, std::vector<std::unique_ptr<LinguistApi::LinguistExecutive>>>
-                idle;
+            std::map<std::string, std::vector<std::unique_ptr<LinguistApi::Executive>>> idle;
 
             /// Number of conversions that currently hold an executive from this slot. A retired
             /// slot with outstanding conversions remains alive until they return.
@@ -453,8 +452,8 @@ namespace wolf {
         ///
         /// The caller holds the lock. The lease is reserved before the function returns, which
         /// prevents a concurrent refresh from destroying the slot while the caller uses it.
-        std::unique_ptr<LinguistApi::LinguistExecutive> takeIdle(const SlotPtr &slot,
-                                                                 std::string_view language) {
+        std::unique_ptr<LinguistApi::Executive> takeIdle(const SlotPtr &slot,
+                                                         std::string_view language) {
             auto &pooled = slot->idle[std::string(language)];
             if (pooled.empty()) {
                 ++slot->outstanding;
@@ -470,9 +469,9 @@ namespace wolf {
         /// loads dictionaries and opens models, and holding the session lock would make every
         /// probe() on any singer wait for a model to open, which defeats the purpose of the pool.
         /// The lease is already reserved, so the slot cannot be destroyed during the call.
-        srt::Expected<std::unique_ptr<LinguistApi::LinguistExecutive>>
-            build(const SlotPtr &slot, std::string_view language) {
-            LinguistApi::LinguistRuntimeOptions options;
+        srt::Expected<std::unique_ptr<LinguistApi::Executive>> build(const SlotPtr &slot,
+                                                                     std::string_view language) {
+            LinguistApi::RuntimeOptions options;
             return slot->pipeline->as<LinguistApi::WolfPipelineExecutive>()->createOwnedLinguist(
                 language, options);
         }
@@ -485,7 +484,7 @@ namespace wolf {
         void recordFailure(const SlotPtr &slot, const std::string &language,
                            const std::pair<SingerKey, std::string> &cacheKey,
                            const srt::Error &error,
-                           std::unique_ptr<LinguistApi::LinguistExecutive> executive = nullptr) {
+                           std::unique_ptr<LinguistApi::Executive> executive = nullptr) {
             {
                 std::lock_guard<std::mutex> guard(mutex);
                 failed.emplace(cacheKey, error);
@@ -497,8 +496,8 @@ namespace wolf {
         /// executive is deleted instead, and the slot is destroyed after the last executive has
         /// returned.
         void giveBack(const SlotPtr &slot, const std::string &language,
-                      std::unique_ptr<LinguistApi::LinguistExecutive> executive, bool reusable) {
-            std::unique_ptr<LinguistApi::LinguistExecutive> doomed;
+                      std::unique_ptr<LinguistApi::Executive> executive, bool reusable) {
+            std::unique_ptr<LinguistApi::Executive> doomed;
             SlotPtr released;
             {
                 std::lock_guard<std::mutex> guard(mutex);
@@ -538,7 +537,7 @@ namespace wolf {
         /// would repeat the lookup of acquire() and could resolve another entry after a refresh.
         struct Lease {
             SlotPtr slot;
-            std::unique_ptr<LinguistApi::LinguistExecutive> executive;
+            std::unique_ptr<LinguistApi::Executive> executive;
             std::pair<SingerKey, std::string> cacheKey;
         };
 
@@ -791,10 +790,9 @@ namespace wolf {
         return {};
     }
 
-    srt::Expected<std::unique_ptr<LinguistApi::LinguistConvertResult>>
+    srt::Expected<std::unique_ptr<LinguistApi::ConvertResult>>
         LinguistSession::convert(const SingerRef &singer, std::string_view language,
-                                 const LinguistApi::LinguistConvertInput &input,
-                                 const CancelToken &token) {
+                                 const LinguistApi::ConvertInput &input, const CancelToken &token) {
         auto leased = m_impl->acquire(singer, language);
         if (!leased) {
             return leased.takeError();
@@ -811,10 +809,10 @@ namespace wolf {
             std::lock_guard<std::mutex> guard(m_impl->mutex);
             markers = m_impl->reservedFor(singer);
         }
-        LinguistApi::LinguistConvertInput forwarded;
+        LinguistApi::ConvertInput forwarded;
         forwarded.depth = input.depth;
         std::vector<std::size_t> positions;
-        auto result = std::make_unique<LinguistApi::LinguistConvertResult>();
+        auto result = std::make_unique<LinguistApi::ConvertResult>();
         result->words.resize(input.words.size());
 
         for (std::size_t index = 0; index < input.words.size(); ++index) {
@@ -878,7 +876,7 @@ namespace wolf {
             // result of the conversion instead, and is never cached.
             auto error = converted.takeError();
             m_impl->recordFailure(slot, std::string(language), cacheKey, error,
-                                 std::move(executive));
+                                  std::move(executive));
             return error;
         }
         // A batch with a different word count would assign every later word to the wrong
@@ -897,7 +895,7 @@ namespace wolf {
                 srt::Error(srt::Error::InvalidFormat,
                            "the conversion returned a different number of words than it was given");
             m_impl->recordFailure(slot, std::string(language), cacheKey, error,
-                                 std::move(executive));
+                                  std::move(executive));
             return error;
         }
         for (std::size_t slotIndex = 0; slotIndex < positions.size(); ++slotIndex) {

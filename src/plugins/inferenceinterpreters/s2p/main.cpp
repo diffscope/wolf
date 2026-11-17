@@ -16,13 +16,14 @@ namespace wolf::s2p {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet.interfaceId() != S2pApi::API_INTERFACE ||
-                triplet.level() != S2pApi::API_LEVEL) {
+            if (triplet.interfaceId() != S2pApi::Contract.interfaceId() ||
+                triplet.level() != S2pApi::Contract.level()) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported S2P contract: " + triplet.toString());
             }
-            if (triplet.variant() != DIRECT && triplet.variant() != DICT &&
-                triplet.variant() != MAPPING) {
+            if (triplet.variant() != DirectTriplet.variant() &&
+                triplet.variant() != DictTriplet.variant() &&
+                triplet.variant() != MappingTriplet.variant()) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported S2P variant: " + triplet.variant());
             }

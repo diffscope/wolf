@@ -29,13 +29,14 @@ namespace {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
             create(const srt::ContribContractTriplet &triplet) override {
-            if (triplet.interfaceId() != S2pApi::API_INTERFACE ||
-                triplet.level() != S2pApi::API_LEVEL) {
+            if (triplet.interfaceId() != S2pApi::Contract.interfaceId() ||
+                triplet.level() != S2pApi::Contract.level()) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported S2P contract: " + triplet.toString());
             }
-            if (triplet.variant() != wolf::s2p::DIRECT && triplet.variant() != wolf::s2p::DICT &&
-                triplet.variant() != wolf::s2p::MAPPING) {
+            if (triplet.variant() != wolf::s2p::DirectTriplet.variant() &&
+                triplet.variant() != wolf::s2p::DictTriplet.variant() &&
+                triplet.variant() != wolf::s2p::MappingTriplet.variant()) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported S2P variant: " + triplet.variant());
             }
@@ -80,14 +81,17 @@ namespace {
 
     std::vector<std::string> convert(srt::PackageHandle &handle, const std::string &pronunciation) {
         auto *spec = handle.contribution("inference", "s2p")->as<srt::InferenceSpec>();
-        S2pApi::S2pImportOptions options(spec->triplet().variant());
-        S2pApi::S2pRuntimeOptions runtime(spec->triplet().variant());
+        BOOST_REQUIRE(spec->exports());
+        BOOST_CHECK_EQUAL(spec->exports()->as<S2pApi::Exports>()->preservesSymbols,
+                          spec->triplet().variant() == "direct");
+        S2pApi::ImportOptions options{};
+        S2pApi::RuntimeOptions runtime{};
         auto executive = spec->createInference(options, runtime);
         BOOST_REQUIRE(executive);
 
-        S2pApi::S2pStartInput input;
+        S2pApi::StartInput input;
         input.pronunciations.push_back(pronunciation);
-        auto result = static_cast<S2pApi::S2pExecutive *>(executive->get())->start(input);
+        auto result = static_cast<S2pApi::Executive *>(executive->get())->start(input);
         BOOST_REQUIRE(result);
         auto phonemes = (*result)->phonemes.front();
         executive->reset();

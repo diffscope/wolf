@@ -15,57 +15,13 @@
 
 namespace wolf::Api::S2p::L1 {
 
-    /// Identifies the phonological symbol to phoneme inference contract.
-    inline constexpr char API_INTERFACE[] = "org.openvpi.wolf.inference.S2P";
-
-    /// Identifies Level 1 of the phonological symbol to phoneme inference contract.
-    inline constexpr int API_LEVEL = 1;
-
-    /// The variant whose output holds the symbols of its input.
-    ///
-    /// A pronunciation is already a space delimited sequence of pronunciation units (see
-    /// S2pStartInput), and this variant copies every unit, so the layer it produces is the
-    /// pronunciation layer rather than a layer of its own. The identity is a property of the
-    /// symbols and not of the text: a run of spaces collapses into one unit and the spaces around
-    /// the units are dropped, so the two layers hold the same units rather than the same string.
-    ///
-    /// The other variants of this contract rewrite the symbols of a pronunciation, through a
-    /// dictionary entry, a mapping row or a script, so the two layers are distinct. A scripted
-    /// variant, however, cannot be decided from its declaration: whether its output keeps the
-    /// symbols is known only after it runs. Such a variant is reported as holding a layer of its
-    /// own, which is the conservative answer: presenting a pronunciation layer that turns out to be
-    /// the phoneme layer is a smaller error than hiding a layer that exists.
-    ///
-    /// A host must not treat this as an exhaustive list of the variants that keep the symbols. A
-    /// third-party variant may keep them as well, and no version of this header can say so.
-    inline constexpr char VARIANT_DIRECT[] = "direct";
-
-    /// Whether \a variant converts a pronunciation without changing its symbols. See
-    /// VARIANT_DIRECT.
-    ///
-    /// Only VARIANT_DIRECT is known to keep the symbols; every other name returns false. That
-    /// includes a variant this version does not know, because a caller must not assume that an
-    /// unknown variant keeps the symbols — it can assume the opposite, which is also the direction
-    /// the report of a separate pronunciation layer takes for a variant whose output is not
-    /// statically known.
-    ///
-    /// A host asks this about a declaration rather than about output, because it has to know the
-    /// shape of the two layers before it converts: a conversion reports the symbols of one layer,
-    /// not whether the other layer would hold the same ones.
-    ///
-    /// The packaging pass keeps its own list of the variants whose table it reads
-    /// (TABLE_VARIANTS in scripts/check-declarations.py), and the variants guide states the same
-    /// table in §5.0.2. A variant that reads a table must be added in all three places; no script
-    /// cross-checks them against this function.
-    inline constexpr bool variantKeepsSymbols(std::string_view variant) {
-        return variant == VARIANT_DIRECT;
-    }
+    /// Identifies the S2p interface contract.
+    inline const srt::ContribContract Contract{"org.openvpi.wolf.inference.S2P", 1};
 
     /// Input and output declaration of one S2P module.
-    class S2pExports : public srt::ContribExports {
+    class Exports : public srt::ContribExports {
     public:
-        explicit S2pExports(std::string variant)
-            : ContribExports({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        Exports() : ContribExports(Contract) {
         }
 
         /// Pairs whose pronunciations this module consumes. This key is the dual of the G2P key
@@ -80,28 +36,30 @@ namespace wolf::Api::S2p::L1 {
         /// whose output is determined by the script sets this flag instead of leaving the list
         /// empty, because an empty list indicates that no phonemes were declared.
         bool openSet = false;
+
+        /// Whether every output preserves the input pronunciation units.
+        /// Implementations set this capability. Unknown or conditional behavior uses false.
+        bool preservesSymbols = false;
     };
 
-    class S2pImportOptions : public srt::ContribImportOptions {
+    class ImportOptions : public srt::ContribImportOptions {
     public:
-        explicit S2pImportOptions(std::string variant)
-            : ContribImportOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        ImportOptions() : ContribImportOptions(Contract) {
         }
     };
 
-    class S2pRuntimeOptions : public srt::InferenceRuntimeOptions {
+    class RuntimeOptions : public srt::InferenceRuntimeOptions {
     public:
-        explicit S2pRuntimeOptions(std::string variant)
-            : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {
+        RuntimeOptions() : InferenceRuntimeOptions(Contract) {
         }
 
-        /// See G2p::L1::G2pRuntimeOptions::binding: the pair bound for the whole lifetime.
+        /// See G2p::L1::RuntimeOptions::binding: the pair bound for the whole lifetime.
         Common::L1::LanguageScheme binding;
     };
 
-    class S2pInitArgs : public srt::InferenceInitArgs {
+    class InitArgs : public srt::InferenceInitArgs {
     public:
-        S2pInitArgs() : InferenceInitArgs(API_INTERFACE, API_LEVEL) {
+        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
         }
     };
 
@@ -110,9 +68,9 @@ namespace wolf::Api::S2p::L1 {
     /// A space is the reserved delimiter of the pronunciation layer. A string that contains a
     /// space is a space delimited sequence and is converted segment by segment. A string without
     /// a space is a single pronunciation unit.
-    class S2pStartInput : public srt::TaskStartInput {
+    class StartInput : public srt::TaskStartInput {
     public:
-        S2pStartInput() : TaskStartInput(API_INTERFACE, API_LEVEL) {
+        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
         }
 
         std::vector<std::string> pronunciations;
@@ -123,23 +81,23 @@ namespace wolf::Api::S2p::L1 {
     /// Level 1 has no per unit error channel. An input without any match yields an empty
     /// sequence, which is not a failure. A batch that cannot proceed fails through the Expected
     /// returned by start().
-    class S2pResult : public srt::TaskResult {
+    class Result : public srt::TaskResult {
     public:
-        S2pResult() : TaskResult(API_INTERFACE, API_LEVEL) {
+        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
         }
 
         std::vector<std::vector<std::string>> phonemes;
     };
 
-    class S2pExecutive : public srt::InferenceExecutive {
+    class Executive : public srt::InferenceExecutive {
     public:
-        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<S2pResult>> result)>;
+        using AsyncCallback = std::function<void(srt::Expected<std::unique_ptr<Result>> result)>;
 
-        virtual srt::Expected<void> initialize(const S2pInitArgs &args) = 0;
+        virtual srt::Expected<void> initialize(const InitArgs &args) = 0;
 
-        virtual srt::Expected<std::unique_ptr<S2pResult>> start(const S2pStartInput &input) = 0;
+        virtual srt::Expected<std::unique_ptr<Result>> start(const StartInput &input) = 0;
 
-        virtual srt::Expected<void> startAsync(std::shared_ptr<const S2pStartInput> input,
+        virtual srt::Expected<void> startAsync(std::shared_ptr<const StartInput> input,
                                                AsyncCallback callback) = 0;
 
     protected:

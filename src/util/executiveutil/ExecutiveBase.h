@@ -15,7 +15,7 @@ namespace wolf {
     /// holds one instance of it, forwards the typed interface of \a Base to it, and adds the stop
     /// flag that stop() sets and that the task consumes after a run has returned.
     ///
-    /// \a Base is the executive type of the contract (G2pExecutive, S2pExecutive, OnsetExecutive
+    /// \a Base is the executive type of the contract (Executive, Executive, Executive
     /// or LinguistExecutive), and a derived class supplies runBatch() and every member that its
     /// contract declares beyond the task interface, such as initialize().
     ///

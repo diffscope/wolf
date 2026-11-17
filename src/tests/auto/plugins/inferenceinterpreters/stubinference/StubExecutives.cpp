@@ -96,7 +96,7 @@ namespace wolf::stub {
         }
 
         class StubG2pExecutive
-            : public StubExecutive<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+            : public StubExecutive<G2pApi::Executive, G2pApi::StartInput, G2pApi::Result> {
         public:
             StubG2pExecutive(srt::InferenceSpec &spec, std::size_t dropWords, int holdMs)
                 : ExecutiveBase(spec), m_dropWords(dropWords), m_holdMs(holdMs) {
@@ -106,12 +106,12 @@ namespace wolf::stub {
                 finish();
             }
 
-            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+            srt::Expected<void> initialize(const G2pApi::InitArgs &) override {
                 return {};
             }
 
         protected:
-            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+            Batch runBatch(const G2pApi::StartInput &input) override {
                 // The one thing this stub waits for: the hold stands for the work of a model or a
                 // script backend, and a stop request ends it, which is how a caller can tell
                 // whether the request reached this executive at all.
@@ -121,10 +121,10 @@ namespace wolf::stub {
                        !stopRequested()) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
                 }
-                auto result = std::make_unique<G2pApi::G2pResult>();
+                auto result = std::make_unique<G2pApi::Result>();
                 result->words.reserve(input.lyrics.size());
                 for (const auto &lyric : input.lyrics) {
-                    G2pApi::G2pWordOutput word;
+                    G2pApi::WordOutput word;
                     if (lyric.empty()) {
                         word.mode = G2pApi::Mode::Skip;
                     } else {
@@ -148,18 +148,18 @@ namespace wolf::stub {
         };
 
         class StubS2pExecutive
-            : public StubExecutive<S2pApi::S2pExecutive, S2pApi::S2pStartInput, S2pApi::S2pResult> {
+            : public StubExecutive<S2pApi::Executive, S2pApi::StartInput, S2pApi::Result> {
         public:
             explicit StubS2pExecutive(srt::InferenceSpec &spec) : ExecutiveBase(spec) {
             }
 
-            srt::Expected<void> initialize(const S2pApi::S2pInitArgs &) override {
+            srt::Expected<void> initialize(const S2pApi::InitArgs &) override {
                 return {};
             }
 
         protected:
-            Batch runBatch(const S2pApi::S2pStartInput &input) override {
-                auto result = std::make_unique<S2pApi::S2pResult>();
+            Batch runBatch(const S2pApi::StartInput &input) override {
+                auto result = std::make_unique<S2pApi::Result>();
                 result->phonemes.reserve(input.pronunciations.size());
                 for (const auto &pronunciation : input.pronunciations) {
                     result->phonemes.push_back(splitOnSpaces(pronunciation));
@@ -169,19 +169,18 @@ namespace wolf::stub {
         };
 
         class StubOnsetExecutive
-            : public StubExecutive<OnsetApi::OnsetExecutive, OnsetApi::OnsetStartInput,
-                                   OnsetApi::OnsetResult> {
+            : public StubExecutive<OnsetApi::Executive, OnsetApi::StartInput, OnsetApi::Result> {
         public:
             explicit StubOnsetExecutive(srt::InferenceSpec &spec) : ExecutiveBase(spec) {
             }
 
-            srt::Expected<void> initialize(const OnsetApi::OnsetInitArgs &) override {
+            srt::Expected<void> initialize(const OnsetApi::InitArgs &) override {
                 return {};
             }
 
         protected:
-            Batch runBatch(const OnsetApi::OnsetStartInput &input) override {
-                auto result = std::make_unique<OnsetApi::OnsetResult>();
+            Batch runBatch(const OnsetApi::StartInput &input) override {
+                auto result = std::make_unique<OnsetApi::Result>();
                 result->onsets.reserve(input.phonemes.size());
                 for (const auto &sequence : input.phonemes) {
                     result->onsets.emplace_back(sequence.size(), false);
@@ -204,7 +203,7 @@ namespace wolf::stub {
         if (!symbols) {
             return symbols.takeError();
         }
-        auto result = std::make_unique<G2pApi::G2pExports>(m_variant);
+        auto result = std::make_unique<G2pApi::Exports>();
         result->languages = languages.take();
         result->symbols = symbols.take();
         return std::unique_ptr<srt::ContribExports>(std::move(result));
@@ -212,8 +211,8 @@ namespace wolf::stub {
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubG2pInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
-        auto result = std::make_unique<StubConfiguration>(
-            srt::ContribContractTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, m_variant));
+        auto result = std::make_unique<StubConfiguration>(srt::ContribContractTriplet(
+            G2pApi::Contract.interfaceId(), G2pApi::Contract.level(), m_variant));
         if (spec.manifestConfiguration().isObject()) {
             const auto &object = spec.manifestConfiguration().toObject();
             if (const auto it = object.find("dropWords"); it != object.end()) {
@@ -237,7 +236,7 @@ namespace wolf::stub {
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         StubG2pInterpreter::createImportOptions(const srt::ContribSpec &,
                                                 const srt::JsonValue &) const {
-        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(m_variant));
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -262,7 +261,7 @@ namespace wolf::stub {
         if (!phonemes) {
             return phonemes.takeError();
         }
-        auto result = std::make_unique<S2pApi::S2pExports>(m_variant);
+        auto result = std::make_unique<S2pApi::Exports>();
         result->languages = languages.take();
         result->phonemes = phonemes.take();
         return std::unique_ptr<srt::ContribExports>(std::move(result));
@@ -270,14 +269,14 @@ namespace wolf::stub {
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubS2pInterpreter::createConfiguration(const srt::ContribSpec &) const {
-        return std::unique_ptr<srt::ContribConfiguration>(
-            new StubConfiguration({S2pApi::API_INTERFACE, S2pApi::API_LEVEL, m_variant}));
+        return std::unique_ptr<srt::ContribConfiguration>(new StubConfiguration(
+            {S2pApi::Contract.interfaceId(), S2pApi::Contract.level(), m_variant}));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         StubS2pInterpreter::createImportOptions(const srt::ContribSpec &,
                                                 const srt::JsonValue &) const {
-        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::S2pImportOptions(m_variant));
+        return std::unique_ptr<srt::ContribImportOptions>(new S2pApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
@@ -295,22 +294,21 @@ namespace wolf::stub {
         if (!known) {
             return known.takeError();
         }
-        auto result = std::make_unique<OnsetApi::OnsetExports>(m_variant);
+        auto result = std::make_unique<OnsetApi::Exports>();
         result->knownPhonemes = known.take();
         return std::unique_ptr<srt::ContribExports>(std::move(result));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubOnsetInterpreter::createConfiguration(const srt::ContribSpec &) const {
-        return std::unique_ptr<srt::ContribConfiguration>(
-            new StubConfiguration({OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL, m_variant}));
+        return std::unique_ptr<srt::ContribConfiguration>(new StubConfiguration(
+            {OnsetApi::Contract.interfaceId(), OnsetApi::Contract.level(), m_variant}));
     }
 
     srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
         StubOnsetInterpreter::createImportOptions(const srt::ContribSpec &,
                                                   const srt::JsonValue &) const {
-        return std::unique_ptr<srt::ContribImportOptions>(
-            new OnsetApi::OnsetImportOptions(m_variant));
+        return std::unique_ptr<srt::ContribImportOptions>(new OnsetApi::ImportOptions());
     }
 
     srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
