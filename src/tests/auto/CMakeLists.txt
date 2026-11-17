@@ -23,6 +23,10 @@ wolf_add_test(util/linguistutil/test_ManifestValues.cpp synthrt-wolf linguistuti
 wolf_add_test(util/linguistutil/test_Verifier.cpp synthrt-wolf linguistutil)
 wolf_add_test(util/textutil/test_Utf8.cpp synthrt-wolf textutil)
 wolf_add_test(util/executiveutil/test_ExecutiveTask.cpp synthrt-wolf executiveutil)
+wolf_add_test(util/executiveutil/test_ExecutiveBase.cpp synthrt-wolf executiveutil)
+wolf_add_test(util/linguistutil/test_InputRules.cpp synthrt-wolf linguistutil)
+wolf_add_test(util/linguistutil/test_ContractValues.cpp synthrt-wolf linguistutil)
+wolf_add_test(util/textutil/test_Files.cpp synthrt-wolf textutil)
 wolf_add_test(Support/test_ResourceCache.cpp synthrt-wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache
@@ -31,15 +35,38 @@ if(TARGET test_ResourceCache)
 endif()
 
 wolf_add_test(Linguist/test_LinguistContrib.cpp synthrt-wolf)
-wolf_add_test(Linguist/test_LinguistIdentity.cpp synthrt-wolf)
-wolf_add_test(Linguist/test_LinguistLoad.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistContrib_Identity.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistContrib_Load.cpp synthrt-wolf)
 wolf_add_test(Linguist/test_LinguistProvider.cpp synthrt-wolf)
 
-wolf_add_test(Runtime/test_LinguistRuntime.cpp synthrt-wolf)
-wolf_add_test(Runtime/test_LinguistSession.cpp synthrt-wolf)
+wolf_add_test(Linguist/test_LinguistContrib_Runtime.cpp synthrt-wolf)
+wolf_add_test(Session/test_LinguistSession.cpp synthrt-wolf)
 
-wolf_add_test(EndToEnd/test_ConvertedPackages.cpp synthrt-wolf)
-wolf_add_test(EndToEnd/test_HostFlow.cpp synthrt-wolf)
+wolf_add_test(Session/test_LinguistSession_ConvertedPackages.cpp synthrt-wolf)
+wolf_add_test(Session/test_LinguistSession_HostFlow.cpp synthrt-wolf)
+
+wolf_add_test(Core/test_ContribInterpreterPlugin_Wolf.cpp synthrt-wolf)
+if(TARGET test_ContribInterpreterPlugin_Wolf)
+    # The dynamically loaded multig2p plugin resolves dsinfer beside its host on Windows.
+    if(WIN32 AND WOLF_HAS_DSINFER)
+        add_custom_command(TARGET test_ContribInterpreterPlugin_Wolf POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:synthrt::dsinfer>"
+                "$<TARGET_FILE_DIR:test_ContribInterpreterPlugin_Wolf>"
+            VERBATIM
+        )
+    endif()
+    foreach(_plugin IN ITEMS wolfs2p wolfonset wolfpinyin wolfchain wolflua wolfmultig2p wolflinguistprovider)
+        if(TARGET ${_plugin})
+            string(TOUPPER "${_plugin}" _upper)
+            add_dependencies(test_ContribInterpreterPlugin_Wolf ${_plugin})
+            target_compile_definitions(test_ContribInterpreterPlugin_Wolf PRIVATE
+                WOLF_TEST_${_upper}_FILE="$<TARGET_FILE:${_plugin}>"
+                WOLF_TEST_${_upper}_MANIFEST="$<TARGET_PROPERTY:${_plugin},SOURCE_DIR>/plugin.json"
+            )
+        endif()
+    endforeach()
+endif()
 
 # The tests load the library under test, synthrt, its stdcorelib dependencies and, if present,
 # dsinfer and ONNX Runtime at run time. Windows resolves these libraries through PATH; the ELF and
@@ -92,8 +119,8 @@ endif()
 if(WOLF_TEST_FIXTURES_SOURCE)
     list(APPEND _wolf_data_env "WOLF_TEST_FIXTURES_SOURCE=${WOLF_TEST_FIXTURES_SOURCE}")
 endif()
-foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_LinguistIdentity
-                       test_LinguistLoad test_LinguistRuntime test_LinguistSession)
+foreach(_test IN ITEMS test_LinguistSession_ConvertedPackages test_LinguistSession_HostFlow test_LinguistContrib_Identity
+                       test_LinguistContrib_Load test_LinguistContrib_Runtime test_LinguistSession)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES SKIP_RETURN_CODE 77)
         if(_wolf_data_env)
@@ -105,7 +132,7 @@ endforeach()
 # Tests that run executives on worker threads, or intentionally stop a stage that does not return
 # by itself, have a timeout: if an interrupt or a wait stops working, the test must fail instead of
 # hanging the build.
-foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
+foreach(_test IN ITEMS test_LinguistContrib_Runtime test_LinguistSession)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES TIMEOUT 120)
     endif()
@@ -127,24 +154,24 @@ if(TARGET test_LinguistProvider)
     )
 endif()
 
-if(TARGET test_LinguistLoad)
-    target_link_libraries(test_LinguistLoad PRIVATE wolfstubinference wolfstubsinger)
-    add_dependencies(test_LinguistLoad wolflinguistprovider wolfs2p wolfchain wolfpinyin wolfonset)
+if(TARGET test_LinguistContrib_Load)
+    target_link_libraries(test_LinguistContrib_Load PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_LinguistContrib_Load wolflinguistprovider wolfs2p wolfchain wolfpinyin wolfonset)
     if(WOLF_HAS_LUAJIT)
-        add_dependencies(test_LinguistLoad wolflua)
-        target_compile_definitions(test_LinguistLoad PRIVATE WOLF_TEST_HAS_LUAJIT=1)
+        add_dependencies(test_LinguistContrib_Load wolflua)
+        target_compile_definitions(test_LinguistContrib_Load PRIVATE WOLF_TEST_HAS_LUAJIT=1)
     endif()
     if(WOLF_HAS_DSINFER)
-        add_dependencies(test_LinguistLoad wolfmultig2p)
+        add_dependencies(test_LinguistContrib_Load wolfmultig2p)
     endif()
-    target_compile_definitions(test_LinguistLoad PRIVATE
+    target_compile_definitions(test_LinguistContrib_Load PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
         WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
         WOLF_TEST_VERDICTS_FILE="${CMAKE_CURRENT_SOURCE_DIR}/loader-verdicts.json"
     )
 endif()
 
-foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
+foreach(_test IN ITEMS test_LinguistContrib_Runtime test_LinguistSession)
     if(TARGET ${_test})
         target_link_libraries(${_test} PRIVATE wolfstubinference wolfstubsinger)
         add_dependencies(${_test} wolflinguistprovider wolfs2p)
@@ -155,10 +182,10 @@ foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
     endif()
 endforeach()
 
-if(TARGET test_ConvertedPackages)
-    target_link_libraries(test_ConvertedPackages PRIVATE wolfstubinference wolfstubsinger)
-    add_dependencies(test_ConvertedPackages wolflinguistprovider wolfs2p)
-    target_compile_definitions(test_ConvertedPackages PRIVATE
+if(TARGET test_LinguistSession_ConvertedPackages)
+    target_link_libraries(test_LinguistSession_ConvertedPackages PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_LinguistSession_ConvertedPackages wolflinguistprovider wolfs2p)
+    target_compile_definitions(test_LinguistSession_ConvertedPackages PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
         WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
     )
@@ -167,11 +194,12 @@ endif()
 
 # Walks the domain as a host does, over the converted packages and the voicebank-shaped fixture
 # that completes them. Both are generated rather than committed.
-if(TARGET test_HostFlow)
-    target_link_libraries(test_HostFlow PRIVATE wolfstubinference wolfstubsinger)
-    add_dependencies(test_HostFlow wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfonset)
-    target_compile_definitions(test_HostFlow PRIVATE
+if(TARGET test_LinguistSession_HostFlow)
+    target_link_libraries(test_LinguistSession_HostFlow PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_LinguistSession_HostFlow wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfonset)
+    target_compile_definitions(test_LinguistSession_HostFlow PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
         WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
     )
 endif()
+add_subdirectory(Api)

@@ -1,4 +1,4 @@
-# The tests of single plugins, one directory per plugin. A test covers one class of the plugin and
+# The tests of single plugins, one directory per plugin. A test covers one header of the plugin and
 # links the objects of the plugin, <target>_objects, as the test of a class of a library links the
 # library.
 #
@@ -103,6 +103,8 @@ if(TARGET wolfmultig2p)
     # The bundle formats of the shared model, whose malformed shapes a package with a working model
     # never shows.
     add_auto_test(inferenceinterpreters/multig2p/test_Bundle.cpp wolfmultig2p_objects)
+    add_auto_test(inferenceinterpreters/multig2p/test_Decoder.cpp wolfmultig2p_objects)
+    list(APPEND _wolf_plugin_tests test_Decoder)
     list(APPEND _wolf_plugin_tests test_Bundle)
 endif()
 
@@ -110,6 +112,28 @@ endif()
 # together with the data variables, the skip status and the timeouts that the parent directory
 # describes. The properties are set here because set_tests_properties() reaches only the tests of
 # the directory that adds them.
+foreach(_helper IN ITEMS inferenceinterpreters/s2p/test_S2pTables.cpp:wolfs2p inferenceinterpreters/onset/test_OnsetRules.cpp:wolfonset inferenceinterpreters/pinyin/test_PinyinEngines.cpp:wolfpinyin inferenceinterpreters/lua/test_LuaSandbox.cpp:wolflua)
+    string(REPLACE ":" ";" _helper "${_helper}")
+    list(GET _helper 0 _source)
+    list(GET _helper 1 _plugin)
+    if(TARGET ${_plugin}_objects)
+        add_auto_test(${_source} ${_plugin}_objects)
+        get_filename_component(_name ${_source} NAME_WE)
+        list(APPEND _wolf_plugin_tests ${_name})
+    endif()
+endforeach()
+
+foreach(_part IN ITEMS WolfLinguistProvider LinguistExecutiveImpl WolfPipelineExecutive)
+    wolf_add_plugin_test(linguistproviders/wolflinguist/test_${_part}.cpp wolflinguistprovider wolfstubinference wolfstubsinger executiveutil)
+    if(TARGET test_${_part})
+        add_dependencies(test_${_part} wolfchain wolfs2p)
+        target_compile_definitions(test_${_part} PRIVATE
+            WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
+        )
+        set_tests_properties(test_${_part} PROPERTIES ENVIRONMENT "${_wolf_data_env}" SKIP_RETURN_CODE 77 TIMEOUT 30)
+    endif()
+endforeach()
+
 foreach(_test IN LISTS _wolf_plugin_tests)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES ENVIRONMENT_MODIFICATION "${_wolf_test_env}")

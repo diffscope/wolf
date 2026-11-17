@@ -24,8 +24,7 @@ namespace LinguistApi = wolf::Api::Linguist::L1;
 namespace {
 
     void configure(srt::SynthUnit &unit) {
-        wolf::test::configure(unit,
-                              {wolf::test::fixtureRoot()});
+        wolf::test::configure(unit, {wolf::test::fixtureRoot()});
     }
 
     /// Loads the passthrough singer and returns its package handle. The handle must outlive every
@@ -335,8 +334,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_RefreshesUnderAConversion) {
     while (converted.load() == 0 && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::yield();
     }
-    BOOST_CHECK_MESSAGE(converted.load() > 0,
-                        "the worker converted nothing before the refreshes");
+    BOOST_CHECK_MESSAGE(converted.load() > 0, "the worker converted nothing before the refreshes");
 
     for (int i = 0; i < 200; ++i) {
         session.refresh();
@@ -397,8 +395,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReleasesUnderAConversion) {
     while (converted.load() == 0 && std::chrono::steady_clock::now() < deadline) {
         std::this_thread::yield();
     }
-    BOOST_CHECK_MESSAGE(converted.load() > 0,
-                        "the worker converted nothing before the releases");
+    BOOST_CHECK_MESSAGE(converted.load() > 0, "the worker converted nothing before the releases");
 
     for (int i = 0; i < 200; ++i) {
         session.release(singer);
@@ -792,10 +789,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheDeclaredShapeOfAnUnroutableL
     // condition it needs (a phoneme the language does not declare) instead of assuming one.
     const auto *entry = session.catalog()->find(singer);
     BOOST_REQUIRE(entry != nullptr);
-    const auto declared = std::find_if(entry->languages.begin(), entry->languages.end(),
-                                       [](const wolf::LanguageEntry &item) {
-                                           return item.handle == "cmn";
-                                       });
+    const auto declared =
+        std::find_if(entry->languages.begin(), entry->languages.end(),
+                     [](const wolf::LanguageEntry &item) { return item.handle == "cmn"; });
     BOOST_REQUIRE(declared != entry->languages.end());
     BOOST_REQUIRE(!declared->phonemes.empty());
     std::string unsingable = "none";

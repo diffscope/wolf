@@ -271,12 +271,12 @@ namespace {
 
 BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
-BOOST_AUTO_TEST_SUITE(test_HostFlow)
+BOOST_AUTO_TEST_SUITE(test_LinguistSession_HostFlow)
 
 /// Checks the languages declared by the voicebank before any conversion. A host reads this
 /// declaration to determine which languages it may offer, and the declaration must be readable
 /// without loading a model.
-BOOST_AUTO_TEST_CASE(test_HostFlow_DeclaresItsLanguages) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_DeclaresItsLanguages) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_DeclaresItsLanguages) {
 
 /// Runs the complete path against the real resources in the order used by a host: pronunciation
 /// first, phonemes second, on a mixed-language line that contains project markers.
-BOOST_AUTO_TEST_CASE(test_HostFlow_ConvertsALineInTwoStages) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_ConvertsALineInTwoStages) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_ConvertsALineInTwoStages) {
 
 /// Checks the reason for separating the two stages: between the stages the user may rewrite a
 /// reading, and the phoneme layer must follow the edited reading rather than the dictionary.
-BOOST_AUTO_TEST_CASE(test_HostFlow_FollowsAnEditedPronunciation) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_FollowsAnEditedPronunciation) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_FollowsAnEditedPronunciation) {
 /// the voicebank; otherwise an ordinary word converts to a reading and then to no phonemes. The
 /// sample covers the retroflex initials, the compound finals and the ü finals, which are the
 /// syllables most prone to split-rule errors.
-BOOST_AUTO_TEST_CASE(test_HostFlow_CoversTheSyllablesTheG2pProduces) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_CoversTheSyllablesTheG2pProduces) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_CoversTheSyllablesTheG2pProduces) {
 /// A word with trailing syllable markers is an ordinary word with project notation. The markers
 /// are removed before the word is sent, so the word still converts, whereas a note that consists
 /// only of markers is never sent to a language.
-BOOST_AUTO_TEST_CASE(test_HostFlow_StripsProjectNotationFromOrdinaryWords) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_StripsProjectNotationFromOrdinaryWords) {
     srt::SynthUnit unit;
     configure(unit);
 
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(test_HostFlow_StripsProjectNotationFromOrdinaryWords) {
 ///
 /// The remaining responsibilities belong to a host: the slur and the syllable markers, which are
 /// part of the lite project model and have no meaning in any language.
-BOOST_AUTO_TEST_CASE(test_HostFlow_TheSameLineThroughTheSession) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession) {
     srt::SynthUnit unit;
     configure(unit);
     auto package = unit.openPackage(voicebankRoot() / "wolf-voicebank-zh", srt::SynthUnit::Load);

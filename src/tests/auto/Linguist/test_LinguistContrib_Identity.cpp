@@ -33,17 +33,18 @@ namespace {
         }
     }
 
-    /// Opens the package at \a path in DataOnly mode. DataOnly stops after manifest construction and
-    /// therefore exercises the parsing of the category without requiring any interpreter plugin.
+    /// Opens the package at \a path in DataOnly mode. DataOnly stops after manifest construction
+    /// and therefore exercises the parsing of the category without requiring any interpreter
+    /// plugin.
     srt::Expected<srt::PackageHandle> openData(srt::SynthUnit &unit, const fs::path &path) {
         return unit.openPackage(path, srt::SynthUnit::DataOnly);
     }
 
 }
 
-BOOST_AUTO_TEST_SUITE(test_LinguistIdentity)
+BOOST_AUTO_TEST_SUITE(test_LinguistContrib_Identity)
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsLanguageAndScheme) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsLanguageAndScheme) {
     srt::SynthUnit unit;
     auto handle = openData(unit, packagePath("wolf-lang-zxx"));
     requireOpened(handle, "wolf/lang-zxx");
@@ -63,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsLanguageAndScheme) {
     BOOST_CHECK(spec->exports() == nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_AllowsManySchemesPerLanguage) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_AllowsManySchemesPerLanguage) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("multi-scheme"));
     requireOpened(handle, "multi-scheme");
@@ -84,7 +85,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_AllowsManySchemesPerLanguage) {
                       "bopomofo");
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_RejectsMalformedIdentity) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_RejectsMalformedIdentity) {
     // Each fixture is a package whose only defect is the one named by its directory. The expected
     // substring pins the rejection reason, so that a fixture rejected for an unrelated reason does
     // not count as a pass.
@@ -120,7 +121,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_RejectsMalformedIdentity) {
 ///
 /// No validation is lost. A misspelt *required* field still fails because the correctly spelt
 /// field is then missing; the identity cases above cover that failure.
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_IgnoresUnknownDeclarationField) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_IgnoresUnknownDeclarationField) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("unknown-field"));
     requireOpened(handle, "unknown-field");
@@ -134,7 +135,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_IgnoresUnknownDeclarationField) {
     BOOST_CHECK_EQUAL(linguist->scheme(), "pinyin");
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsSingerLanguageMap) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsSingerLanguageMap) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("singer-ok"));
     requireOpened(handle, "singer-ok");
@@ -155,7 +156,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsSingerLanguageMap) {
     BOOST_CHECK_EQUAL(languages->entries[1].role, "lang/b");
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_AcceptsSingerWithoutLanguages) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_AcceptsSingerWithoutLanguages) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("singer-none"));
     requireOpened(handle, "singer-none");
@@ -169,15 +170,15 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_AcceptsSingerWithoutLanguages) {
 // The shape of the map belongs to the singer category, so synthrt rejects a malformed map when the
 // package opens, before wolf reads the map. These cases verify that the fixtures used by the wolf
 // tests are rejected for the reason that each fixture was written to trigger.
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_MalformedSingerLanguageMapDoesNotOpen) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_MalformedSingerLanguageMapDoesNotOpen) {
     const struct {
         const char *fixture;
         const char *reason;
     } cases[] = {
-        {"singer-no-default",  "defaultLanguage"                   },
+        {"singer-no-default",  "defaultLanguage"                    },
         {"singer-bad-role",    "refers to a nonexistent import role"},
-        {"singer-bad-default", "is not a key of languages"         },
-        {"singer-bad-shape",   "must map"                          },
+        {"singer-bad-default", "is not a key of languages"          },
+        {"singer-bad-shape",   "must map"                           },
     };
     for (const auto &entry : cases) {
         srt::SynthUnit unit;
@@ -190,7 +191,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_MalformedSingerLanguageMapDoesNotOpen
     }
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_LanguageMapIsRefusedOnOtherCategories) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_LanguageMapIsRefusedOnOtherCategories) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("unknown-field"));
     requireOpened(handle, "unknown-field");
@@ -200,7 +201,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_LanguageMapIsRefusedOnOtherCategories
     BOOST_CHECK(!languages);
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsDefaultLyric) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsDefaultLyric) {
     srt::SynthUnit unit;
     auto handle = openData(unit, packagePath("wolf-lang-zxx"));
     requireOpened(handle, "wolf/lang-zxx");
@@ -215,7 +216,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistIdentity_ReadsDefaultLyric) {
     BOOST_CHECK_EQUAL(linguist->defaultLyric(), "la");
 }
 
-BOOST_AUTO_TEST_CASE(test_LinguistIdentity_IgnoresMalformedDefaultLyric) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_IgnoresMalformedDefaultLyric) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("lang-chain"));
     requireOpened(handle, "lang-chain");

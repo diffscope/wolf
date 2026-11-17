@@ -45,12 +45,12 @@ namespace {
 
 }
 
-BOOST_AUTO_TEST_SUITE(test_LinguistLoad)
+BOOST_AUTO_TEST_SUITE(test_LinguistContrib_Load)
 
 /// Loading wolf/lang-zxx end to end verifies that the contract family belongs to the built-in
 /// inference category of synthrt: the loader must discover the stub plugin through the IID and the
 /// search path of that category, select all three triples, and return the results as typed exports.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_LoadsPassthroughPackage) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_LoadsPassthroughPackage) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_LoadsPassthroughPackage) {
 
 /// The pair check prevents a chain from being assembled from members that disagree on the notation.
 /// Matching on contribution IDs, as in the earlier design, could not detect this mismatch.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_RejectsMismatchedLanguagePair) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RejectsMismatchedLanguagePair) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_RejectsMismatchedLanguagePair) {
 
 /// Declaring no pairs forgoes the static match instead of failing. Omission is the only accurate
 /// declaration for a variant whose output set is open or produced by a script.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_AcceptsOmittedLanguages) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_AcceptsOmittedLanguages) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_AcceptsOmittedLanguages) {
 
 /// The flag defaults to false, so every declaration written before the flag existed retains its
 /// meaning: the phoneme list is complete.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_OpenSetDefaultsToClosed) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_OpenSetDefaultsToClosed) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_OpenSetDefaultsToClosed) {
 /// The contract publishes a schema for exports, and the loader rejects every key that the schema
 /// rejects. A key that the contract does not define is a misspelling, and a declaration with a
 /// misspelt field states less than its author intended.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesAnUnknownExportsKey) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAnUnknownExportsKey) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesAnUnknownExportsKey) {
 
 /// Level 1 defines no import options, so a non-empty options object is rejected rather than
 /// ignored, because the author intended its content to take effect.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesImportOptionsTheContractDoesNotDefine) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesImportOptionsTheContractDoesNotDefine) {
     srt::SynthUnit unit;
     configurePlugins(unit);
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesImportOptionsTheContractDoesNotDef
 ///
 /// The case deliberately uses contribution-free fixtures because the subject is version
 /// resolution, and the real language packages are not present in every build.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_ServesAConsumerPinnedToAnOlderRevision) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_ServesAConsumerPinnedToAnOlderRevision) {
     srt::SynthUnit unit;
     configurePlugins(unit);
     std::vector<fs::path> packages = {wolf::test::fixtureRoot()};
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_ServesAConsumerPinnedToAnOlderRevision) {
 
 /// Checks the converse case, so that the case above cannot pass because the loader ignores the
 /// requested version.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesAConsumerPinnedAboveWhatIsInstalled) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAConsumerPinnedAboveWhatIsInstalled) {
     srt::SynthUnit unit;
     configurePlugins(unit);
     std::vector<fs::path> packages = {wolf::test::fixtureRoot()};
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_RefusesAConsumerPinnedAboveWhatIsInstalle
 /// loader rejects, except the packages listed with a reason. Checking the file against the loader
 /// keeps that comparison valid, because a verdict that diverged from the loader would render the
 /// lint test meaningless.
-BOOST_AUTO_TEST_CASE(test_LinguistLoad_VerdictsMatchTheRecord) {
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_VerdictsMatchTheRecord) {
     // The record is tracked next to the sources rather than shipped with the generated packages.
     const auto recordPath = std::filesystem::path(WOLF_TEST_VERDICTS_FILE);
     std::ifstream file(recordPath);
@@ -262,8 +262,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistLoad_VerdictsMatchTheRecord) {
         }
 #endif
         srt::SynthUnit unit;
-        wolf::test::configure(unit,
-                              {wolf::test::fixtureRoot()});
+        wolf::test::configure(unit, {wolf::test::fixtureRoot()});
         auto handle = unit.openPackage(fixturePath(name.c_str()), srt::SynthUnit::Load);
         if (expectation.loads) {
             BOOST_CHECK_MESSAGE(handle, name + " should load: " + wolf::test::why(handle));

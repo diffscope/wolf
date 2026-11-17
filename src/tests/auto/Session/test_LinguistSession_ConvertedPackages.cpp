@@ -37,14 +37,14 @@ namespace {
 
 BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
-BOOST_AUTO_TEST_SUITE(test_ConvertedPackages)
+BOOST_AUTO_TEST_SUITE(test_LinguistSession_ConvertedPackages)
 
 /// Loads every converted package with the real loader.
 ///
 /// This test is the gate before publication: a package that the loader rejects indicates a
 /// conversion defect, and only the loader can detect such a defect. Cross-package dependencies are
 /// also covered because the chain packages import the shared backend.
-BOOST_AUTO_TEST_CASE(test_ConvertedPackages_AllLoad) {
+BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertedPackages_AllLoad) {
     const auto root = convertedRoot();
 
     std::vector<fs::path> searchPaths = {root, wolf::test::fixtureRoot()};
