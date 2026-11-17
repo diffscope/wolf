@@ -23,7 +23,7 @@ S2P_INTERFACE = "org.openvpi.wolf.inference.S2P"
 ONSET_INTERFACE = "org.openvpi.wolf.inference.Onset"
 
 # The interface that the target of each role must implement. Mirrors validateLinguistRole() in
-# src/plugins/linguistproviders/wolf/WolfLinguistProvider.cpp.
+# src/plugins/linguistproviders/wolflinguist/WolfLinguistProvider.cpp.
 ROLE_INTERFACES = {
     ROLE_G2P: G2P_INTERFACE,
     ROLE_S2P: S2P_INTERFACE,

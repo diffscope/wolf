@@ -261,7 +261,7 @@ def read_table(path: Path, unit) -> str:
 
     The file is read as bytes and never decoded, because the loader compares its columns as bytes
     too; a table that is not valid UTF-8 therefore takes this same path (see stripLineDecorations()
-    in src/lib/Support/Files.cpp, which removes a byte order mark from the first line and one
+    in src/util/textutil/src/Files.cpp, which removes a byte order mark from the first line and one
     carriage return from every line, and never decodes). A row is usable in the shape
     DictionaryTable::load() and MappingTable::load() accept: exactly two columns separated by one
     tab, neither column empty. A file that cannot be read, or that holds no usable row at all, says
@@ -312,8 +312,9 @@ class IdentityGrammar:
     """Holds the grammars of language handles and scheme names, read from the published schema.
 
     docs/schemas/language-scheme.schema.json specifies both grammars, and the loader implements the
-    same grammars in isLanguageHandle() and isSchemeName() (src/lib/Support/ManifestValues.cpp).
-    Reading the patterns from the schema avoids a separate copy in this script that could diverge.
+    same grammars in isLanguageHandle() and isSchemeName()
+    (src/util/linguistutil/src/ManifestValues.cpp). Reading the patterns from the schema avoids a
+    separate copy in this script that could diverge.
     """
 
     def __init__(self, schemas):
@@ -575,8 +576,8 @@ def lint_package(directory: Path, warnings: list) -> None:
             path = inference_paths.get(entry_id)
             if path is not None and isinstance(file, str) and file:
                 # The loader rewrites a backslash into a separator before it opens the file
-                # (pathFromManifest in src/lib/Support/ManifestValues.cpp), so a declared path
-                # that uses one names the same file on both platforms.
+                # (pathFromManifest in src/util/linguistutil/src/ManifestValues.cpp), so a declared
+                # path that uses one names the same file on both platforms.
                 table = read_table(path.parent / file.replace("\\", "/"), units_bytes)
                 if table == IDENTITY:
                     warnings.append(
