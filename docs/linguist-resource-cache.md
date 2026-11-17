@@ -13,7 +13,7 @@
 > `Session/Session.cpp:523-660`）。因此本文的适用范围是**解析产物**，不含模型权重；模型权重由
 > 驱动层自行去重，与 §1「明确不缓存的对象」划定的边界一致。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)。
 本文属于 wolf 的实现文档，不是对外契约。
 
 **透明性要求**：缓存不改变 `exports`、`configuration` 与运行时 IO 的任何可观察行为。缓存内容、

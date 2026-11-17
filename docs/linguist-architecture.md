@@ -7,7 +7,7 @@
 
 冲突时按下列顺序裁决，**上位者恒胜**：
 
-1. **[DiffSinger 数据格式与推理接口规范 2.4](ds-spec-2.4.md)**——上位规范；
+1. **[DiffSinger 数据格式与推理接口规范 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)**——上位规范；
 2. **synthrt / dsinfer 实际代码**——框架能力的唯一事实来源。规范未描述而代码提供的能力，
    使用前必须在本文显式登记（见《依赖的框架超集》）；
 3. **本文**——分层与跨层决策；
@@ -20,7 +20,7 @@
 
 | 树 | 基准 | 引用写法 |
 | :-- | :-- | :-- |
-| spec 2.4 | 本仓 `docs/ds-spec-2.4.md` | `spec 2.4:<行号>` |
+| spec 2.4 | SynthRT 仓库的 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md) | `spec 2.4 §<章节名>` |
 | synthrt / dsinfer | synthrt 的 main 分支 | `synthrt/lib/Core/PackageLoader.cpp:38-56` |
 | wolf | wolf 的 `linguistic-level-1-v2` 分支 | `src/lib/Linguist/LinguistContrib.cpp:172-173`（类别注册） |
 | stdcorelib | vcpkg 端口，随版本变化 | 只记录文件与结论，不作固定锚点 |

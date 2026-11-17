@@ -3,7 +3,7 @@
 本文规定**运行时装配层（L4）**与**宿主接入层（L5）**：pipeline extension 的挂载与取用、执行体
 监督树、任务与并发模型、失败与降级语义、诊断通道，以及宿主的解析次序与呈现策略。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
 声明形态与加载期裁决见 [linguist-domain-contract.md](linguist-domain-contract.md)；
 逐调用 IO 词汇见 [linguist-inference-contract.md](linguist-inference-contract.md)。
 

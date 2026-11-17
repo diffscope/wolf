@@ -3,7 +3,7 @@
 本文规定**语言域身份层（L1）**与**语言组合契约层（L2）**：`linguist` 贡献类别、语言身份、
 `WolfLinguist` Level 1 契约，以及歌手侧的语言映射。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)，分层与跨层不变量见
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)，分层与跨层不变量见
 [linguist-architecture.md](linguist-architecture.md)，冲突时按索引所定的可信源顺序裁决。
 链推理契约（G2P / S2P / Onset）见 [linguist-inference-contract.md](linguist-inference-contract.md)；
 运行时与宿主接入见 [linguist-runtime.md](linguist-runtime.md)；`configuration` 键汇与资源格式
@@ -253,7 +253,7 @@ object 且不含上表以外的键；`phonemes` 必须存在；写为路径时�
 
 - 各 stage 的「模型音素表」以推理模块 `onnx` 变体 `configuration.phonemes` 所指的
   「音素名 ↔ ID 表」文件为准；该 `onnx` 变体是规范 2.4 为 Inference 契约定义的变体
-  （`docs/ds-spec-2.4.md:562`），该字段由声库侧的模型模块提供，不属本仓；
+  （见 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)），该字段由声库侧的模型模块提供，不属本仓；
 - 校验方向为 **`phonemes` ⊆（各 stage 模型音素表的交集）**，即语言产出的每个音素都
   必须能被声库所用的各 stage 编码；
 - 该裁决**属于编辑器运行期职责，加载事务不执行**；

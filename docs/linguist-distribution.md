@@ -2,7 +2,7 @@
 
 本文规定公共语言包的**形态、身份、版本模型与发布渠道**，以及 wolf 的 **vcpkg 端口拓扑**。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)。
 本文属 wolf 实现文档，不构成对外契约。
 
 ---

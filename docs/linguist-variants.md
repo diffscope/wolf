@@ -5,7 +5,7 @@
 [linguist-inference-contract.md](linguist-inference-contract.md)）只规定
 「`configuration` 由 `variant` 全权规定」，具体内容由本文规定。
 
-本文属 **wolf 实现文档**，不是对外契约。上位规范为 [spec 2.4](ds-spec-2.4.md)；
+本文属 **wolf 实现文档**，不是对外契约。上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；
 分层见 [linguist-architecture.md](linguist-architecture.md)；决策见
 [linguist-decisions.md](linguist-decisions.md)。
 

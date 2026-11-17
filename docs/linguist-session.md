@@ -3,7 +3,7 @@
 本文规定**宿主直接持有的会话对象**。会话位于层栈最上层，把执行体树、就绪状态、并发与保留词收进
 语言域内部，宿主只需提供三项输入：歌手、语言与待转换的词。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
 决策见 [linguist-decisions.md](linguist-decisions.md)。本文属 **wolf 实现文档**，不是对外契约。
 
 > **口径**：本文描述**目标形态**，该形态已全部实现（§9）。实现状态见 [Status.md](Status.md)；

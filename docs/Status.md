@@ -181,7 +181,7 @@ overlay 的 `synthrt-main`，从不引用共享 overlay 的 `synthrt`，该端�
 ## 外部基线
 
 - synthrt：`synthrt-main` 端口固定 synthrt 的 `onnxruntime-builds-uptake` 分支（基于 synthrt main）；
-  spec 2.4 的文本以本仓 `docs/ds-spec-2.4.md` 为准；转换源为 synthrt `refactor` 分支上由
+  spec 2.4 的文本以 SynthRT 仓库的 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md) 为准；转换源为 synthrt `refactor` 分支上由
   `convert-g2p-packages.py` 中固定的 `SOURCE_REF` 所指的提交。
 - 随附插件：`linguistproviders/wolf`，推理解释器 `chain` / `pinyin` / `s2p` / `onset`，条件构建的
   `multig2p`（需要 dsinfer）与 `lua`（需要 LuaJIT），以及仅在测试构建中存在的桩。

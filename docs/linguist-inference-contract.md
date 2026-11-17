@@ -3,7 +3,7 @@
 本文规定语言链上三份推理契约的 Level 1：**G2P**（歌词 → 发音）、**S2P**（发音 → 音素序列）、
 **Onset**（音素 → onset 标记）。
 
-上位规范为 [spec 2.4](ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；
 组合规则与语言身份见 [linguist-domain-contract.md](linguist-domain-contract.md)；
 执行体树、任务与并发见 [linguist-runtime.md](linguist-runtime.md)；
 `configuration` 键汇与资源格式见 [linguist-variants.md](linguist-variants.md)。
