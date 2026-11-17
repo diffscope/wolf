@@ -41,7 +41,7 @@ namespace wolf {
     /// A singer without declared languages is not an error and yields an empty result. wolf
     /// verifies whether a role resolves to a linguist contribution and whether that contribution
     /// declares the same language. The import validator of the wolf linguist provider
-    /// (src/plugins/linguistproviders/wolf) checks both conditions before Commit.
+    /// (src/plugins/linguistproviders/wolflinguist) checks both conditions before Commit.
     ///
     /// \pre \a singer belongs to the \c singer category. Any other category is rejected.
     WOLF_EXPORT srt::Expected<SingerLanguages> readSingerLanguages(const srt::ContribSpec &singer);

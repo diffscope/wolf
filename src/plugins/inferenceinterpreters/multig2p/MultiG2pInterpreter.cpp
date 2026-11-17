@@ -1,0 +1,386 @@
+#include "MultiG2pInterpreter.h"
+
+#include <atomic>
+#include <limits>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <dsinfer/Inference/InferenceDriver.h>
+#include <dsinfer/Inference/InferenceDriverPlugin.h>
+
+#include <synthrt/Core/PackageHandle.h>
+#include <synthrt/Core/SynthUnit.h>
+#include <synthrt/SVS/InferenceInterpreter.h>
+
+#include <stdcorelib/path.h>
+
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
+#include <wolf/Support/ResourceCache.h>
+
+#include <executiveutil/ExecutiveBase.h>
+#include <linguistutil/ContractValues.h>
+#include <linguistutil/InputRules.h>
+#include <linguistutil/ManifestValues.h>
+
+#include "Bundle.h"
+#include "Decoder.h"
+
+namespace fs = std::filesystem;
+namespace G2pApi = wolf::Api::G2p::L1;
+
+namespace wolf::multig2p {
+
+    namespace {
+
+        /// Shape of the G2P contract exports: the language pairs the module produces, its
+        /// symbols, and openSet.
+        constexpr ExportsShape G2P_EXPORTS{true, "symbols", false, true};
+
+        /// The driver backend of this variant, which is also the name of its Runtime Service.
+        constexpr char BACKEND[] = "onnx";
+
+        constexpr char BUNDLE_KIND[] = "multig2p-bundle-json@1";
+        constexpr char VOCABULARY_KIND[] = "multig2p-vocabulary-json@1";
+
+        /// One contract pair and the bundle language it selects.
+        struct MappedLanguage : LanguageMapEntry {
+            /// The language id of ref in the bundle, resolved after the bundle is read.
+            std::int64_t id = -1;
+        };
+
+        class Configuration : public srt::ContribConfiguration {
+        public:
+            Configuration()
+                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
+            }
+
+            std::shared_ptr<const Bundle> bundle;
+            std::shared_ptr<const Vocabulary> vocabulary;
+            std::vector<MappedLanguage> languageMap;
+
+            /// The directory holding the bundle and its models.
+            fs::path directory;
+
+            int maxLength = 48;
+        };
+
+        class Executive
+            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+        public:
+            Executive(srt::InferenceSpec &spec, const Configuration *configuration,
+                      std::unique_ptr<Decoder> decoder, std::string languageRef,
+                      std::int64_t languageId)
+                : ExecutiveBase(spec), m_configuration(configuration),
+                  m_decoder(std::move(decoder)), m_languageRef(std::move(languageRef)),
+                  m_languageId(languageId) {
+            }
+
+            ~Executive() {
+                finish();
+            }
+
+            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+                return {};
+            }
+
+            // See ExecutiveBase: quit() and wait() are deliberately not overridden.
+
+        protected:
+            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+                // See ExecutiveBase: a stop request on entry cancels this batch.
+                auto result = std::make_unique<G2pApi::G2pResult>();
+                result->words.resize(input.lyrics.size());
+
+                // No driver is available in this process. The contract defines a word-level error
+                // for this case, which allows a chain to fall back instead of the whole language
+                // failing to load.
+                if (!m_decoder) {
+                    for (auto &word : result->words) {
+                        word.error = G2pApi::Error::DriverUnavailable;
+                    }
+                    return result;
+                }
+                if (input.lyrics.empty()) {
+                    return result;
+                }
+
+                // The input ordering of the contract applies first, so a word that the contract
+                // settles is neither encoded nor counted against the decode budget.
+                std::vector<LyricVerdict> verdicts;
+                verdicts.reserve(input.lyrics.size());
+                std::vector<std::string> convertible;
+                std::vector<std::size_t> positions;
+                for (std::size_t i = 0; i < input.lyrics.size(); ++i) {
+                    verdicts.push_back(classifyLyric(input.lyrics[i]));
+                    if (verdicts.back() == LyricVerdict::Skip) {
+                        result->words[i].mode = G2pApi::Mode::Skip;
+                    } else if (verdicts.back() == LyricVerdict::Invalid) {
+                        result->words[i].pronunciation = input.lyrics[i];
+                        result->words[i].error = G2pApi::Error::InvalidInput;
+                    } else {
+                        convertible.push_back(input.lyrics[i]);
+                        positions.push_back(i);
+                    }
+                }
+                if (convertible.empty()) {
+                    return result;
+                }
+
+                auto decoded = m_decoder->run(convertible, m_languageRef, m_languageId,
+                                              *m_configuration->vocabulary,
+                                              m_configuration->maxLength, stopFlag());
+                if (stopRequested()) {
+                    // The decoder stopped between decode steps. A partial sequence is not a
+                    // pronunciation, so the words are returned empty and the task state records
+                    // the cancellation.
+                    return result;
+                }
+                if (!decoded) {
+                    // A batch fails as a whole: every word in the batch carries the same error,
+                    // rather than the call reporting success with silently empty output.
+                    for (const auto position : positions) {
+                        result->words[position].error = G2pApi::Error::ModelInferenceFailed;
+                    }
+                    return result;
+                }
+
+                const auto tokens = decoded.take();
+                for (std::size_t k = 0; k < positions.size(); ++k) {
+                    const auto i = positions[k];
+                    auto &word = result->words[i];
+                    std::string pronunciation;
+                    for (const auto id : tokens[k]) {
+                        if (m_configuration->vocabulary->isSpecial(id)) {
+                            continue;
+                        }
+                        auto symbol = m_configuration->vocabulary->phonemeAt(id);
+                        if (symbol.empty()) {
+                            continue;
+                        }
+                        if (!pronunciation.empty()) {
+                            pronunciation += ' ';
+                        }
+                        pronunciation += symbol;
+                    }
+                    if (pronunciation.empty()) {
+                        word.error = G2pApi::Error::PhonemeGenerationFailed;
+                        continue;
+                    }
+                    word.pronunciation = pronunciation;
+                    word.candidates.push_back(pronunciation);
+                    word.hitSource = G2pApi::HitSource::Model;
+                }
+                return result;
+            }
+
+        private:
+            const Configuration *m_configuration;
+            std::unique_ptr<Decoder> m_decoder;
+            std::string m_languageRef;
+            std::int64_t m_languageId;
+        };
+
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribExports>>
+        MultiG2pInterpreter::createExports(const srt::ContribSpec &spec) const {
+        auto read = readContractExports(spec, G2P_EXPORTS, "exports");
+        if (!read) {
+            return read.takeError();
+        }
+        auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
+        result->languages = std::move(read->languages);
+        result->symbols = std::move(read->strings);
+        result->openSet = read->openSet;
+        return std::unique_ptr<srt::ContribExports>(std::move(result));
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
+        MultiG2pInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
+        const auto &value = spec.manifestConfiguration();
+        if (!value.isObject()) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the multig2p configuration must be an object");
+        }
+        auto result = std::make_unique<Configuration>();
+        std::vector<LanguageMapEntry> mapped;
+        for (const auto &[key, item] : value.toObject()) {
+            if (key == "languageMap") {
+                auto languageMap = readLanguageMap(item);
+                if (!languageMap) {
+                    return languageMap.takeError();
+                }
+                mapped = languageMap.take();
+            } else if (key == "maxLen") {
+                // The decoder counts steps with an `int` (`Decoder.cpp`:287), so a value
+                // that does not fit one is rejected instead of being narrowed: it would
+                // become zero or negative, the loop would not run at all, and every word
+                // would come back as its first token alone.
+                const auto length = item.isInt() ? item.toInt() : 0;
+                if (length < 1 || length > std::numeric_limits<int>::max()) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "maxLen must be a positive integer that fits an int");
+                }
+                result->maxLength = static_cast<int>(length);
+            } else if (key == "beamSize" || key == "topK") {
+                // Both keys widen the search, which only beam decoding performs. This
+                // build decodes greedily, so accepting a wider setting and silently
+                // ignoring it would misreport the behavior of the module.
+                if (!item.isInt() || item.toInt() < 1) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      key + " must be a positive integer");
+                }
+                if (item.toInt() != 1) {
+                    return srt::Error(srt::Error::FeatureNotSupported,
+                                      key + " above 1 requires beam search, which this "
+                                            "build does not implement");
+                }
+            } else if (key == "lengthPenalty") {
+                if (!item.isDouble() && !item.isInt()) {
+                    return srt::Error(srt::Error::InvalidFormat, "lengthPenalty must be a number");
+                }
+                if (item.toDouble() != 0.0) {
+                    return srt::Error(srt::Error::FeatureNotSupported,
+                                      "lengthPenalty only affects beam search, which this "
+                                      "build does not implement");
+                }
+            } else {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "unknown multig2p configuration key: " + key);
+            }
+        }
+        if (mapped.empty()) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the multig2p configuration needs a languageMap");
+        }
+        if (auto reconciled = reconcileLanguageMap(spec, mapped); !reconciled) {
+            return reconciled.takeError();
+        }
+        for (auto &entry : mapped) {
+            MappedLanguage language;
+            static_cast<LanguageMapEntry &>(language) = std::move(entry);
+            result->languageMap.push_back(std::move(language));
+        }
+
+        // The bundle is located beside the declaration, so no key refers to it: each
+        // declaration has exactly one bundle, and a path key would only restate that
+        // location.
+        result->directory = spec.declarationPath().parent_path();
+        auto &cache = ResourceCache::instance();
+        auto bundle = cache.acquire<Bundle>(
+            result->directory / "bundle.json", BUNDLE_KIND, VARIANT,
+            std::function([](const fs::path &path) -> srt::Expected<std::shared_ptr<const Bundle>> {
+                auto parsed = Bundle::load(path);
+                if (!parsed) {
+                    return parsed.takeError();
+                }
+                return std::make_shared<const Bundle>(parsed.take());
+            }));
+        if (!bundle) {
+            return bundle.takeError();
+        }
+        result->bundle = bundle.take();
+
+        // The models are checked here, where the bundle is read, rather than when an
+        // executive opens them: a package whose models are missing is rejected by the load
+        // itself (spec 2.4:444), instead of loading and then failing word by word for
+        // every language that the bundle serves. The check reads and creates nothing, so
+        // it leaves no state for a rollback to undo (spec 2.4:446). Only the files are
+        // resolved: a session is a run-time resource, and an installation without an
+        // inference driver must keep loading, because the contract reports that case per
+        // word.
+        if (auto checked = Decoder::verifyModels(*result->bundle, result->directory); !checked) {
+            return checked.takeError();
+        }
+
+        auto vocabulary = cache.acquire<Vocabulary>(
+            result->directory / "vocabulary.json", VOCABULARY_KIND, VARIANT,
+            std::function(
+                [](const fs::path &path) -> srt::Expected<std::shared_ptr<const Vocabulary>> {
+                    auto parsed = Vocabulary::load(path);
+                    if (!parsed) {
+                        return parsed.takeError();
+                    }
+                    return std::make_shared<const Vocabulary>(parsed.take());
+                }));
+        if (!vocabulary) {
+            return vocabulary.takeError();
+        }
+        result->vocabulary = vocabulary.take();
+
+        // The ids are resolved once here rather than per executive, because the language
+        // id of a reference is a property of the bundle, and an unknown reference is a
+        // declaration error.
+        for (auto &entry : result->languageMap) {
+            entry.id = result->bundle->languageId(entry.ref);
+            if (entry.id < 0) {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "languageMap names " + entry.ref +
+                                      ", which the bundle does not list");
+            }
+        }
+        return std::unique_ptr<srt::ContribConfiguration>(std::move(result));
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
+        MultiG2pInterpreter::createImportOptions(const srt::ContribSpec &,
+                                                 const srt::JsonValue &manifestOptions) const {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, VARIANT); !checked) {
+            return checked.takeError();
+        }
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(VARIANT));
+    }
+
+    srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
+        MultiG2pInterpreter::createInference(srt::InferenceSpec &spec,
+                                             const srt::ContribImportOptions &,
+                                             const srt::InferenceRuntimeOptions &runtimeOptions) {
+        const auto *configuration = static_cast<const Configuration *>(spec.configuration());
+        if (configuration == nullptr) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the multig2p module was imported without its configuration");
+        }
+        const auto &binding =
+            static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
+
+        const MappedLanguage *mapped = nullptr;
+        for (const auto &entry : configuration->languageMap) {
+            if (entry.pair == binding) {
+                mapped = &entry;
+                break;
+            }
+        }
+        if (mapped == nullptr) {
+            // No default language exists: an executive is bound to one pair, so a pair
+            // that the language map does not contain is an error rather than a case for
+            // substitution.
+            return srt::Error(srt::Error::FeatureNotSupported, "this bundle maps no language to " +
+                                                                   binding.language + "/" +
+                                                                   binding.scheme);
+        }
+
+        // The host owns the backend and registers it as a Runtime Service. The absence of
+        // the service is a property of the installation rather than of the package, so the
+        // executive reports a per-word error instead of failing the load.
+        auto *service =
+            spec.package().synthUnit().runtimeService(ds::InferenceDriverPlugin::IID, BACKEND);
+        if (service == nullptr) {
+            return std::unique_ptr<srt::InferenceExecutive>(
+                new Executive(spec, configuration, nullptr, mapped->ref, mapped->id));
+        }
+
+        auto decoder = Decoder::open(*service->as<ds::InferenceDriver>(), *configuration->bundle,
+                                     configuration->directory);
+        if (!decoder) {
+            // The driver is available but the models fail to open, so the fault lies in
+            // the package rather than in the installation.
+            return decoder.takeError();
+        }
+        return std::unique_ptr<srt::InferenceExecutive>(
+            new Executive(spec, configuration, decoder.take(), mapped->ref, mapped->id));
+    }
+
+}

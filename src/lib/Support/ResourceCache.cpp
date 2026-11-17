@@ -1,8 +1,6 @@
 #include "ResourceCache.h"
 #include "ResourceCache_p.h"
 
-#include <textutil/Files.h>
-
 #include <array>
 #include <cstdint>
 #include <fstream>
@@ -17,6 +15,8 @@
 
 #include <blake3.h>
 #include <stdcorelib/path.h>
+
+#include <textutil/Files.h>
 
 namespace fs = std::filesystem;
 

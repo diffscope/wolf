@@ -56,6 +56,9 @@ endif()
 set(WOLF_VERSION ${PROJECT_VERSION})
 set(WOLF_INSTALL_NAME ${PROJECT_NAME})
 set(WOLF_INSTALL_NAMESPACE synthrt)
+# A plugin is loaded at run time and never linked, so it is a module library, which has no
+# import library to install.
+set(WOLF_PLUGIN_TYPE MODULE)
 set(WOLF_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------
@@ -72,7 +75,8 @@ endif()
 qm_init_directories()
 
 find_package(synthrt CONFIG REQUIRED)
-find_package(blake3 CONFIG REQUIRED)
+include("${SYNTHRT_MODULES_DIR}/find-modules/Blake3.cmake")
+synthrt_find_blake3()
 find_package(re2 CONFIG REQUIRED)
 
 # ----------------------------------
@@ -90,41 +94,9 @@ if(NOT WOLF_DISABLE_DSINFER)
 endif()
 
 if(TARGET synthrt::dsinfer)
+    # The ONNX driver is a plugin of dsinfer rather than a link target. The dsinfer package exports
+    # it as the imported target synthrt::onnxdriver, from which the tests take its directory.
     set(WOLF_HAS_DSINFER ON)
-    # The ONNX driver ships as a plugin under lib/plugins beside the library, not as a link
-    # target. The dsinfer package specifies the location of that tree in DSINFER_PLUGINS_DIR. For
-    # an older package that does not define the variable, the directories above its config file
-    # are searched for a lib/plugins/dsinfer tree; the config file is in share/dsinfer in a vcpkg
-    # tree and in lib/cmake/dsinfer in a plain install. A plugin search path contains one
-    # subdirectory per plugin, so the resulting directory is the parent of the onnx directory. A
-    # vcpkg tree keeps its Debug build under a separate debug/ prefix. Tests pass the directory to
-    # the driver factory at run time.
-    set(_wolf_dsinfer_plugins "")
-    if(DEFINED DSINFER_PLUGINS_DIR AND IS_DIRECTORY "${DSINFER_PLUGINS_DIR}")
-        set(_wolf_dsinfer_plugins "${DSINFER_PLUGINS_DIR}")
-    else()
-        set(_wolf_dsinfer_prefix "${synthrt-dsinfer_DIR}")
-        foreach(_step RANGE 3)
-            get_filename_component(_wolf_dsinfer_prefix "${_wolf_dsinfer_prefix}" DIRECTORY)
-            if(IS_DIRECTORY "${_wolf_dsinfer_prefix}/lib/plugins/dsinfer")
-                set(_wolf_dsinfer_plugins "${_wolf_dsinfer_prefix}/lib/plugins/dsinfer")
-                break()
-            endif()
-        endforeach()
-    endif()
-    set(WOLF_DSINFER_DRIVER_DIR "")
-    if(_wolf_dsinfer_plugins)
-        get_filename_component(_wolf_dsinfer_prefix "${_wolf_dsinfer_plugins}/../../.." ABSOLUTE)
-        if(IS_DIRECTORY "${_wolf_dsinfer_prefix}/debug/lib/plugins/dsinfer")
-            set(WOLF_DSINFER_DRIVER_DIR
-                "${_wolf_dsinfer_prefix}/$<$<CONFIG:Debug>:debug/>lib/plugins/dsinfer/inferencedrivers")
-        else()
-            set(WOLF_DSINFER_DRIVER_DIR "${_wolf_dsinfer_plugins}/inferencedrivers")
-        endif()
-    else()
-        message(WARNING "dsinfer was found, but its plugin tree was not; the model-backed tests "
-                        "will be skipped because no driver is available")
-    endif()
     message(STATUS "dsinfer: ${synthrt-dsinfer_DIR}")
 else()
     set(WOLF_HAS_DSINFER OFF)

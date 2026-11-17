@@ -1,0 +1,342 @@
+#include "PinyinInterpreter.h"
+
+#include <atomic>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <synthrt/SVS/InferenceInterpreter.h>
+
+#include <stdcorelib/path.h>
+
+#include <wolf/Api/Inferences/G2p/1/G2pApiL1.h>
+
+#include <executiveutil/ExecutiveBase.h>
+#include <linguistutil/ContractValues.h>
+#include <linguistutil/InputRules.h>
+#include <linguistutil/ManifestValues.h>
+#include <textutil/Utf8.h>
+
+#include "PinyinEngines.h"
+
+namespace fs = std::filesystem;
+namespace G2pApi = wolf::Api::G2p::L1;
+
+namespace wolf::pinyin {
+
+    namespace {
+
+        /// Exports of the G2P contract: the language/scheme pairs that the module produces, its
+        /// symbols, and openSet.
+        constexpr ExportsShape G2P_EXPORTS{true, "symbols", false, true};
+
+        /// Highest configuration format version supported by this build. A declaration with a
+        /// higher version is rejected rather than read leniently.
+        constexpr int FORMAT_VERSION = 1;
+
+        /// One contract pair and the engine that converts it.
+        using MappedLanguage = LanguageMapEntry;
+
+        /// Checks that \a ref names an engine compiled into this plugin. An unknown ref is a
+        /// declaration error and is reported at load time rather than at conversion time.
+        ///
+        /// \return Success if the ref is known; otherwise a FeatureNotSupported error.
+        srt::Expected<void> checkEngineRef(const std::string &position, const std::string &ref) {
+            if (!PinyinEngineRegistry::isKnownRef(ref)) {
+                return srt::Error(srt::Error::FeatureNotSupported,
+                                  position + " names an unknown engine: " + ref);
+            }
+            return {};
+        }
+
+        class Configuration : public srt::ContribConfiguration {
+        public:
+            Configuration()
+                : ContribConfiguration({G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT}) {
+            }
+
+            fs::path dictRoot;
+            std::vector<MappedLanguage> languageMap;
+        };
+
+        class Executive
+            : public ExecutiveBase<G2pApi::G2pExecutive, G2pApi::G2pStartInput, G2pApi::G2pResult> {
+        public:
+            Executive(srt::InferenceSpec &spec, std::unique_ptr<Engine> engine)
+                : ExecutiveBase(spec), m_engine(std::move(engine)) {
+            }
+
+            ~Executive() {
+                finish();
+            }
+
+            srt::Expected<void> initialize(const G2pApi::G2pInitArgs &) override {
+                return {};
+            }
+
+            // See ExecutiveBase: quit() and wait() are deliberately not overridden.
+
+        protected:
+            Batch runBatch(const G2pApi::G2pStartInput &input) override {
+                // See ExecutiveBase: a stop request on entry cancels this batch.
+                // The input rules of the contract are applied first: a word that the rules classify
+                // as skipped or invalid never reaches the engine, and it also splits the run of
+                // convertible words around it. The phrase tables depend on adjacency, and two
+                // words separated by such a word are not adjacent in the song.
+                std::vector<LyricVerdict> verdicts;
+                verdicts.reserve(input.lyrics.size());
+                for (const auto &lyric : input.lyrics) {
+                    verdicts.push_back(classifyLyric(lyric));
+                }
+
+                std::vector<std::string> characters;
+                std::vector<std::size_t> offsets;
+                offsets.reserve(input.lyrics.size() + 1);
+                for (std::size_t i = 0; i < input.lyrics.size(); ++i) {
+                    offsets.push_back(characters.size());
+                    if (verdicts[i] != LyricVerdict::Accept) {
+                        continue;
+                    }
+                    // The engine looks up one character at a time, so a word must be split into
+                    // characters. An invalid byte becomes a separate element and fails to convert.
+                    for (auto &character : splitUtf8(input.lyrics[i])) {
+                        characters.push_back(std::move(character));
+                    }
+                }
+                offsets.push_back(characters.size());
+
+                auto result = std::make_unique<G2pApi::G2pResult>();
+                // Each convertible run is passed to the engine as a whole, because the engine uses
+                // adjacency: the same two characters can receive different readings when converted
+                // together and when converted separately. Cancellation is checked before the
+                // first call rather than during the calls. A stop request that arrives during the
+                // runs is consumed by the next start, as the parent executive expects of a
+                // canceled batch.
+                if (stopRequested()) {
+                    return result;
+                }
+                std::vector<CharacterResult> converted;
+                converted.reserve(characters.size());
+                for (std::size_t begin = 0; begin < input.lyrics.size();) {
+                    if (verdicts[begin] != LyricVerdict::Accept) {
+                        ++begin;
+                        continue;
+                    }
+                    std::size_t end = begin;
+                    while (end < input.lyrics.size() && verdicts[end] == LyricVerdict::Accept) {
+                        ++end;
+                    }
+                    const std::vector<std::string> run(characters.begin() + offsets[begin],
+                                                       characters.begin() + offsets[end]);
+                    const auto part = m_engine->convert(run);
+                    // The assembly requires exactly one reading per character, because the
+                    // offsets that split the readings into words are computed from the input. A
+                    // different reading count would assign every word after the affected run the
+                    // readings of neighboring words, and the last word would be read past the end
+                    // of the readings. The engine is third-party code, so the count is checked.
+                    if (part.size() != run.size()) {
+                        return srt::Error(srt::Error::InvalidFormat,
+                                          "the pinyin engine returned " +
+                                              std::to_string(part.size()) + " readings for " +
+                                              std::to_string(run.size()) + " characters");
+                    }
+                    converted.insert(converted.end(), part.begin(), part.end());
+                    begin = end;
+                }
+                result->words.reserve(input.lyrics.size());
+                for (std::size_t i = 0; i < input.lyrics.size(); ++i) {
+                    switch (verdicts[i]) {
+                        case LyricVerdict::Skip: {
+                            G2pApi::G2pWordOutput word;
+                            word.mode = G2pApi::Mode::Skip;
+                            result->words.push_back(std::move(word));
+                            break;
+                        }
+                        case LyricVerdict::Invalid: {
+                            G2pApi::G2pWordOutput word;
+                            word.pronunciation = input.lyrics[i];
+                            word.error = G2pApi::Error::InvalidInput;
+                            result->words.push_back(std::move(word));
+                            break;
+                        }
+                        case LyricVerdict::Accept:
+                            result->words.push_back(
+                                assemble(converted, offsets[i], offsets[i + 1]));
+                            break;
+                    }
+                }
+                return result;
+            }
+
+        private:
+            /// Joins the character readings of one word.
+            ///
+            /// A word is converted completely or not at all. A partially converted word would
+            /// require an invented reading for the failed characters, so such a word is returned
+            /// without a pronunciation, and the fallback step of the chain determines its result.
+            ///
+            /// \return A word with the error PhonemeGenerationFailed if the word has no characters
+            /// or if any character has no reading; otherwise the converted word with its
+            /// candidates.
+            static G2pApi::G2pWordOutput assemble(const std::vector<CharacterResult> &converted,
+                                                  std::size_t begin, std::size_t end) {
+                G2pApi::G2pWordOutput word;
+                word.mode = G2pApi::Mode::Convert;
+                if (begin == end) {
+                    word.error = G2pApi::Error::PhonemeGenerationFailed;
+                    return word;
+                }
+                for (auto i = begin; i < end; ++i) {
+                    if (converted[i].pronunciation.empty()) {
+                        word.error = G2pApi::Error::PhonemeGenerationFailed;
+                        return word;
+                    }
+                    if (!word.pronunciation.empty()) {
+                        word.pronunciation += ' ';
+                    }
+                    word.pronunciation += converted[i].pronunciation;
+                }
+                word.hitSource = G2pApi::HitSource::Rule;
+                // Alternatives are defined only for a single character. Across a word they would
+                // form a cross product that this contract cannot express.
+                //
+                // The alternatives of the engine come from its per-character table, while the
+                // reading itself may come from a phrase table, so the two differ exactly when a
+                // phrase determined the reading. The contract requires the pronunciation to be the
+                // first candidate, so the pronunciation is inserted first and the other candidates
+                // keep their order.
+                word.candidates.push_back(word.pronunciation);
+                if (end - begin == 1) {
+                    for (const auto &candidate : converted[begin].candidates) {
+                        if (candidate != word.pronunciation) {
+                            word.candidates.push_back(candidate);
+                        }
+                    }
+                }
+                return word;
+            }
+
+            std::unique_ptr<Engine> m_engine;
+        };
+
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribExports>>
+        PinyinInterpreter::createExports(const srt::ContribSpec &spec) const {
+        auto read = readContractExports(spec, G2P_EXPORTS, "exports");
+        if (!read) {
+            return read.takeError();
+        }
+        auto result = std::make_unique<G2pApi::G2pExports>(VARIANT);
+        result->languages = std::move(read->languages);
+        result->symbols = std::move(read->strings);
+        result->openSet = read->openSet;
+        return std::unique_ptr<srt::ContribExports>(std::move(result));
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
+        PinyinInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
+        const auto &value = spec.manifestConfiguration();
+        if (!value.isObject()) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the pinyin configuration must be an object");
+        }
+        auto result = std::make_unique<Configuration>();
+        bool hasFormatVersion = false;
+        fs::path dictRoot;
+        for (const auto &[key, item] : value.toObject()) {
+            if (key == "formatVersion") {
+                if (auto version = readFormatVersion(item, FORMAT_VERSION); !version) {
+                    return version.takeError();
+                }
+                hasFormatVersion = true;
+            } else if (key == "dictRoot") {
+                if (!item.isString() || item.toString().empty()) {
+                    return srt::Error(srt::Error::InvalidFormat,
+                                      "dictRoot must be a non-empty string");
+                }
+                dictRoot = pathFromManifest(item.toString());
+            } else if (key == "languageMap") {
+                auto languageMap = readLanguageMap(item, checkEngineRef);
+                if (!languageMap) {
+                    return languageMap.takeError();
+                }
+                result->languageMap = languageMap.take();
+            } else {
+                return srt::Error(srt::Error::InvalidFormat,
+                                  "unknown pinyin configuration key: " + key);
+            }
+        }
+        if (!hasFormatVersion) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the pinyin configuration requires a formatVersion");
+        }
+        if (dictRoot.empty()) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the pinyin configuration requires a dictRoot");
+        }
+        if (result->languageMap.empty()) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the pinyin configuration requires a languageMap");
+        }
+        if (auto reconciled = reconcileLanguageMap(spec, result->languageMap); !reconciled) {
+            return reconciled.takeError();
+        }
+
+        if (dictRoot.is_relative()) {
+            dictRoot = spec.declarationPath().parent_path() / dictRoot;
+        }
+        std::error_code ec;
+        result->dictRoot = fs::weakly_canonical(dictRoot.lexically_normal(), ec);
+        if (ec) {
+            result->dictRoot = dictRoot.lexically_normal();
+        }
+        if (!fs::is_directory(result->dictRoot, ec)) {
+            return srt::Error(srt::Error::FileNotFound, "the pinyin dictionary root is missing: " +
+                                                            stdc::path::to_utf8(result->dictRoot));
+        }
+
+        // The 2.x library takes the dictionary root as an argument to Engine::open, so
+        // there is no process-wide root to claim here. Two packages that ship different
+        // roots coexist, which the 1.x arbiter could not allow.
+        return std::unique_ptr<srt::ContribConfiguration>(std::move(result));
+    }
+
+    srt::Expected<std::unique_ptr<srt::ContribImportOptions>>
+        PinyinInterpreter::createImportOptions(const srt::ContribSpec &,
+                                               const srt::JsonValue &manifestOptions) const {
+        if (auto checked = wolf::requireNoImportOptions(manifestOptions, VARIANT); !checked) {
+            return checked.takeError();
+        }
+        return std::unique_ptr<srt::ContribImportOptions>(new G2pApi::G2pImportOptions(VARIANT));
+    }
+
+    srt::Expected<std::unique_ptr<srt::InferenceExecutive>>
+        PinyinInterpreter::createInference(srt::InferenceSpec &spec,
+                                           const srt::ContribImportOptions &,
+                                           const srt::InferenceRuntimeOptions &runtimeOptions) {
+        const auto *configuration = static_cast<const Configuration *>(spec.configuration());
+        if (configuration == nullptr) {
+            return srt::Error(srt::Error::InvalidFormat,
+                              "the pinyin module was imported without its configuration");
+        }
+        const auto &binding =
+            static_cast<const G2pApi::G2pRuntimeOptions &>(runtimeOptions).binding;
+        for (const auto &entry : configuration->languageMap) {
+            if (entry.pair == binding) {
+                auto engine =
+                    PinyinEngineRegistry::createEngine(configuration->dictRoot, entry.ref);
+                if (!engine) {
+                    return engine.takeError();
+                }
+                return std::unique_ptr<srt::InferenceExecutive>(new Executive(spec, engine.take()));
+            }
+        }
+        return srt::Error(srt::Error::FeatureNotSupported, "this pinyin module maps no engine to " +
+                                                               binding.language + "/" +
+                                                               binding.scheme);
+    }
+
+}

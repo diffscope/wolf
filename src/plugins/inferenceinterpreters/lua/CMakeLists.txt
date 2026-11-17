@@ -3,4 +3,4 @@ project(wolflua
     LANGUAGES CXX
 )
 
-wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE wolf::luajit)
+wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE wolf::luajit linguistutil textutil executiveutil)

@@ -13,7 +13,7 @@
 
 #include <synthrt/Support/Expected.h>
 
-#include "Bundle.h"
+#include <multig2p/Bundle.h>
 
 namespace wolf::multig2p {
 

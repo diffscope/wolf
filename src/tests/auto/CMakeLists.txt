@@ -1,10 +1,11 @@
 include("${SYNTHRT_MODULES_DIR}/AddAutoTest.cmake")
 
-# One directory per layer, so that the path of a test identifies the layer of a failure. Support
-# contains pure units independent of the linguist category; Linguist the category, its declarations
-# and its provider; Inference the chain and the variant interpreters; Runtime the executive tree
-# and the session; EndToEnd the walks over generated packages. Every test uses TestSupport.h from
-# this directory.
+# One directory per layer, so that the path of a test identifies the layer of a failure. util
+# contains the libraries under src/util, one directory per library, and Support the public support
+# components, both independent of the linguist category; Linguist the category, its declarations and
+# its provider; Runtime the executive tree and the session; EndToEnd the walks over generated
+# packages; plugins the classes of single plugins, one directory per plugin. Every test uses
+# TestSupport.h from this directory.
 
 # Registers a test and records its target, so that the common settings below apply to exactly the
 # tests that exist. The alternative was a manually maintained second list of names, and a test
@@ -16,12 +17,12 @@ macro(wolf_add_test _source)
     list(APPEND _wolf_tests ${_wolf_test_name})
 endmacro()
 
-# The stateless helpers are not exported from libwolf; their tests link the static library that
+# The stateless helpers are not exported from libwolf. Their tests link the static library that
 # contains them, as the plugins do.
-wolf_add_test(Support/test_ManifestValues.cpp synthrt-wolf linguistutil textutil executiveutil)
-wolf_add_test(Support/test_Utf8.cpp synthrt-wolf linguistutil textutil executiveutil)
-wolf_add_test(Support/test_Verifier.cpp synthrt-wolf linguistutil textutil executiveutil)
-wolf_add_test(Support/test_ExecutiveTask.cpp synthrt-wolf linguistutil textutil executiveutil)
+wolf_add_test(util/linguistutil/test_ManifestValues.cpp synthrt-wolf linguistutil)
+wolf_add_test(util/linguistutil/test_Verifier.cpp synthrt-wolf linguistutil)
+wolf_add_test(util/textutil/test_Utf8.cpp synthrt-wolf textutil)
+wolf_add_test(util/executiveutil/test_ExecutiveTask.cpp synthrt-wolf executiveutil)
 wolf_add_test(Support/test_ResourceCache.cpp synthrt-wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache
@@ -33,20 +34,6 @@ wolf_add_test(Linguist/test_LinguistContrib.cpp synthrt-wolf)
 wolf_add_test(Linguist/test_LinguistIdentity.cpp synthrt-wolf)
 wolf_add_test(Linguist/test_LinguistLoad.cpp synthrt-wolf)
 wolf_add_test(Linguist/test_LinguistProvider.cpp synthrt-wolf)
-
-wolf_add_test(Inference/test_OnsetRules.cpp synthrt-wolf)
-wolf_add_test(Inference/test_S2pVariants.cpp synthrt-wolf)
-wolf_add_test(Inference/test_PipeChain.cpp synthrt-wolf)
-wolf_add_test(Inference/test_PinyinBackend.cpp synthrt-wolf)
-# Each of these tests requires the library that its variants embed and is built only if that
-# library is available.
-if(WOLF_HAS_LUAJIT)
-    wolf_add_test(Inference/test_LuaVariants.cpp synthrt-wolf)
-endif()
-if(WOLF_HAS_DSINFER)
-    wolf_add_test(Inference/test_MultiG2p.cpp synthrt-wolf synthrt::dsinfer)
-    wolf_add_test(Inference/test_MultiG2pMaxLen.cpp synthrt-wolf synthrt::dsinfer)
-endif()
 
 wolf_add_test(Runtime/test_LinguistRuntime.cpp synthrt-wolf)
 wolf_add_test(Runtime/test_LinguistSession.cpp synthrt-wolf)
@@ -105,9 +92,8 @@ endif()
 if(WOLF_TEST_FIXTURES_SOURCE)
     list(APPEND _wolf_data_env "WOLF_TEST_FIXTURES_SOURCE=${WOLF_TEST_FIXTURES_SOURCE}")
 endif()
-foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_MultiG2p test_MultiG2pMaxLen
-                       test_LinguistIdentity test_LinguistLoad test_PipeChain test_PinyinBackend
-                       test_LinguistRuntime test_LinguistSession)
+foreach(_test IN ITEMS test_ConvertedPackages test_HostFlow test_LinguistIdentity
+                       test_LinguistLoad test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES SKIP_RETURN_CODE 77)
         if(_wolf_data_env)
@@ -119,7 +105,7 @@ endforeach()
 # Tests that run executives on worker threads, or intentionally stop a stage that does not return
 # by itself, have a timeout: if an interrupt or a wait stops working, the test must fail instead of
 # hanging the build.
-foreach(_test IN ITEMS test_PipeChain test_LuaVariants test_LinguistRuntime test_LinguistSession)
+foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
         set_tests_properties(${_test} PROPERTIES TIMEOUT 120)
     endif()
@@ -128,7 +114,10 @@ endforeach()
 # A plugin search path contains one subdirectory per plugin, so the paths passed to the tests are
 # the parents of the plugin directories.
 set(_wolf_linguist_plugins "$<TARGET_FILE_DIR:wolflinguistprovider>/..")
-set(_wolf_singer_plugins "$<TARGET_FILE_DIR:wolfstubsinger>/..")
+set(_wolf_inference_plugins "$<TARGET_FILE_DIR:wolfs2p>/..")
+
+
+add_subdirectory(plugins)
 
 if(TARGET test_LinguistProvider)
     add_dependencies(test_LinguistProvider wolflinguistprovider)
@@ -139,8 +128,8 @@ if(TARGET test_LinguistProvider)
 endif()
 
 if(TARGET test_LinguistLoad)
-    add_dependencies(test_LinguistLoad wolflinguistprovider wolfstubinference wolfs2p wolfchain
-                     wolfpinyin wolfonset wolfstubsinger)
+    target_link_libraries(test_LinguistLoad PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_LinguistLoad wolflinguistprovider wolfs2p wolfchain wolfpinyin wolfonset)
     if(WOLF_HAS_LUAJIT)
         add_dependencies(test_LinguistLoad wolflua)
         target_compile_definitions(test_LinguistLoad PRIVATE WOLF_TEST_HAS_LUAJIT=1)
@@ -150,104 +139,39 @@ if(TARGET test_LinguistLoad)
     endif()
     target_compile_definitions(test_LinguistLoad PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
-        WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
         WOLF_TEST_VERDICTS_FILE="${CMAKE_CURRENT_SOURCE_DIR}/loader-verdicts.json"
     )
 endif()
 
 foreach(_test IN ITEMS test_LinguistRuntime test_LinguistSession)
     if(TARGET ${_test})
-        add_dependencies(${_test} wolflinguistprovider wolfstubinference wolfstubsinger wolfs2p)
+        target_link_libraries(${_test} PRIVATE wolfstubinference wolfstubsinger)
+        add_dependencies(${_test} wolflinguistprovider wolfs2p)
         target_compile_definitions(${_test} PRIVATE
             WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-            WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
-            WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
+            WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
         )
     endif()
 endforeach()
 
 if(TARGET test_ConvertedPackages)
-    add_dependencies(test_ConvertedPackages wolflinguistprovider wolfstubinference wolfs2p)
+    target_link_libraries(test_ConvertedPackages PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_ConvertedPackages wolflinguistprovider wolfs2p)
     target_compile_definitions(test_ConvertedPackages PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfstubinference>/.."
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
     )
 endif()
 
-if(TARGET test_S2pVariants)
-    add_dependencies(test_S2pVariants wolfs2p)
-    target_compile_definitions(test_S2pVariants PRIVATE
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfs2p>/.."
-    )
-endif()
-
-if(TARGET test_OnsetRules)
-    add_dependencies(test_OnsetRules wolfonset)
-    target_compile_definitions(test_OnsetRules PRIVATE
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfonset>/.."
-    )
-endif()
-
-# The chain and the engine are exercised through the complete tree: a singer declares a language,
-# the language declares a chain, and the chain reaches its backend through an import. The
-# components below that level are not reachable from a test in any other way.
-foreach(_test IN ITEMS test_PipeChain test_PinyinBackend)
-    if(TARGET ${_test})
-        add_dependencies(${_test} wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfstubsinger)
-        # One case requires a package whose phoneme stage is a script, which cannot load without
-        # the scripted variants.
-        if(WOLF_HAS_LUAJIT)
-            add_dependencies(${_test} wolflua)
-            target_compile_definitions(${_test} PRIVATE WOLF_TEST_HAS_LUAJIT=1)
-        endif()
-        target_compile_definitions(${_test} PRIVATE
-            WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-            WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
-            WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
-        )
-    endif()
-endforeach()
-
-if(TARGET test_MultiG2p)
-    add_dependencies(test_MultiG2p wolflinguistprovider wolfchain wolfmultig2p wolfs2p
-                     wolfstubsinger)
-    target_compile_definitions(test_MultiG2p PRIVATE
-        WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
-        WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
-        WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
-        WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"
-    )
-endif()
-
-# The limit case binds the backend directly rather than through a chain, so it needs neither the
-# linguist provider nor the singer plugin: it assembles the smallest tree in which a declaration
-# reaches a model.
-if(TARGET test_MultiG2pMaxLen)
-    add_dependencies(test_MultiG2pMaxLen wolfmultig2p)
-    target_compile_definitions(test_MultiG2pMaxLen PRIVATE
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfmultig2p>/.."
-        WOLF_TEST_DRIVER_PLUGIN_DIR="${WOLF_DSINFER_DRIVER_DIR}"
-        WOLF_TEST_ONNXRUNTIME_DIR="${WOLF_ONNXRUNTIME_DIR}"
-    )
-endif()
 
 # Walks the domain as a host does, over the converted packages and the voicebank-shaped fixture
 # that completes them. Both are generated rather than committed.
 if(TARGET test_HostFlow)
-    add_dependencies(test_HostFlow wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfonset
-                     wolfstubsinger)
+    target_link_libraries(test_HostFlow PRIVATE wolfstubinference wolfstubsinger)
+    add_dependencies(test_HostFlow wolflinguistprovider wolfchain wolfpinyin wolfs2p wolfonset)
     target_compile_definitions(test_HostFlow PRIVATE
         WOLF_TEST_LINGUIST_PLUGIN_DIR="${_wolf_linguist_plugins}"
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolfchain>/.."
-        WOLF_TEST_SINGER_PLUGIN_DIR="${_wolf_singer_plugins}"
-    )
-endif()
-
-if(TARGET test_LuaVariants)
-    add_dependencies(test_LuaVariants wolflua)
-    target_compile_definitions(test_LuaVariants PRIVATE
-        WOLF_TEST_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:wolflua>/.."
+        WOLF_TEST_INFERENCE_PLUGIN_DIR="${_wolf_inference_plugins}"
     )
 endif()

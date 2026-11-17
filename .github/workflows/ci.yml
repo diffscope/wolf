@@ -112,7 +112,10 @@ jobs:
       - name: Check the installed CMake package
         # The test suite above exercises the code, and this step exercises the installed package
         # that a host consumes. The install rules write the targets, the include directories and
-        # the plugin directory of that package, and no earlier step reads them.
+        # the plugin tree of that package, and no earlier step reads them. The consumer is run, not
+        # only built, because it finds the plugin tree through the installed library at run time.
+        # Windows resolves the libraries through PATH; elsewhere the build tree rpath of the
+        # consumer already names them.
         shell: bash
         run: |
           cmake --install build/cmake --prefix build/install
@@ -123,3 +126,7 @@ jobs:
             -DVCPKG_MANIFEST_MODE=OFF \
             -DCMAKE_PREFIX_PATH="$PWD/build/install"
           cmake --build build/consumer
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            export PATH="$PWD/build/install/bin:$(cygpath -u '${{ steps.vcpkg.outputs.installed-dir }}')/$VCPKG_DEFAULT_TRIPLET/bin:$PATH"
+          fi
+          build/consumer/wolf_package_consumer

@@ -21,8 +21,3 @@ endif()
 add_subdirectory(onset)
 add_subdirectory(pinyin)
 add_subdirectory(s2p)
-
-# Test scaffolding, built only with the tests. See src/plugins/CMakeLists.txt.
-if(WOLF_BUILD_TESTS)
-    add_subdirectory(stub)
-endif()

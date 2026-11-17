@@ -3,7 +3,9 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -11,6 +13,7 @@
 #include <synthrt/Core/SynthUnit.h>
 #include <synthrt/SVS/InferenceContrib.h>
 #include <synthrt/SVS/SingerContrib.h>
+#include <synthrt/Support/Json.h>
 
 #include <wolf/Linguist/LinguistContrib.h>
 
@@ -79,6 +82,26 @@ namespace wolf::test {
              "as WOLF_TEST_FIXTURES_SOURCE");
     }
 
+    /// Reads the plugin.json at \a path, the metadata of the static plugin that a test of one
+    /// plugin registers in place of the library the build produces. The package then loads the
+    /// interpreter that the test links, under the manifest that the library ships.
+    ///
+    /// The metadata is read during plugin discovery, outside any test case, so a manifest that does
+    /// not parse is reported on the standard error and yields a null value, which discovery
+    /// rejects.
+    inline srt::JsonValue readPluginManifest(const std::filesystem::path &path) {
+        std::ifstream stream(path, std::ios::binary);
+        const std::string text((std::istreambuf_iterator<char>(stream)),
+                               std::istreambuf_iterator<char>());
+        stdc::json::ParseError error;
+        auto value = srt::JsonValue::fromJson(text, false, &error);
+        if (error) {
+            std::cerr << "the plugin manifest " << path.string()
+                      << " is not valid JSON: " << error.message() << "\n";
+        }
+        return value;
+    }
+
     /// Configures \a unit as a host does: references the library so that a linker which drops
     /// unreferenced libraries retains it, sets the package search paths to \a packagePaths, and
     /// sets one plugin search path for each category that the build defined for this test.
@@ -97,13 +120,6 @@ namespace wolf::test {
             std::vector<std::filesystem::path> paths = {
                 std::filesystem::path(WOLF_TEST_INFERENCE_PLUGIN_DIR)};
             unit.setPluginPaths(srt::InferenceCategory::NAME, paths);
-        }
-#endif
-#ifdef WOLF_TEST_SINGER_PLUGIN_DIR
-        {
-            std::vector<std::filesystem::path> paths = {
-                std::filesystem::path(WOLF_TEST_SINGER_PLUGIN_DIR)};
-            unit.setPluginPaths(srt::SingerCategory::NAME, paths);
         }
 #endif
     }

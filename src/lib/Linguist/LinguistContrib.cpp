@@ -12,9 +12,10 @@
 #include <synthrt/Core/ContribImportBinding.h>
 
 #include "Logging.h"
-#include <linguistutil/ManifestValues.h>
 #include "LinguistProvider.h"
 #include "LinguistProviderPlugin.h"
+
+#include <linguistutil/ManifestValues.h>
 
 namespace wolf {
 

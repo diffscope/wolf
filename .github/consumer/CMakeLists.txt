@@ -18,37 +18,30 @@ if(NOT TARGET synthrt::wolf)
     message(FATAL_ERROR "the synthrt-wolf package defines no synthrt::wolf target")
 endif()
 
-# The plugin tree is a path rather than a target. No target links against it, so no other check
-# detects its absence. A host passes one directory per category to SynthUnit::setPluginPaths, which
-# requires the package to export the location of those directories.
-if(NOT DEFINED WOLF_PLUGINS_DIR)
-    message(FATAL_ERROR "the synthrt-wolf package exports no WOLF_PLUGINS_DIR")
-endif()
-# The package must provide one directory for each category in which the library ships plugins. Every
-# library that adds inference contracts also uses the inferenceinterpreters category, so a host
-# lists the wolf directory next to the directories of those libraries.
-foreach(_category IN ITEMS linguistproviders inferenceinterpreters)
-    if(NOT IS_DIRECTORY "${WOLF_PLUGINS_DIR}/${_category}")
-        message(FATAL_ERROR "WOLF_PLUGINS_DIR (${WOLF_PLUGINS_DIR}) contains no "
-                            "${_category} directory")
-    endif()
-endforeach()
-message(STATUS "wolf plugins: ${WOLF_PLUGINS_DIR}")
-if(DEFINED WOLF_PLUGINS_DIR_DEBUG)
-    message(STATUS "wolf plugins (debug): ${WOLF_PLUGINS_DIR_DEBUG}")
-endif()
-
-# wolf/Support contains the internal helpers of the library and is not installed. Its stateless
-# helpers are exported from no binary, and the symbols that libwolf exports from it
-# (WOLF_INTERNAL_EXPORT) serve only the plugins built with wolf and carry no API or ABI guarantee. A
-# Support header in the package would expose exactly that surface to a host, so its absence is
-# checked here.
+# The libraries under src/util contain the stateless helpers that libwolf and the plugins of wolf
+# share. They are not installed, and no binary exports their symbols, so a header of theirs in the
+# package would declare functions that a host cannot link. Their absence is checked here.
 get_target_property(_wolf_include_dirs synthrt::wolf INTERFACE_INCLUDE_DIRECTORIES)
 foreach(_dir IN LISTS _wolf_include_dirs)
-    if(EXISTS "${_dir}/wolf/Support")
-        message(FATAL_ERROR "the wolf package installs wolf/Support under ${_dir}")
+    foreach(_util IN ITEMS linguistutil textutil executiveutil)
+        if(EXISTS "${_dir}/${_util}")
+            message(FATAL_ERROR "the wolf package installs ${_util} under ${_dir}")
+        endif()
+    endforeach()
+endforeach()
+
+# Every installed plugin is an imported target of the package. The two plugins below are built in
+# every configuration, one in each category in which wolf ships plugins, and the program checks
+# that the category directory of each exists, which is the directory a host adds.
+foreach(_plugin IN ITEMS synthrt::wolflinguistprovider synthrt::wolfchain)
+    if(NOT TARGET ${_plugin})
+        message(FATAL_ERROR "the synthrt-wolf package defines no ${_plugin} target")
     endif()
 endforeach()
 
 add_executable(wolf_package_consumer main.cpp)
 target_link_libraries(wolf_package_consumer PRIVATE synthrt::wolf)
+target_compile_definitions(wolf_package_consumer PRIVATE
+    WOLF_CONSUMER_LINGUIST_PLUGIN_DIR="$<TARGET_FILE_DIR:synthrt::wolflinguistprovider>/.."
+    WOLF_CONSUMER_INFERENCE_PLUGIN_DIR="$<TARGET_FILE_DIR:synthrt::wolfchain>/.."
+)

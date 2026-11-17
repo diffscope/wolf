@@ -3,4 +3,4 @@ project(wolfonset
     LANGUAGES CXX
 )
 
-wolf_add_interpreter_plugin(${PROJECT_NAME})
+wolf_add_interpreter_plugin(${PROJECT_NAME} LINKS_PRIVATE linguistutil textutil executiveutil)

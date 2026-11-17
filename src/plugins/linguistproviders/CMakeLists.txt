@@ -14,4 +14,4 @@ endif()
 set(CURRENT_PLUGIN_IID "${CMAKE_MATCH_1}")
 unset(_iid_line)
 
-add_subdirectory(wolf)
+add_subdirectory(wolflinguist)
