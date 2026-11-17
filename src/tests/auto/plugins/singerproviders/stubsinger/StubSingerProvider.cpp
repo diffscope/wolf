@@ -9,7 +9,7 @@
 
 namespace wolf::stub {
 
-    StubSingerProvider::StubSingerProvider(srt::ContribTriplet triplet)
+    StubSingerProvider::StubSingerProvider(srt::ContribContractTriplet triplet)
         : m_triplet(std::move(triplet)) {
     }
 

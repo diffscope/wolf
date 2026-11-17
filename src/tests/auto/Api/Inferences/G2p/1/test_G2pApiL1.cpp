@@ -13,8 +13,8 @@ BOOST_AUTO_TEST_CASE(variant_identity_and_task_identity_are_separate) {
     Api::G2pRuntimeOptions runtime("test.variant");
     const srt::ContribSpecPayload *specPayloads[] = {&schema, &options, &runtime};
     for (const auto payload : specPayloads) {
-        BOOST_CHECK(payload->triplet() ==
-                    srt::ContribTriplet(Api::API_INTERFACE, Api::API_LEVEL, "test.variant"));
+        BOOST_CHECK(payload->triplet() == srt::ContribContractTriplet(
+                                              Api::API_INTERFACE, Api::API_LEVEL, "test.variant"));
     }
     Api::G2pInitArgs args;
     BOOST_CHECK_EQUAL(args.type(), Api::API_INTERFACE);

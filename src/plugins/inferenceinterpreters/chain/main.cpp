@@ -9,9 +9,9 @@ namespace wolf::chain {
     class ChainPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
-            if (triplet != srt::ContribTriplet(Api::G2p::L1::API_INTERFACE, Api::G2p::L1::API_LEVEL,
-                                               VARIANT)) {
+            create(const srt::ContribContractTriplet &triplet) override {
+            if (triplet != srt::ContribContractTriplet(Api::G2p::L1::API_INTERFACE,
+                                                       Api::G2p::L1::API_LEVEL, VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

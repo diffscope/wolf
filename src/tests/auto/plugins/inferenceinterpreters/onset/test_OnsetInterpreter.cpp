@@ -26,9 +26,9 @@ namespace {
     class OnsetPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
-            if (triplet != srt::ContribTriplet(OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL,
-                                               wolf::onset::RULE)) {
+            create(const srt::ContribContractTriplet &triplet) override {
+            if (triplet != srt::ContribContractTriplet(OnsetApi::API_INTERFACE, OnsetApi::API_LEVEL,
+                                                       wolf::onset::RULE)) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

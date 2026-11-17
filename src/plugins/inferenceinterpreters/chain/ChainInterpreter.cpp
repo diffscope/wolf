@@ -416,8 +416,8 @@ namespace wolf::chain {
                 // Every registered validator receives every contribution in the transaction, so
                 // the interface, level and variant must match before the configuration is cast to
                 // the type of this plugin.
-                if (spec.triplet() !=
-                    srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, VARIANT)) {
+                if (spec.triplet() != srt::ContribContractTriplet(G2pApi::API_INTERFACE,
+                                                                  G2pApi::API_LEVEL, VARIANT)) {
                     return {};
                 }
                 const auto *configuration =

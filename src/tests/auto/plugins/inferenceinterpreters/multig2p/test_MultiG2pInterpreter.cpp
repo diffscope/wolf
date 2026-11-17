@@ -38,10 +38,10 @@ namespace {
     class MultiG2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
-            if (triplet != srt::ContribTriplet(wolf::Api::G2p::L1::API_INTERFACE,
-                                               wolf::Api::G2p::L1::API_LEVEL,
-                                               wolf::multig2p::VARIANT)) {
+            create(const srt::ContribContractTriplet &triplet) override {
+            if (triplet != srt::ContribContractTriplet(wolf::Api::G2p::L1::API_INTERFACE,
+                                                       wolf::Api::G2p::L1::API_LEVEL,
+                                                       wolf::multig2p::VARIANT)) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported contract: " + triplet.toString());
             }

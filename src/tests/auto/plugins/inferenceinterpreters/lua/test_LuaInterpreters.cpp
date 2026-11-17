@@ -32,7 +32,7 @@ namespace {
     class LuaPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
+            create(const srt::ContribContractTriplet &triplet) override {
             if (triplet.variant() != wolf::lua::VARIANT) {
                 return srt::Error(srt::Error::InvalidArgument,
                                   "unsupported variant: " + triplet.variant());

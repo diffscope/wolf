@@ -15,10 +15,10 @@ namespace {
     class ProviderPlugin : public wolf::LinguistProviderPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
+            create(const srt::ContribContractTriplet &triplet) override {
             namespace Api = wolf::Api::Linguist::L1;
             if (triplet !=
-                srt::ContribTriplet(Api::API_INTERFACE, Api::API_LEVEL, Api::API_VARIANT))
+                srt::ContribContractTriplet(Api::API_INTERFACE, Api::API_LEVEL, Api::API_VARIANT))
                 return srt::Error(srt::Error::InvalidArgument, "unknown linguist contract");
             return std::make_unique<wolf::WolfLinguistProvider>();
         }

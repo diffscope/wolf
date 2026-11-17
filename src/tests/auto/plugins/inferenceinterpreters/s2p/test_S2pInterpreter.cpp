@@ -28,7 +28,7 @@ namespace {
     class S2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-            create(const srt::ContribTriplet &triplet) override {
+            create(const srt::ContribContractTriplet &triplet) override {
             if (triplet.interfaceId() != S2pApi::API_INTERFACE ||
                 triplet.level() != S2pApi::API_LEVEL) {
                 return srt::Error(srt::Error::InvalidArgument,

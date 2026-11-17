@@ -22,7 +22,7 @@ namespace wolf::stub {
         class StubInferencePlugin final : public srt::InferenceInterpreterPlugin {
         public:
             srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-                create(const srt::ContribTriplet &triplet) override {
+                create(const srt::ContribContractTriplet &triplet) override {
                 if (triplet.interfaceId() == Api::G2p::L1::API_INTERFACE &&
                     triplet.level() == Api::G2p::L1::API_LEVEL) {
                     return std::unique_ptr<srt::ContribInterpreter>(

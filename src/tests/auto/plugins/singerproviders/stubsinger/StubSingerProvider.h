@@ -30,18 +30,18 @@ namespace wolf::stub {
     /// only accepts every configuration.
     class StubSingerProvider : public srt::SingerProvider {
     public:
-        explicit StubSingerProvider(srt::ContribTriplet triplet);
+        explicit StubSingerProvider(srt::ContribContractTriplet triplet);
         srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
             createConfiguration(const srt::ContribSpec &) const override;
 
     private:
         class Configuration : public srt::ContribConfiguration {
         public:
-            explicit Configuration(srt::ContribTriplet triplet)
+            explicit Configuration(srt::ContribContractTriplet triplet)
                 : ContribConfiguration(std::move(triplet)) {
             }
         };
-        srt::ContribTriplet m_triplet;
+        srt::ContribContractTriplet m_triplet;
     };
 
 }

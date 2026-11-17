@@ -308,15 +308,15 @@ G2P / S2P / Onset 都是**多变体契约**，因此其 `RuntimeOptions` 类**�
 ```cpp
 class G2pRuntimeOptions : public srt::InferenceRuntimeOptions {
 public:
-    // 变体由调用方按目标 spec 的 variant() 传入，不得硬编码。
+    // 变体由调用方按目标 spec 的 triplet().variant() 传入，不得硬编码。
     explicit G2pRuntimeOptions(std::string variant)
-        : InferenceRuntimeOptions(API_INTERFACE, std::move(variant), API_LEVEL) {}
+        : InferenceRuntimeOptions({API_INTERFACE, API_LEVEL, std::move(variant)}) {}
 
     Common::L1::LanguageScheme binding;   // 该执行体绑定的二元组
 };
 ```
 
-调用方（组合 provider）从 import 的目标 spec 读取 `variant()` 构造该对象。该约束由框架的比对逻辑决定，不是风格选择。
+调用方（组合 provider）从 import 的目标 spec 读取 `triplet().variant()` 构造该对象。该约束由框架的比对逻辑决定，不是风格选择。
 
 ### 6.4 与运行时的边界
 

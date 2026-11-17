@@ -52,7 +52,7 @@ vendor/sample:linguist/mandarin        # 已求解的直接依赖中的模块
 class MyLinguistProviderPlugin : public wolf::LinguistProviderPlugin {
 public:
     srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-        create(const srt::ContribTriplet &triplet) override {
+        create(const srt::ContribContractTriplet &triplet) override {
         // 校验请求的契约，并返回对应的 provider。
     }
 };

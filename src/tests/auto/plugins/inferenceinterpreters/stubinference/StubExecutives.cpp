@@ -65,7 +65,7 @@ namespace wolf::stub {
         /// declare no reusable configuration class.
         class StubConfiguration : public srt::ContribConfiguration {
         public:
-            explicit StubConfiguration(srt::ContribTriplet triplet)
+            explicit StubConfiguration(srt::ContribContractTriplet triplet)
                 : ContribConfiguration(std::move(triplet)) {
             }
 
@@ -213,7 +213,7 @@ namespace wolf::stub {
     srt::Expected<std::unique_ptr<srt::ContribConfiguration>>
         StubG2pInterpreter::createConfiguration(const srt::ContribSpec &spec) const {
         auto result = std::make_unique<StubConfiguration>(
-            srt::ContribTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, m_variant));
+            srt::ContribContractTriplet(G2pApi::API_INTERFACE, G2pApi::API_LEVEL, m_variant));
         if (spec.manifestConfiguration().isObject()) {
             const auto &object = spec.manifestConfiguration().toObject();
             if (const auto it = object.find("dropWords"); it != object.end()) {

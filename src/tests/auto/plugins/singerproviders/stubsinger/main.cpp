@@ -16,9 +16,9 @@ namespace wolf::stub {
         class StubSingerPlugin final : public srt::SingerProviderPlugin {
         public:
             srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
-                create(const srt::ContribTriplet &triplet) override {
-                if (triplet !=
-                    srt::ContribTriplet(std::string(INTERFACE), LEVEL, std::string(VARIANT))) {
+                create(const srt::ContribContractTriplet &triplet) override {
+                if (triplet != srt::ContribContractTriplet(std::string(INTERFACE), LEVEL,
+                                                           std::string(VARIANT))) {
                     return srt::Error(srt::Error::InvalidArgument,
                                       "unsupported stub singer contract: " + triplet.toString());
                 }
