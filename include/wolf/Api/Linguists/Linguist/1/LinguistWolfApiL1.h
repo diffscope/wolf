@@ -4,6 +4,7 @@
 #include <wolf/Api/Linguists/Linguist/1/LinguistApiL1.h>
 
 namespace wolf::Api::Linguist::L1::Wolf {
+
     /// Identifies the wolf implementation of the linguist contract.
     inline const srt::ContribContractTriplet Triplet{Contract, "wolf"};
 
@@ -13,6 +14,7 @@ namespace wolf::Api::Linguist::L1::Wolf {
         Configuration() : ContribConfiguration(Triplet) {
         }
     };
+
 }
 
 #endif // WOLF_API_LINGUISTS_LINGUIST_1_LINGUISTWOLFAPIL1_H
