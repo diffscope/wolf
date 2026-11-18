@@ -63,8 +63,6 @@ namespace wolf::Api::Linguist::L1 {
         bool openSet = false;
     };
 
-
-
     /// Options supplied when another contribution imports a linguist composition.
     ///
     /// Level 1 defines no vocabulary. The composition already declares its pair, and the import
@@ -364,8 +362,6 @@ namespace srt {
 }
 
 namespace wolf::Api::Linguist::L1 {
-
-
 
     // Defined after the traits specialization above, which the lookup instantiates.
     inline WolfPipelineExtension *WolfPipelineExtension::from(const srt::SingerSpec &singer) {
