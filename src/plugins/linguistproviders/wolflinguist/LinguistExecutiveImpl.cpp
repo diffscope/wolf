@@ -76,9 +76,10 @@ namespace wolf {
     }
 
     LinguistExecutiveImpl::~LinguistExecutiveImpl() {
-        // Waits before any member that runBatch() reads is destroyed. The base class waits again
-        // in its destructor, but the fields of this class are already destroyed at that point.
-        finish();
+        // Stops and waits before any member that runBatch() reads is destroyed. The base class
+        // repeats the barrier in its destructor, but the fields of this class are then destroyed.
+        (void) quit();
+        (void) wait();
     }
 
     const Api::Common::L1::LanguageScheme &LinguistExecutiveImpl::binding() const noexcept {

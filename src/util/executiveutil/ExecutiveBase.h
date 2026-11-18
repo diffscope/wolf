@@ -37,8 +37,8 @@ namespace wolf {
     /// \par Destruction
     /// A base class destructor runs after the members of the derived class are destroyed, and
     /// this class therefore cannot wait for a run on their behalf. A derived class whose
-    /// runBatch() reads its own members calls finish() at the start of its destructor. This
-    /// destructor also waits, which covers a derived class without such members.
+    /// runBatch() reads its own members calls quit() and then wait() at the start of its
+    /// destructor. This destructor repeats the barrier for a derived class without such members.
     ///
     /// This header is internal to the repository and is not installed.
     template <class Base, class Input, class Result>
@@ -61,6 +61,9 @@ namespace wolf {
 
     protected:
         srt::Expected<void> quit() override {
+            if (m_task.state() != srt::ITask::Running) {
+                return {};
+            }
             m_stopRequested = true;
             onStop();
             return m_task.stop();
@@ -81,7 +84,8 @@ namespace wolf {
         }
 
         ~ExecutiveBase() {
-            (void) m_task.waitForFinished();
+            (void) quit();
+            (void) wait();
         }
 
         /// Executes the body of one run. It is called on the thread that runs the task and never
@@ -106,12 +110,6 @@ namespace wolf {
         /// Returns the flag itself, for a callee that polls it at its own boundaries.
         const std::atomic_bool &stopFlag() const noexcept {
             return m_stopRequested;
-        }
-
-        /// Waits for a run in progress to return. A derived class whose runBatch() reads its own
-        /// members calls this first in its destructor.
-        void finish() {
-            (void) m_task.waitForFinished();
         }
 
     private:

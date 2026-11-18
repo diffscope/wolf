@@ -1,10 +1,8 @@
 #ifndef WOLF_EXECUTIVEUTIL_EXECUTIVETASK_H
 #define WOLF_EXECUTIVEUTIL_EXECUTIVETASK_H
 
-#include <condition_variable>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <utility>
 
 #include <synthrt/Task/ITask.h>
@@ -47,48 +45,10 @@ namespace wolf {
 
         ~ExecutiveTask() = default;
 
-        /// \name Untyped ITask interface
-        /// \{
-        srt::Expected<std::unique_ptr<srt::TaskResult>>
-            start(const srt::TaskStartInput &input) override {
-            // Counted, so that waitForFinished() on another thread also waits for a run on the
-            // calling thread and not only for the worker. A package unload reaches an executive
-            // through wait(), and the session runs conversions synchronously.
-            SyncRun running(*this);
-            setState(Running);
-            auto result = m_body(static_cast<const Input &>(input));
-            if (!result) {
-                setState(Failed);
-                // The cancelled callback runs after every run, a failed one included: it calls
-                // onSettled(), which the base class documents as running once after every run, and
-                // it consumes the stop flag. Consuming it here is what keeps a stop that arrived
-                // during this run from cancelling the next one.
-                (void) m_cancelled();
-                return result.takeError();
-            }
-            setState(m_cancelled() ? Canceled : Succeeded);
-            return std::unique_ptr<srt::TaskResult>(result.take().release());
-        }
-
-        srt::Expected<void> stop() override {
-            // Also recorded for the default asynchronous execution, so that a stop delivered while
-            // a worker is running sets the final state to Canceled instead of Succeeded.
-            requestAsyncCancellation();
-            return {};
-        }
-
-        srt::Expected<void> waitForFinished() override {
-            waitForAsyncExecution();
-            std::unique_lock<std::mutex> lock(m_syncMutex);
-            m_syncDone.wait(lock, [this] { return m_syncRuns == 0; });
-            return {};
-        }
-        /// \}
-
         /// \name Typed interface exposed by the executives
         /// \{
         srt::Expected<std::unique_ptr<Result>> run(const Input &input) {
-            auto result = start(static_cast<const srt::TaskStartInput &>(input));
+            auto result = ITask::start(input);
             if (!result) {
                 return result.takeError();
             }
@@ -103,7 +63,7 @@ namespace wolf {
             // The null input check, the rejection of a second concurrent execution and the
             // exception guard are implemented in ITask::startAsync. This function only restores
             // the static types.
-            return ITask::startAsync(
+            return srt::ITask::startAsync(
                 std::static_pointer_cast<const srt::TaskStartInput>(std::move(input)),
                 [callback = std::move(callback)](
                     srt::Expected<std::unique_ptr<srt::TaskResult>> result) mutable {
@@ -117,31 +77,24 @@ namespace wolf {
         }
         /// \}
 
+    protected:
+        srt::Expected<std::unique_ptr<srt::TaskResult>>
+            execute(const srt::TaskStartInput &input) override {
+            return m_body(static_cast<const Input &>(input));
+        }
+
+        State classifyOutcome(
+            const srt::Expected<std::unique_ptr<srt::TaskResult>> &outcome) noexcept override {
+            const bool stopped = m_cancelled();
+            if (!outcome) {
+                return Failed;
+            }
+            return stopped ? Canceled : Succeeded;
+        }
+
     private:
-        /// Marks one synchronous run for the duration of start().
-        class SyncRun {
-        public:
-            explicit SyncRun(ExecutiveTask &task) : m_task(task) {
-                std::lock_guard<std::mutex> lock(m_task.m_syncMutex);
-                ++m_task.m_syncRuns;
-            }
-            ~SyncRun() {
-                {
-                    std::lock_guard<std::mutex> lock(m_task.m_syncMutex);
-                    --m_task.m_syncRuns;
-                }
-                m_task.m_syncDone.notify_all();
-            }
-
-        private:
-            ExecutiveTask &m_task;
-        };
-
         Body m_body;
         Cancelled m_cancelled;
-        std::mutex m_syncMutex;
-        std::condition_variable m_syncDone;
-        int m_syncRuns = 0;
     };
 
 }

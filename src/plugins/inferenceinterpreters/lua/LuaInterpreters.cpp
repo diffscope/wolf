@@ -137,7 +137,8 @@ namespace wolf::lua {
             }
 
             ~S2pExecutive() {
-                finish();
+                (void) quit();
+                (void) wait();
             }
 
             srt::Expected<void> initialize(const S2pApi::InitArgs &) override {
@@ -193,7 +194,8 @@ namespace wolf::lua {
             }
 
             ~OnsetExecutive() {
-                finish();
+                (void) quit();
+                (void) wait();
             }
 
             srt::Expected<void> initialize(const OnsetApi::InitArgs &) override {

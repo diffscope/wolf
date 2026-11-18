@@ -49,7 +49,8 @@ namespace wolf::onset {
             }
 
             ~Executive() {
-                finish();
+                (void) quit();
+                (void) wait();
             }
 
             srt::Expected<void> initialize(const OnsetApi::InitArgs &) override {

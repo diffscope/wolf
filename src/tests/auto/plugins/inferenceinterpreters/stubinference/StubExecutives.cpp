@@ -103,7 +103,8 @@ namespace wolf::stub {
             }
 
             ~StubG2pExecutive() {
-                finish();
+                (void) quit();
+                (void) wait();
             }
 
             srt::Expected<void> initialize(const G2pApi::InitArgs &) override {

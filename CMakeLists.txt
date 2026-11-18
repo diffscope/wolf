@@ -9,8 +9,11 @@ cmake_minimum_required(VERSION 3.19)
 # 0.2.0.0 makes the pronunciation layer a reported property of a composition: the pipeline extension
 # gained the pure virtual function hasSeparatePronunciationLayer, and the public value types
 # LanguageStatus and LanguageEntry each gained one field.
+#
+# 0.3.0.0 unifies Task cancellation and callback semantics with synthrt and adds the wolf error
+# category.
 project(synthrt-wolf
-    VERSION 0.2.0.0
+    VERSION 0.3.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
     HOMEPAGE_URL "https://github.com/diffscope/wolf"

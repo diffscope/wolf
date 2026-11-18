@@ -383,13 +383,8 @@ end
     executive->reset();
 }
 
-/// A stop request applies to the running execution, or to the next execution if none is running;
-/// the linguist executive above these variants follows the same rule. A request received while
-/// nothing is running cancels the next batch and is consumed by that batch, so the following batch
-/// runs normally. The linguist executive detects a stage cancelled by a request that the linguist
-/// executive did not issue and runs the stage again, so that a stop left over from an earlier
-/// conversion does not affect a later conversion.
-BOOST_AUTO_TEST_CASE(test_LuaInterpreters_AStopWithNothingRunningCancelsTheNextRunOnce) {
+/// A stop with no conversion running is a no-op. It must not poison the next conversion.
+BOOST_AUTO_TEST_CASE(test_LuaInterpreters_AStopWithNothingRunningIsIgnored) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("carry", "S2P", R"(
 function s2p(pronunciation)
@@ -409,11 +404,6 @@ end
 
     S2pApi::StartInput input;
     input.pronunciations.push_back("a");
-    auto cancelled = s2p->start(input);
-    BOOST_REQUIRE(cancelled);
-    BOOST_CHECK(s2p->state() == srt::ITask::Canceled);
-    BOOST_CHECK((*cancelled)->phonemes.empty());
-
     auto result = s2p->start(input);
     BOOST_REQUIRE(result);
     BOOST_CHECK(s2p->state() == srt::ITask::Succeeded);

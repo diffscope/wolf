@@ -106,3 +106,4 @@ BOOST_AUTO_TEST_CASE(a_stop_during_a_successful_run_reports_canceled) {
     BOOST_REQUIRE(fixture.task.run(TestInput(2)));
     BOOST_TEST(fixture.task.state() == srt::ITask::Succeeded);
 }
+

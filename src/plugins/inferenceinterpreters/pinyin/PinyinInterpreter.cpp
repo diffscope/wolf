@@ -68,7 +68,8 @@ namespace wolf::pinyin {
             }
 
             ~Executive() {
-                finish();
+                (void) quit();
+                (void) wait();
             }
 
             srt::Expected<void> initialize(const G2pApi::InitArgs &) override {
