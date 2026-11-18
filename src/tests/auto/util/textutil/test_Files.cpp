@@ -11,6 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 namespace {
+
     struct TemporaryDirectory {
         std::filesystem::path path =
             std::filesystem::temp_directory_path() /
@@ -31,6 +32,7 @@ namespace {
             return result;
         }
     };
+
 }
 
 BOOST_AUTO_TEST_CASE(file_errors_distinguish_missing_from_unreadable_paths) {

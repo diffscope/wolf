@@ -16,7 +16,9 @@
 #include <wolf/wolf_global.h>
 
 namespace srt {
+
     class SynthUnit;
+
 }
 
 namespace wolf {

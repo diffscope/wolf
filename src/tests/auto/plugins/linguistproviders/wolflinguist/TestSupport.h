@@ -13,6 +13,7 @@
 #include <wolf/Api/Linguists/Linguist/1/LinguistWolfApiL1.h>
 
 namespace {
+
     class ProviderPlugin : public wolf::LinguistProviderPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -46,6 +47,7 @@ namespace {
             return *imported->binding()->target().as<wolf::LinguistSpec>();
         }
     };
+
 }
 
 #endif // WOLF_TESTS_PLUGINS_LINGUISTPROVIDERS_WOLFLINGUIST_TESTSUPPORT_H

@@ -11,6 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 namespace {
+
     struct TemporaryDirectory {
         std::filesystem::path path =
             std::filesystem::temp_directory_path() /
@@ -31,6 +32,7 @@ namespace {
             return result;
         }
     };
+
 }
 
 BOOST_AUTO_TEST_CASE(registry_rejects_unknown_dialects_and_missing_dictionaries) {

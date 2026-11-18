@@ -10,6 +10,7 @@
 #include <boost/test/unit_test.hpp>
 
 namespace {
+
     struct Models {
         std::filesystem::path root =
             std::filesystem::temp_directory_path() /
@@ -28,6 +29,7 @@ namespace {
             BOOST_REQUIRE(stream.good());
         }
     };
+
 }
 
 BOOST_AUTO_TEST_CASE(model_resolution_uses_bundle_names_and_reports_missing_files) {

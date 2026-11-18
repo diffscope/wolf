@@ -13,6 +13,7 @@
 #include <boost/test/unit_test.hpp>
 
 namespace {
+
     class Input : public srt::TaskStartInput {
     public:
         Input() : TaskStartInput("test", 1) {
@@ -79,6 +80,7 @@ namespace {
             ++settled;
         }
     };
+
 }
 
 BOOST_AUTO_TEST_CASE(stop_while_idle_does_not_cancel_the_next_run) {
