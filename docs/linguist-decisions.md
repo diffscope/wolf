@@ -1259,7 +1259,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 | Q4 | wolf 打包期 lint 工具是否单独立项 | **已定**：不单独立项，由 `scripts/check-declarations.py` 承担，并由 `make-lang-release.py` 在打包前调用。schema 一致性与 §12 中只依赖声明的三项（未引用的 import、贡献 ID 惯例、S2P 表内容级恒等）已接入；另两项需要外部音素表，归编辑器运行期 |
 | Q5 | DiffSinger 歌手 `configuration` 仍强制要求 `dict` 路径（`dsinfer/plugins/singerproviders/diffsinger/DiffSingerProvider.cpp:171-185`），属旧 G2P 栈遗留 | 语言域迁移完成后应退役，不在本轮范围内 |
 | Q6 | A11 的上游合并时点 | **已落地**于 synthrt 分支 `onnxruntime-builds-uptake`（A26 补记），端口固定在该分支上；并入 synthrt main 有待上游 |
-| Q7 | `srt::ITask::startAsync` 的 `finish()` 在**释放互斥量之后**才调用 `notify_all()`，等待方因此可能在通知进行中析构条件变量。TSan 在 `test_LinguistRuntime` 中报告一处，但整条调用栈都位于未插桩的 `libsynthrt.so` 内，与既有的 `libonnxruntime.so` 报告同类；按 `shared_ptr` 引用计数推演存在合法的 happens-before 关系，因此**倾向于判定为误报**。定论需要一个插桩的 synthrt 构建 | 上游，待定论 |
+| Q7 | 旧 `srt::ITask::startAsync` 在 `finish()` 中释放互斥量后才通知等待方。2026-11-18 以插桩的 synthrt、stdcorelib 与 stdcorelib-plugin 连续执行新 `test_ITask` 100 次，12 个用例、70 条断言无 TSan 报告。新执行内核没有旧 `finish()` 路径，相关状态由 `TaskExecution` 的互斥量与条件变量保护 | **已关闭** |
 | Q8 | S2P 层形状的内容级例外（`dict`/`mapping` 表逐行恒等、`lua` 脚本恒等）：运行期按变体名判定，前两者由 `check-declarations.py` 报警，`lua` 一律按独立层。变体清单在 C++（`S2pApiL1.h` 的 `variantKeepsSymbols()`）、Python lint 与变体文档 §5.0.2 三处各有一份，新增读表变体时**须三处同改**，无脚本交叉校验 | **已定，可复议**（A81）。若将来出现此类声明，再评估新增显式声明字段（需动两份 schema 与 `ContractValues` 白名单） |
 
 ---

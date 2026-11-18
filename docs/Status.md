@@ -61,6 +61,7 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 | 完整构建 | CTest 注册 **22** 个测试二进制、**167** 个用例（`src/tests/auto` 中的 `BOOST_AUTO_TEST_CASE`）——这两个数是权威，其它文档引用它们时只写指针。插件重构之前的 20 个二进制曾在 `-j8` 满负载下连续运行 12 轮，结果稳定 |
 | 最小构建（`-DWOLF_DISABLE_DSINFER=ON -DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaInterpreters` 与 `test_MultiG2pInterpreter`）全部通过；现行该配置为 18 个，被排除的四个见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt` 的注册条件，以及 `src/plugins/inferenceinterpreters/CMakeLists.txt` 对 lua 与 multig2p 两个插件的构建条件 |
 | ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2pInterpreter`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
+| Task TSan 复核 | 2026-11-18 以插桩的 synthrt、stdcorelib 与 stdcorelib-plugin 连续执行 `test_ITask` 100 次，12 个用例、70 条断言无报告。旧 `finish()` 通知路径已不存在，Q7 关闭 |
 | 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，当时的 17 个测试二进制以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(synthrt-wolf)` 并链接；检查 `synthrt::wolf` 目标与安装包中不含 Support 头文件，检查导入的插件目标，并运行程序，检查这些目标所在的两个类别目录。把私有依赖放回公开链接接口时，配置期断言即失败 |
 | 版本区间 | 消费者夹具钉在修订 2，由安装的修订 3 供给：解析结果版本为 `1.0.0.3`，请求侧不是该版本（A68；用例为 `test_LinguistLoad.cpp` 的 `ServesAConsumerPinnedToAnOlderRevision`） |
@@ -108,7 +109,6 @@ M5 剩余项：`eng` / `por` / `kor` / `ita` 四种语言已构成完整的语�
 | # | 内容 | 归属 |
 | :-- | :-- | :-- |
 | **P7** | `deu` / `fra` / `spa` / `rus` / `fil` 五种语言的 `scheme` 命名。其余七种已定（A27 / A45 / A49）；这五种的现有证据不足以确定有依据的名称，暂用 `ds` 占位 | 需要生态知识，**已搁置** |
-| Q7 | 旧 `srt::ITask::startAsync` 内部 `finish()` 的顺序报告。统一 Task 内核已重写 callback/generation 生命周期和通知路径，旧形态不再存在；仍需在有插桩 synthrt 的环境中复跑 TSan 才能关闭历史报告 | 上游 |
 | P5 | `.dspk` 单文件形态，待 synthrt main 支持解压后再议 | 上游 |
 | P6 | 旧声库 manifest 的 `g2pPackageVersion` / `g2pPackages` 映射 | 迁移期 |
 | Q1 | 未被 `languages` 引用的 linguist import：现定为编辑期 lint 警告，不判加载失败 | 已定，可复议 |
