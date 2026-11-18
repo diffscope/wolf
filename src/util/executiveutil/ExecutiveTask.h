@@ -4,7 +4,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <system_error>
 #include <utility>
 
 #include <synthrt/Task/ITask.h>
@@ -67,7 +66,7 @@ namespace wolf {
             // The null input check, the rejection of a second concurrent execution and the
             // exception guard are implemented in ITask::startAsync. This function only restores
             // the static types.
-            return srt::ITask::startAsync(
+            auto started = srt::ITask::startAsync(
                 std::static_pointer_cast<const srt::TaskStartInput>(std::move(input)),
                 [callback = std::move(callback)](
                     srt::Expected<std::unique_ptr<srt::TaskResult>> result) mutable {
@@ -78,17 +77,21 @@ namespace wolf {
                     callback(
                         std::unique_ptr<Result>(static_cast<Result *>(result.take().release())));
                 });
+            if (!started) {
+                return started.takeError();
+            }
+            return {};
         }
         /// \}
 
     protected:
         srt::Expected<std::unique_ptr<srt::TaskResult>>
-            execute(const srt::TaskStartInput &input) override {
+            execute(const srt::TaskStartInput &input, const srt::TaskStopToken &) override {
             return m_body(static_cast<const Input &>(input));
         }
 
-        State classifyOutcome(
-            const srt::Expected<std::unique_ptr<srt::TaskResult>> &outcome) noexcept override {
+        State classifyOutcome(const srt::Expected<std::unique_ptr<srt::TaskResult>> &outcome,
+                              bool) noexcept override {
             const bool stopped = m_cancelled();
             if (!outcome) {
                 return Failed;
@@ -96,9 +99,12 @@ namespace wolf {
             return stopped ? Canceled : Succeeded;
         }
 
-        srt::Error workerStartError(const std::system_error &error) const override {
-            return srt::Error(ErrorCode::NoWorker,
-                              "no worker thread could be started: " + std::string(error.what()));
+        srt::Expected<void> startWorker(std::function<void()> work) override {
+            auto started = srt::ITask::startWorker(std::move(work));
+            if (!started) {
+                return srt::Error(ErrorCode::NoWorker, started.error().message());
+            }
+            return {};
         }
 
     private:

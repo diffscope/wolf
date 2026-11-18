@@ -1,6 +1,5 @@
 #include <atomic>
 #include <memory>
-#include <system_error>
 
 #include <synthrt/Support/Error.h>
 #include <synthrt/Task/ITask.h>
@@ -71,9 +70,8 @@ namespace {
         }
 
     protected:
-        void startWorker(std::function<void()>) override {
-            throw std::system_error(std::make_error_code(std::errc::resource_unavailable_try_again),
-                                    "no worker for the test");
+        srt::Expected<void> startWorker(std::function<void()>) override {
+            return srt::Error(wolf::ErrorCode::NoWorker, "no worker for the test");
         }
     };
 
