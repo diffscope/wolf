@@ -198,8 +198,6 @@ namespace wolf::Api::Linguist::L1 {
                                                AsyncCallback callback) = 0;
 
         virtual srt::ITask::State state() const noexcept = 0;
-        virtual srt::Expected<void> stop() = 0;
-        virtual srt::Expected<void> waitForFinished() = 0;
 
         /// \name Executive level diagnostics
         ///

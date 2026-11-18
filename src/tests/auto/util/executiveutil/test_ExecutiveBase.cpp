@@ -27,8 +27,18 @@ namespace {
         virtual srt::Expected<std::unique_ptr<Result>> start(const Input &) = 0;
         virtual srt::Expected<void> startAsync(std::shared_ptr<const Input>, AsyncCallback) = 0;
         virtual srt::ITask::State state() const noexcept = 0;
-        virtual srt::Expected<void> stop() = 0;
-        virtual srt::Expected<void> waitForFinished() = 0;
+
+        srt::Expected<void> stop() {
+            return quit();
+        }
+
+        srt::Expected<void> waitForFinished() {
+            return wait();
+        }
+
+    protected:
+        virtual srt::Expected<void> quit() = 0;
+        virtual srt::Expected<void> wait() = 0;
     };
     class Executive : public wolf::ExecutiveBase<Contract, Input, Result> {
     public:

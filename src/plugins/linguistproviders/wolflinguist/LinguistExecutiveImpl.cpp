@@ -103,14 +103,6 @@ namespace wolf {
         }
     }
 
-    srt::Expected<void> LinguistExecutiveImpl::quit() {
-        return stop();
-    }
-
-    srt::Expected<void> LinguistExecutiveImpl::wait() {
-        return waitForFinished();
-    }
-
     template <class Stage, class Input>
     auto LinguistExecutiveImpl::runStage(Stage &stage, const Input &input)
         -> decltype(stage.start(input)) {

@@ -19,10 +19,9 @@ namespace wolf {
     /// or LinguistExecutive), and a derived class supplies runBatch() and every member that its
     /// contract declares beyond the task interface, such as initialize().
     ///
-    /// The quit() and wait() hooks of srt::InferenceExecutive are deliberately not overridden by
-    /// the executives of this repository: srt::InferenceExecutive already forwards them to stop()
-    /// and waitForFinished(), which is the path by which a package unload stops a running
-    /// conversion. Overriding them to return {} would silently disable that path (A75).
+    /// The protected quit() and wait() hooks stop and wait for the task that this class owns.
+    /// srt::ContribExecutive exposes them through recursive public stop() and waitForFinished()
+    /// calls, which are also the path by which a package unload stops a running conversion.
     ///
     /// \par Stopping
     /// stop() sets the flag, calls onStop() and requests that the task record the stop.
@@ -60,17 +59,17 @@ namespace wolf {
             return m_task.state();
         }
 
-        srt::Expected<void> stop() override {
+    protected:
+        srt::Expected<void> quit() override {
             m_stopRequested = true;
             onStop();
             return m_task.stop();
         }
 
-        srt::Expected<void> waitForFinished() override {
+        srt::Expected<void> wait() override {
             return m_task.waitForFinished();
         }
 
-    protected:
         template <class... Args>
         explicit ExecutiveBase(Args &&...args)
             : Base(std::forward<Args>(args)...),

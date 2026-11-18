@@ -29,14 +29,6 @@ namespace wolf {
         const srt::ContribLocator &g2pContribution() const noexcept override;
 
     protected:
-        /// Stops the in-flight conversion of this executive. The supervision tree stops the
-        /// children by walking down from this executive, so this function must not recurse.
-        srt::Expected<void> quit() override;
-
-        /// Waits for the conversion to finish, so that unloading a Package waits for running work
-        /// instead of returning while the work is still running.
-        srt::Expected<void> wait() override;
-
         /// Runs one conversion. The ExecutiveTask behind this executive sets the task state and
         /// owns the worker thread; this function performs only the conversion.
         Batch runBatch(const Api::Linguist::L1::ConvertInput &input) override;
