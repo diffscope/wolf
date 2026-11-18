@@ -28,6 +28,7 @@ wolf_add_test(util/linguistutil/test_InputRules.cpp synthrt-wolf linguistutil)
 wolf_add_test(util/linguistutil/test_ContractValues.cpp synthrt-wolf linguistutil)
 wolf_add_test(util/textutil/test_Files.cpp synthrt-wolf textutil)
 wolf_add_test(Support/test_ResourceCache.cpp synthrt-wolf)
+wolf_add_test(Support/test_ErrorCode.cpp synthrt-wolf)
 if(TARGET test_ResourceCache)
     # The test reads the private state of the cache through the probe class that ResourceCache
     # declares as a friend.

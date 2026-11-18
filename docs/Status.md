@@ -35,7 +35,9 @@ wolf 在 synthrt spec 2.4 之上建立开放的**语言域**：注册 `linguist`
 
 **契约开放位**：`exports.openSet` 表示清单是否为全集（域契约 §4.0），其取值由打包 lint 从链的兜底步推导；Onset 缺席时逐位为 `false`（域契约 §5.0）；空词判为 `skip`、含空白的词判为 `InvalidInput`，这两条规则集中在 `wolf::classifyLyric()`，由三个 G2P 变体共用。
 
-**任务面**：十一个执行体均持有 `srt::ITask` 并转发任务面调用（`wolf::ExecutiveTask`，A75）。`waitForFinished()` 阻塞至转换结束，第二次并发的 `startAsync` 被拒绝，卸载包时等待转换结束。转发逻辑与停止标志只实现一次，位于 `wolf::ExecutiveBase<Base, Input, Result>`（`src/util/executiveutil/ExecutiveBase.h`，不安装）：各执行体只实现 `runBatch()`，按需覆盖 `onStop()`（脚本变体在此中断解释器，linguist 执行体在此停止子执行体）与 `onSettled()`，并在各自的析构函数中先调用 `finish()`。
+**任务面**：十一个执行体均使用 synthrt 的统一 `srt::ITask` claim、generation、callback 和等待内核。同步与异步入口互斥，`stop()` 只影响已经建立的 claim，空闲取消不会污染下一次执行；callback 可以启动下一次执行、销毁执行体或被安全捕获异常。`wolf::ExecutiveTask` 只保留 body 与部分结果取消分类，`wolf::ExecutiveBase<Base, Input, Result>` 只保留停止标志、`onStop()` 和 `onSettled()` 钩子。各执行体实现 `runBatch()`，析构时调用 `quit()` 和 `wait()`。
+
+wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。当前 `NoWorker` 用于异步 worker 创建失败，`ResourceInvalid` 用于资源解析器违反返回错误的约定；synthrt 的格式、参数与文件错误继续使用 synthrt 错误域。
 
 **降级**：`linguist/s2p` 可以缺席，此时该语言的最大深度为 `Pronunciation`（域契约 §5.0.1）；`LanguageStatus` 提供 `maxDepth`、`hasSeparatePronunciationLayer`（发音层是否独立于音素层，域契约 §5.0.2、A81）与音素覆盖度，门限由宿主决定。唯一的例外是清单声明为全集而声库不支持其中任何音素的情形，会话直接将其判为不可用（A70）。
 
@@ -106,7 +108,7 @@ M5 剩余项：`eng` / `por` / `kor` / `ita` 四种语言已构成完整的语�
 | # | 内容 | 归属 |
 | :-- | :-- | :-- |
 | **P7** | `deu` / `fra` / `spa` / `rus` / `fil` 五种语言的 `scheme` 命名。其余七种已定（A27 / A45 / A49）；这五种的现有证据不足以确定有依据的名称，暂用 `ds` 占位 | 需要生态知识，**已搁置** |
-| Q7 | `srt::ITask::startAsync` 中的 `finish()` 在释放互斥量之后才调用 `notify_all()`；TSan 报告一处，但调用栈全部位于未插桩的 `libsynthrt.so` 内，倾向于误报，定论需要插桩构建的 synthrt | 上游 |
+| Q7 | 旧 `srt::ITask::startAsync` 内部 `finish()` 的顺序报告。统一 Task 内核已重写 callback/generation 生命周期和通知路径，旧形态不再存在；仍需在有插桩 synthrt 的环境中复跑 TSan 才能关闭历史报告 | 上游 |
 | P5 | `.dspk` 单文件形态，待 synthrt main 支持解压后再议 | 上游 |
 | P6 | 旧声库 manifest 的 `g2pPackageVersion` / `g2pPackages` 映射 | 迁移期 |
 | Q1 | 未被 `languages` 引用的 linguist import：现定为编辑期 lint 警告，不判加载失败 | 已定，可复议 |

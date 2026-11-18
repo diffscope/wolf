@@ -3,9 +3,13 @@
 
 #include <functional>
 #include <memory>
+#include <string>
+#include <system_error>
 #include <utility>
 
 #include <synthrt/Task/ITask.h>
+
+#include <wolf/Support/ErrorCode.h>
 
 namespace wolf {
 
@@ -90,6 +94,11 @@ namespace wolf {
                 return Failed;
             }
             return stopped ? Canceled : Succeeded;
+        }
+
+        srt::Error workerStartError(const std::system_error &error) const override {
+            return srt::Error(ErrorCode::NoWorker,
+                              "no worker thread could be started: " + std::string(error.what()));
         }
 
     private:

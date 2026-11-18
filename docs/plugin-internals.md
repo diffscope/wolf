@@ -22,7 +22,7 @@
 
 ## 2. 骨架与构建 [现状]
 
-六个推理解释器插件结构相同：`Configuration : srt::ContribConfiguration`、`Executive : ExecutiveBase<XxxApi::XxxExecutive, Input, Result>`（任务面与停止标志位于基类，执行体只实现 `runBatch()`，并在析构函数中先调用 `finish()`）、`Interpreter : srt::InferenceInterpreter`、插件类。解释器类声明在插件目录的 `<X>Interpreter.h`（lua 有两个解释器，放在 `LuaInterpreters.h`），成员函数的定义连同配置与执行体放在同名的 `.cpp`。配置与执行体位于匿名命名空间，只由解释器创建，测试经 `createInference()` 够到它们。`main.cpp` 只放插件类，插件类在 `create()` 中判定三元组。
+六个推理解释器插件结构相同：`Configuration : srt::ContribConfiguration`、`Executive : ExecutiveBase<XxxApi::XxxExecutive, Input, Result>`（统一的任务面位于 `srt::ITask`，wolf 基类只保留停止标志和 `onStop()` / `onSettled()` 钩子，执行体实现 `runBatch()`，并在析构函数中先调用 `quit()` 和 `wait()`）、`Interpreter : srt::InferenceInterpreter`、插件类。解释器类声明在插件目录的 `<X>Interpreter.h`（lua 有两个解释器，放在 `LuaInterpreters.h`），成员函数的定义连同配置与执行体放在同名的 `.cpp`。配置与执行体位于匿名命名空间，只由解释器创建，测试经 `createInference()` 够到它们。`main.cpp` 只放插件类，插件类在 `create()` 中判定三元组。
 
 连同 linguist provider，七个插件的 CMake 一律经 `wolf_add_interpreter_plugin(<target> [LINKS ...] [LINKS_PRIVATE ...])`（`src/plugins/CMakeLists.txt`）声明。它以 `wolf_add_plugin()` 声明插件，再组合 synthrt 的 `${SYNTHRT_MODULES_DIR}/AddPlugin.cmake` 提供的 `synthrt_add_plugin_objects()`、`synthrt_configure_plugin_manifest()` 与 stdcorelib-plugin 的 `stdc_add_plugin_metadata()`，以所在目录名为插件名与 include 命名空间：类别目录是 include 根，头文件之间写 `<multig2p/Bundle.h>`，源文件引用本插件的头文件仍用引号，仓库内的插件目录不得重名。`main.cpp` 以外的源编成 OBJECT 库 `<target>_objects`，由插件与测试共用。插件元数据、`plugin.json` 在构建树中的配置期复制及其安装也由这几步完成。`LINKS` 给头文件用到的依赖（multig2p 的 `Decoder.h` 用到 dsinfer），`LINKS_PRIVATE` 给只有源文件用到的依赖。插件安装在 `lib/synthrt-wolf/plugins/<category>/<name>/`，构建树布局相同。统一骨架因此不是待办项，本文只规定骨架之上容易出现偏差的部分。
 

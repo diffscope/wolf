@@ -24,6 +24,8 @@
 
 #include <synthrt/Support/Expected.h>
 
+#include <wolf/Support/ErrorCode.h>
+
 #include <wolf/Support/ResourceCache.h>
 
 namespace wolf {
@@ -140,7 +142,7 @@ namespace wolf {
                 Outcome failed;
                 // A parser is provider code, and a parser that throws violates the contract that
                 // requires it to report failures through its result.
-                failed.error = srt::Error(srt::Error::InvalidFormat,
+                failed.error = srt::Error(ErrorCode::ResourceInvalid,
                                           stdc::path::to_utf8(m_path) +
                                               ": the parser of this resource raised an exception");
                 settle(std::move(failed), {});

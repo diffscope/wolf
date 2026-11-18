@@ -1,10 +1,12 @@
 #include <atomic>
 #include <memory>
+#include <system_error>
 
 #include <synthrt/Support/Error.h>
 #include <synthrt/Task/ITask.h>
 
 #include <executiveutil/ExecutiveTask.h>
+#include <wolf/Support/ErrorCode.h>
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
@@ -60,6 +62,21 @@ namespace {
         }
     };
 
+    class WorkerlessTask final : public wolf::ExecutiveTask<TestInput, TestResult> {
+    public:
+        WorkerlessTask()
+            : ExecutiveTask(
+                  [](const TestInput &input) { return std::make_unique<TestResult>(input.value); },
+                  [] { return false; }) {
+        }
+
+    protected:
+        void startWorker(std::function<void()>) override {
+            throw std::system_error(std::make_error_code(std::errc::resource_unavailable_try_again),
+                                    "no worker for the test");
+        }
+    };
+
 }
 
 /// The base class documents the invariant that onSettled() runs and the stop flag is consumed
@@ -107,3 +124,9 @@ BOOST_AUTO_TEST_CASE(a_stop_during_a_successful_run_reports_canceled) {
     BOOST_TEST(fixture.task.state() == srt::ITask::Succeeded);
 }
 
+BOOST_AUTO_TEST_CASE(a_missing_worker_is_a_wolf_error) {
+    WorkerlessTask task;
+    auto started = task.runAsync(std::make_shared<TestInput>(1), [](auto) {});
+    BOOST_REQUIRE(!started);
+    BOOST_CHECK(started.error().code() == wolf::ErrorCode::NoWorker);
+}
