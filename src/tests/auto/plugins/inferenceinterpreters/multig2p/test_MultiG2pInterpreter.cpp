@@ -501,9 +501,10 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RunsOnARuntimeTheHostDeployed) {
         const auto *extension = service->as<ds::InferenceDriver>()->extension();
         BOOST_REQUIRE(extension != nullptr);
         const auto loaded = extension->as<OnnxApi::DriverExtension>()->runtimePath;
-        BOOST_CHECK_MESSAGE(loaded.parent_path() == staged, "the driver loaded " + loaded.string() +
-                                                                " rather than one under " +
-                                                                staged.string());
+        std::error_code equivalentError;
+        BOOST_CHECK_MESSAGE(fs::equivalent(loaded.parent_path(), staged, equivalentError),
+                            "the driver loaded " + loaded.string() + " rather than one under " +
+                                staged.string());
 
         const auto words = convert(unit, "eng", {"hello"});
         BOOST_REQUIRE_EQUAL(words.size(), 1u);
