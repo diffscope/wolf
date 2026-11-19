@@ -130,8 +130,8 @@ namespace wolf {
         return converted;
     }
 
-    template <class Options, class Executive>
-    srt::Expected<Executive *> LinguistExecutiveImpl::createMember(std::string_view role) {
+    template <class Options, class TExecutive>
+    srt::Expected<TExecutive *> LinguistExecutiveImpl::createMember(std::string_view role) {
         const auto import = spec().findImport(role);
         if (!import || !import->binding()) {
             return srt::Error(srt::Error::InvalidFormat,
@@ -143,7 +143,7 @@ namespace wolf {
         if (!child) {
             return child.takeError();
         }
-        return static_cast<Executive *>(child.take());
+        return static_cast<TExecutive *>(child.take());
     }
 
     srt::Expected<Api::G2p::L1::Executive *> LinguistExecutiveImpl::g2p() {

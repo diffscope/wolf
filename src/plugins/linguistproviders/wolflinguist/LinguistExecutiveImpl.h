@@ -59,8 +59,8 @@ namespace wolf {
         ///
         /// \return The created child, or an error if the import is not bound or the child cannot
         /// be created.
-        template <class Options, class Executive>
-        srt::Expected<Executive *> createMember(std::string_view role);
+        template <class Options, class TExecutive>
+        srt::Expected<TExecutive *> createMember(std::string_view role);
 
         srt::Expected<Api::G2p::L1::Executive *> g2p();
         srt::Expected<Api::S2p::L1::Executive *> s2p();
