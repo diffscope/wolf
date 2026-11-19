@@ -121,6 +121,11 @@ BOOST_AUTO_TEST_CASE(stop_during_a_run_is_consumed_after_that_run) {
     BOOST_CHECK_EQUAL(executive.stops, 1);
     BOOST_CHECK_EQUAL(executive.settled, 1);
 
+    // A restart while the callback is still being delivered is refused by contract, and the
+    // promise above only proves that the callback has begun. The barrier is what makes the
+    // restart below deterministic.
+    BOOST_REQUIRE(executive.waitForFinished());
+
     executive.block = false;
     Input input;
     auto next = executive.start(input);
