@@ -59,7 +59,7 @@ namespace wolf::Api::S2p::L1 {
 
     class InitArgs : public srt::InferenceInitArgs {
     public:
-        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
+        InitArgs() : InferenceInitArgs(Contract) {
         }
     };
 
@@ -70,7 +70,7 @@ namespace wolf::Api::S2p::L1 {
     /// a space is a single pronunciation unit.
     class StartInput : public srt::TaskStartInput {
     public:
-        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
+        StartInput() : TaskStartInput(Contract) {
         }
 
         std::vector<std::string> pronunciations;
@@ -83,7 +83,7 @@ namespace wolf::Api::S2p::L1 {
     /// returned by start().
     class Result : public srt::TaskResult {
     public:
-        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
+        Result() : TaskResult(Contract) {
         }
 
         std::vector<std::vector<std::string>> phonemes;

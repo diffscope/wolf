@@ -16,12 +16,12 @@ namespace {
 
     class Input : public srt::TaskStartInput {
     public:
-        Input() : TaskStartInput("test", 1) {
+        Input() : TaskStartInput({"test", 1}) {
         }
     };
     class Result : public srt::TaskResult {
     public:
-        Result() : TaskResult("test", 1) {
+        Result() : TaskResult({"test", 1}) {
         }
         bool stopped = false;
     };

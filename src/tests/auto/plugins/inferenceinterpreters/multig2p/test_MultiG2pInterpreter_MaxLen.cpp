@@ -99,7 +99,7 @@ namespace {
     void registerDriver(ds::InferenceDriverFactory &factory, srt::SynthUnit &unit) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
         factory.setPluginPaths(paths);
-        auto *loader = factory.find(OnnxApi::Name);
+        auto *loader = factory.find(OnnxApi::Contract.name());
         if (loader == nullptr) {
             BOOST_FAIL("the ONNX driver plugin should be present in this tree");
         }

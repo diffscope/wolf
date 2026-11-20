@@ -94,14 +94,14 @@ namespace wolf::Api::G2p::L1 {
 
     class InitArgs : public srt::InferenceInitArgs {
     public:
-        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
+        InitArgs() : InferenceInitArgs(Contract) {
         }
     };
 
     /// One batch of words to convert.
     class StartInput : public srt::TaskStartInput {
     public:
-        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
+        StartInput() : TaskStartInput(Contract) {
         }
 
         std::vector<std::string> lyrics;
@@ -121,7 +121,7 @@ namespace wolf::Api::G2p::L1 {
 
     class Result : public srt::TaskResult {
     public:
-        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
+        Result() : TaskResult(Contract) {
         }
 
         std::vector<WordOutput> words;

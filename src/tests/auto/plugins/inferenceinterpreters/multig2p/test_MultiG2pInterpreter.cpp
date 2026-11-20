@@ -88,7 +88,7 @@ namespace {
                         const fs::path &runtimeDir = fs::path(WOLF_TEST_ONNXRUNTIME_DIR)) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
         factory.setPluginPaths(paths);
-        auto *loader = factory.find(OnnxApi::Name);
+        auto *loader = factory.find(OnnxApi::Contract.name());
         if (loader == nullptr) {
             BOOST_TEST_MESSAGE("no ONNX driver plugin present");
             return false;
@@ -496,7 +496,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RunsOnARuntimeTheHostDeployed) {
         BOOST_REQUIRE(registerDriver(factory, unit, staged));
 
         // The driver reports the library that it opened, which must be the library just deployed.
-        auto *service = unit.runtimeService(ds::InferenceDriverPlugin::IID, OnnxApi::Name);
+        auto *service =
+            unit.runtimeService(ds::InferenceDriverPlugin::IID, OnnxApi::Contract.name());
         BOOST_REQUIRE(service != nullptr);
         const auto *extension = service->as<ds::InferenceDriver>()->extension();
         BOOST_REQUIRE(extension != nullptr);

@@ -17,6 +17,6 @@ BOOST_AUTO_TEST_CASE(linguist_payloads_identify_one_fixed_contract) {
     BOOST_CHECK(configuration.triplet() == Api::Wolf::Triplet);
     Api::ConvertInput input;
     Api::ConvertResult result;
-    BOOST_CHECK_EQUAL(input.type(), Api::Contract.interfaceId());
-    BOOST_CHECK_EQUAL(result.version(), Api::Contract.level());
+    BOOST_CHECK(input.contract() == Api::Contract);
+    BOOST_CHECK(result.contract() == Api::Contract);
 }

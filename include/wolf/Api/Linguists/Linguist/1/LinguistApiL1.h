@@ -129,7 +129,7 @@ namespace wolf::Api::Linguist::L1 {
 
     class ConvertInput : public srt::TaskStartInput {
     public:
-        ConvertInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
+        ConvertInput() : TaskStartInput(Contract) {
         }
 
         std::vector<WordInput> words;
@@ -154,7 +154,7 @@ namespace wolf::Api::Linguist::L1 {
 
     class ConvertResult : public srt::TaskResult {
     public:
-        ConvertResult() : TaskResult(Contract.interfaceId(), Contract.level()) {
+        ConvertResult() : TaskResult(Contract) {
         }
 
         std::vector<WordOutput> words;

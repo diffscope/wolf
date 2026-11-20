@@ -43,14 +43,14 @@ namespace wolf::Api::Onset::L1 {
 
     class InitArgs : public srt::InferenceInitArgs {
     public:
-        InitArgs() : InferenceInitArgs(Contract.interfaceId(), Contract.level()) {
+        InitArgs() : InferenceInitArgs(Contract) {
         }
     };
 
     /// One batch of phoneme sequences.
     class StartInput : public srt::TaskStartInput {
     public:
-        StartInput() : TaskStartInput(Contract.interfaceId(), Contract.level()) {
+        StartInput() : TaskStartInput(Contract) {
         }
 
         std::vector<std::vector<std::string>> phonemes;
@@ -62,7 +62,7 @@ namespace wolf::Api::Onset::L1 {
     /// error, and Level 1 therefore defines no per unit error channel for Onset.
     class Result : public srt::TaskResult {
     public:
-        Result() : TaskResult(Contract.interfaceId(), Contract.level()) {
+        Result() : TaskResult(Contract) {
         }
 
         std::vector<std::vector<bool>> onsets;

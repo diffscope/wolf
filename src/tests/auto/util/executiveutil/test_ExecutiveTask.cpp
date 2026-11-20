@@ -15,7 +15,7 @@ namespace {
     /// The task passes its payloads through as static types, so a test supplies the two.
     class TestInput final : public srt::TaskStartInput {
     public:
-        explicit TestInput(int value) : TaskStartInput("com.example.TestInput", 2), value(value) {
+        explicit TestInput(int value) : TaskStartInput({"com.example.TestInput", 2}), value(value) {
         }
 
         int value;
@@ -23,7 +23,7 @@ namespace {
 
     class TestResult final : public srt::TaskResult {
     public:
-        explicit TestResult(int value) : TaskResult("com.example.TestResult", 3), value(value) {
+        explicit TestResult(int value) : TaskResult({"com.example.TestResult", 3}), value(value) {
         }
 
         int value;
