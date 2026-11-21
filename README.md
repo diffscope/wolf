@@ -96,12 +96,9 @@ Every dependency, including synthrt, is installed through vcpkg from the manifes
 
 Boost.Test is required only to build the tests.
 
-Two variants depend on an external backend and are built only if that backend is present, in the same way as synthrt omits its ONNX driver if ONNX Runtime is absent:
+`multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. dsinfer is a required dependency: wolf links it for the model backend and for the DiffSinger singer exports. The `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`; ONNX Runtime itself comes from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA).
 
-+ `multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. The `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`; ONNX Runtime itself comes from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA).
-+ `lua`, the scripted S2P and Onset variants, requires LuaJIT, which the manifest lists as a plain dependency.
-
-`-DWOLF_DISABLE_DSINFER=ON` and `-DWOLF_DISABLE_LUAJIT=ON` exclude either backend even if it is installed. A build without either backend still loads every package that the shipped plugins support. The test stub always declares a `stub-miscount` variant for the fixtures that violate the provider contract deliberately, and declares `multig2p-onnx` only in a build without dsinfer, so that the loading tests also run in that build. The shipped minimal build contains no stub, and a package that requires the model backend fails to load in it.
+`lua`, the scripted S2P and Onset variants, requires LuaJIT, which the manifest lists as a plain dependency. `-DWOLF_DISABLE_LUAJIT=ON` excludes it even if LuaJIT is installed. The test stub always declares a `stub-miscount` variant for the fixtures that violate the provider contract deliberately.
 
 ## Setup Environment
 

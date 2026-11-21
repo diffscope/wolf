@@ -96,12 +96,9 @@ CMake 3.19 或更高版本，以及 Git，用于检出 vcpkg 及其 overlay。
 
 只有构建测试时才需要 Boost.Test。
 
-有两个变体依赖外部后端，只在该后端存在时构建，与 synthrt 在没有 ONNX Runtime 时跳过它的 ONNX 驱动是同一种做法：
+`multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。dsinfer 是硬依赖：wolf 为模型后端和 DiffSinger singer exports 链接它。`onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。
 
-+ `multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。`onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。
-+ `lua`，脚本化的 S2P 与 Onset 变体，需要 LuaJIT，清单把它列为普通依赖。
-
-`-DWOLF_DISABLE_DSINFER=ON` 与 `-DWOLF_DISABLE_LUAJIT=ON` 即使后端已安装也会排除它。没有任一后端的构建，仍能加载随附插件支持的所有包。测试桩总是声明一个 `stub-miscount` 变体，供故意违反 provider 契约的夹具使用，并且只在不带 dsinfer 的构建中声明 `multig2p-onnx`，好让加载测试在这种构建中也能运行。随附的最小构建不含测试桩，需要模型后端的包在其中加载失败。
+`lua`，脚本化的 S2P 与 Onset 变体，需要 LuaJIT，清单把它列为普通依赖。`-DWOLF_DISABLE_LUAJIT=ON` 即使 LuaJIT 已安装也会排除它。测试桩总是声明一个 `stub-miscount` 变体，供故意违反 provider 契约的夹具使用。
 
 ## 准备环境
 
