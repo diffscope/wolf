@@ -24,6 +24,7 @@ namespace wolf {
     struct SingerLanguages {
         std::vector<SingerLanguage> entries;
         std::string defaultLanguage;
+        std::vector<std::string> reservedPhonemes;
 
         inline bool empty() const noexcept {
             return entries.empty();
@@ -32,11 +33,9 @@ namespace wolf {
 
     /// Reads the language map of \a singer.
     ///
-    /// \c languages and \c defaultLanguage are fields that the singer category adds to every
-    /// singer declaration and parses before a provider is selected, in the same way as the avatar.
-    /// synthrt has already validated their structure and verified that every role names an import
-    /// of the singer, and a malformed map therefore fails to load. This function converts the
-    /// parsed map to the wolf structure, ordered by handle in the same order as the JSON object.
+    /// The fields are part of the DiffSinger singer \c exports. After Load the DiffSinger provider
+    /// has interpreted them, and this function reads the typed object. A singer opened with
+    /// \c DataOnly has no typed exports, so the function reads the expanded manifest directly.
     ///
     /// A singer without declared languages is not an error and yields an empty result. wolf
     /// verifies whether a role resolves to a linguist contribution and whether that contribution

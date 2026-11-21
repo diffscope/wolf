@@ -156,6 +156,16 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsSingerLanguageMap) {
     BOOST_CHECK_EQUAL(languages->entries[1].role, "lang/b");
 }
 
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsReservedPhonemesFromExports) {
+    srt::SynthUnit unit;
+    auto handle = openData(unit, fixturePath("singer-markers"));
+    requireOpened(handle, "singer-markers");
+
+    auto languages = wolf::readSingerLanguages(*handle->contribution("singer", "s"));
+    BOOST_REQUIRE(languages);
+    BOOST_REQUIRE_EQUAL(languages->reservedPhonemes.size(), 1u);
+    BOOST_CHECK_EQUAL(languages->reservedPhonemes[0], "EP");
+}
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_AcceptsSingerWithoutLanguages) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("singer-none"));
@@ -167,10 +177,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_AcceptsSingerWithoutLanguages
     BOOST_CHECK(languages->defaultLanguage.empty());
 }
 
-// The shape of the map belongs to the singer category, so synthrt rejects a malformed map when the
-// package opens, before wolf reads the map. These cases verify that the fixtures used by the wolf
-// tests are rejected for the reason that each fixture was written to trigger.
-BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_MalformedSingerLanguageMapDoesNotOpen) {
+// The shape of the map belongs to the DiffSinger singer exports. In DataOnly mode no provider
+// has interpreted them, so wolf refuses a malformed map when it reads the expanded manifest.
+BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_MalformedSingerLanguageMapIsRefused) {
     const struct {
         const char *fixture;
         const char *reason;
@@ -183,8 +192,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_MalformedSingerLanguageMapDoe
     for (const auto &entry : cases) {
         srt::SynthUnit unit;
         auto handle = openData(unit, fixturePath(entry.fixture));
-        BOOST_REQUIRE_MESSAGE(!handle, std::string("should not have opened: ") + entry.fixture);
-        const auto message = handle.error().toString();
+        requireOpened(handle, entry.fixture);
+        auto *singer = handle->contribution("singer", "s");
+        BOOST_REQUIRE(singer != nullptr);
+        auto languages = wolf::readSingerLanguages(*singer);
+        BOOST_REQUIRE_MESSAGE(!languages,
+                              std::string("should have been refused: ") + entry.fixture);
+        const auto message = languages.error().toString();
         BOOST_CHECK_MESSAGE(message.find(entry.reason) != std::string::npos,
                             std::string(entry.fixture) +
                                 " failed for the wrong reason: " + message);

@@ -15,6 +15,8 @@
 #include <synthrt/Core/SynthUnit.h>
 #include <synthrt/SVS/SingerContrib.h>
 
+#include <wolf/Linguist/SingerLanguages.h>
+
 #include "LinguistContrib.h"
 #include "Logging.h"
 
@@ -335,19 +337,24 @@ namespace wolf {
                     // Every contribution of the singer category is a SingerSpec, and as<>() is an
                     // unchecked cast, so no check is required.
                     auto singer = spec->as<srt::SingerSpec>();
+                    SingerLanguages languages;
+                    if (auto read = readSingerLanguages(*singer)) {
+                        languages = std::move(*read);
+                    }
                     auto extension = LinguistApi::WolfPipelineExtension::from(*singer);
                     if (extension == nullptr) {
                         // A singer without linguist contributions is not a linguist domain object
                         // and is therefore absent from the catalog instead of present and empty.
-                        if (!singer->languages().empty()) {
+                        if (!languages.empty()) {
                             UnmountedSinger record;
                             record.ref.locator =
                                 srt::ContribLocator(package.id(), srt::SingerCategory::NAME,
                                                     spec->locator().contributionId());
                             record.ref.version = package.version();
-                            for (const auto &[language, role] : singer->languages()) {
-                                record.reasons.emplace(language,
-                                                       unmountedReason(*singer, language, role));
+                            for (const auto &language : languages.entries) {
+                                record.reasons.emplace(
+                                    language.language,
+                                    unmountedReason(*singer, language.language, language.role));
                             }
                             logCategory().srtWarning(
                                 "singer %1 declares languages but carries no linguist pipeline: %2",
@@ -365,7 +372,7 @@ namespace wolf {
                                                             spec->locator().contributionId());
                     entry.ref.version = package.version();
                     entry.defaultLanguage = extension->defaultLanguage();
-                    entry.reservedMarkers = singer->reservedPhonemes();
+                    entry.reservedMarkers = languages.reservedPhonemes;
                     for (const auto &handle : extension->languages()) {
                         LanguageEntry language;
                         language.handle = handle;

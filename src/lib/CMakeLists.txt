@@ -10,7 +10,7 @@ file(GLOB_RECURSE _src "*.cpp")
 wolf_add_library(${PROJECT_NAME} SHARED
     MACRO_PREFIX WOLF
     SOURCES ${_src}
-    LINKS synthrt::synthrt
+    LINKS synthrt::synthrt synthrt::dsinfer
     LINKS_PRIVATE BLAKE3::blake3 linguistutil textutil
     INCLUDE_PRIVATE ../../include/** **
 )
@@ -34,7 +34,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME wolf)
 # find_package(synthrt-wolf) fails at generate time with "but the target was not found" for every
 # consumer that has not found that target itself. The tests link the build-tree target and do not
 # use the installed config, so the check below keeps such a target out of the interface.
-set(_wolf_exported_targets synthrt::synthrt)  # keep in sync with src/synthrt-wolf-config.cmake.in
+set(_wolf_exported_targets synthrt::synthrt synthrt::dsinfer)  # keep in sync with src/synthrt-wolf-config.cmake.in
 get_target_property(_wolf_interface_links ${PROJECT_NAME} INTERFACE_LINK_LIBRARIES)
 
 foreach(_link IN LISTS _wolf_interface_links)

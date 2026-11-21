@@ -85,31 +85,14 @@ find_package(re2 CONFIG REQUIRED)
 # ----------------------------------
 # Optional inference backend
 # ----------------------------------
-# The model-backed G2P variant runs its models through the driver framework of dsinfer.
-# synthrt[onnx] builds dsinfer, which installs its own CMake package beside the synthrt package, so
-# find_package locates it. dsinfer is optional, and WOLF_DISABLE_DSINFER excludes it even if it is
-# installed; this option is the supported way to request the minimal build.
-option(WOLF_DISABLE_DSINFER "Build without dsinfer even if it is installed" OFF)
+# wolf links dsinfer: the model-backed G2P variant runs its models through the driver framework,
+# and the singer language map is part of the DiffSinger singer exports.
+find_package(synthrt-dsinfer CONFIG REQUIRED)
+# The ONNX driver is a plugin of dsinfer rather than a link target. The dsinfer package exports it
+# as the imported target synthrt::onnxdriver, from which the tests take its directory.
+set(WOLF_HAS_DSINFER ON)
+message(STATUS "dsinfer: ${synthrt-dsinfer_DIR}")
 option(WOLF_DISABLE_LUAJIT "Build without LuaJIT even if it is installed" OFF)
-
-if(NOT WOLF_DISABLE_DSINFER)
-    find_package(synthrt-dsinfer CONFIG QUIET)
-endif()
-
-if(TARGET synthrt::dsinfer)
-    # The ONNX driver is a plugin of dsinfer rather than a link target. The dsinfer package exports
-    # it as the imported target synthrt::onnxdriver, from which the tests take its directory.
-    set(WOLF_HAS_DSINFER ON)
-    message(STATUS "dsinfer: ${synthrt-dsinfer_DIR}")
-else()
-    set(WOLF_HAS_DSINFER OFF)
-    if(WOLF_DISABLE_DSINFER)
-        message(STATUS "dsinfer: disabled; the model-backed G2P variant will not be built")
-    else()
-        message(STATUS "dsinfer: not found; the model-backed G2P variant will not be built "
-                       "(install synthrt with the onnx feature to enable it)")
-    endif()
-endif()
 
 # The scripted variants embed LuaJIT, which ships a pkg-config file but no CMake package, so it is
 # also located manually. The Unix makefile installs its headers in a versioned subdirectory

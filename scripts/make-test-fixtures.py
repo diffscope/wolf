@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -267,6 +268,27 @@ PACKAGES = {
     },
 }
 
+def _move_singer_exports() -> None:
+    """Move the DiffSinger singer fields from the declaration root into exports."""
+    for package in PACKAGES.values():
+        for relative, text in list(package.items()):
+            if relative != "singers/s/singer.json":
+                continue
+            data = json.loads(text)
+            exports = data.get("exports")
+            if not isinstance(exports, dict):
+                exports = {}
+            moved = False
+            for key in ("languages", "defaultLanguage", "reservedPhonemes"):
+                if key in data:
+                    exports[key] = data.pop(key)
+                    moved = True
+            if moved:
+                data["exports"] = exports
+                package[relative] = json.dumps(data, indent=4, ensure_ascii=False) + "\n"
+
+
+_move_singer_exports()
 
 def write_tree(root: Path) -> None:
     """Write every fixture file below root."""

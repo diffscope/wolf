@@ -3,5 +3,6 @@
 include(CMakeFindDependencyMacro)
 
 find_dependency(synthrt CONFIG REQUIRED)
+find_dependency(synthrt-dsinfer CONFIG REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/synthrt-wolf-targets.cmake")

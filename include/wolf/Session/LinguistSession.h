@@ -141,9 +141,9 @@ namespace wolf {
         /// host and takes no part in matching.
         std::string defaultLanguage;
 
-        /// Markers that this singer declares (reservedPhonemes of the singer category). The
-        /// session resolves these markers itself instead of passing them to a language. The list
-        /// is empty if the singer declares none, and the session wide set then applies.
+        /// Markers that this singer declares (reservedPhonemes of the DiffSinger singer exports).
+        /// The session resolves these markers itself instead of passing them to a language. The
+        /// list is empty if the singer declares none, and the session wide set then applies.
         std::vector<std::string> reservedMarkers;
     };
 
@@ -302,11 +302,10 @@ namespace wolf {
         ///
         /// Markers that the session resolves itself instead of passing them to a language, for
         /// every singer that declares no set of its own. The set of a singer is the
-        /// reservedPhonemes field of its declaration, a field of the singer category that synthrt
-        /// reads and the singer validator checks against the models. The session takes that set
-        /// from the catalog, and the host does not supply it. The session wide set follows the
-        /// ecosystem convention for other singers, and a host that uses another notation can
-        /// replace it. The default is SP and AP.
+        /// reservedPhonemes field of the DiffSinger singer exports, which the provider checks
+        /// against the models. The session takes that set from the catalog, and the host does not
+        /// supply it. The session wide set follows the ecosystem convention for other singers, and
+        /// a host that uses another notation can replace it. The default is SP and AP.
         ///
         /// A word on which the host pinned a pronunciation or a phoneme layer is never compared
         /// against this set, because pinning expresses explicit intent and the session must not
