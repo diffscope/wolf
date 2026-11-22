@@ -1,13 +1,13 @@
-# cpp-pinyin2 -- the 2.x line of cpp-pinyin (C ABI cppp2_*, package/target cpp-pinyin2).
+# cpp-pinyin2: the 2.x line of cpp-pinyin (C ABI cppp2_*, package/target cpp-pinyin2).
 #
-# It is a NEW port rather than a version bump of `cpp-pinyin`: 2.x renamed every public entity, so a
-# bump would break every existing `find_package(cpp-pinyin)` consumer. Both ports install side by
-# side; the 1.x one stays frozen at 1.0.2.
+# It is a NEW port rather than a version bump of cpp-pinyin, because 2.x renamed every public
+# entity, so a bump would break every existing find_package(cpp-pinyin) consumer. Both ports install
+# side by side. The 1.x one stays frozen at 1.0.2.
 #
-# Pinned to branch `v2` as of commit 0d9a565 rather than to a release tag: no `v2.0.0` tag exists yet.
-# A commit, not the branch name, is the ref, because a branch ref would silently change what this port
-# builds; when upstream publishes a newer commit, change REF and re-stamp SHA512 with the archive of
-# that commit.
+# Pinned to branch v2 as of commit 0d9a565 rather than to a release tag, because no v2.0.0 tag
+# exists yet. A commit, not the branch name, is the ref, because a branch ref would silently change
+# what this port builds. When upstream publishes a newer commit, change REF and re-stamp SHA512
+# with the archive of that commit.
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO wolfgitpr/cpp-pinyin

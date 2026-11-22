@@ -28,7 +28,7 @@ from declarations import ROLE_G2P, ROLE_ONSET, ROLE_S2P
 
 REPOSITORY = Path(__file__).resolve().parent.parent
 
-# Longest first: `zh` must match before `z`, so that `h` is not split off.
+# Longest first: the initial zh must match before z, so that h is not split off.
 PINYIN_INITIALS = ["zh", "ch", "sh", "b", "p", "m", "f", "d", "t", "n", "l", "g", "k", "h",
                    "j", "q", "x", "r", "z", "c", "s", "y", "w"]
 
@@ -175,8 +175,8 @@ def main():
         _pinned = Path(__file__).resolve().parent / "fixtures" / "voicebank-pinned" / "desc.json"
         if _pinned.is_file():
             for _entry in json.loads(_pinned.read_text(encoding="utf-8")).get("dependencies", []):
-                # spec["package"] is the directory name; the snapshot carries the package id, which
-                # separates its segments with a slash.
+                # The spec package field is the directory name. The snapshot carries the package
+                # id, which separates its segments with a slash.
                 if _entry.get("id", "").replace("/", "-") != spec["package"]:
                     continue
                 if tuple(map(int, required.split("."))) > tuple(map(int, _entry["version"].split("."))):
@@ -225,7 +225,7 @@ def main():
             "exports": {"phonemes": phonemes},
             "configuration": {},
             "imports": [
-                # The G2P belongs to the language package; the S2P and onset modules belong to
+                # The G2P belongs to the language package. The S2P and onset modules belong to
                 # the voicebank.
                 {"role": ROLE_G2P, "ref": f"{spec['dependency']}:inference/g2p"},
                 {"role": ROLE_S2P, "ref": f":inference/s2p-{language}"},

@@ -77,7 +77,7 @@ BACKEND_REF = "wolf/g2p-multi:inference/multig2p"
 #
 # The remaining languages are not closed. Five still use a placeholder scheme (P7). cmn, yue and
 # jpn produce syllables rather than phonemes, and their syllable-to-phoneme dictionary belongs to
-# the voicebank rather than to the language package (A66); their packages therefore carry only
+# the voicebank rather than to the language package (A66). Their packages therefore carry only
 # inference modules, which is the final form.
 CLOSED_LANGUAGES = {"eng", "por", "kor", "ita"}
 
@@ -96,7 +96,7 @@ SCHEMES = {
 # phoneme sets for one language, and those sets are separate notations. Naming a set after a set it
 # supposedly extends would assert a derivation that does not exist: marzipan and millefeuille are
 # siblings of the default sets, not derivatives of them. arpabet-plus is the only actual derivative
-# here; it is ARPABET with four added symbols.
+# here. It is ARPABET with four added symbols.
 #
 # Five values are still "ds", which the naming rule does not allow, because "ds" identifies the
 # users of a set rather than its contents. These sets are named once their contents are identified
@@ -134,7 +134,7 @@ PINYIN_REF = "wolf/g2p-pinyin:inference/pinyin"
 # changed reading is compatible by the letter of the specification and would otherwise go unnoticed.
 # Otherwise two different packages would carry the same version, and a consumer targeting that
 # version would receive whichever package it downloaded.
-# Revision 2 adds `openSet` to the emitted declarations (C1). An added optional field with a
+# Revision 2 adds openSet to the emitted declarations (C1). An added optional field with a
 # default does not break consumers, so the compatibility floor is unchanged.
 # Revision 3 lowers the compatVersion of the language packages to the revision 0 floor, which the
 # backends already used. Nothing else changes, and the change is compatible in both directions: a
@@ -146,10 +146,10 @@ PINYIN_REF = "wolf/g2p-pinyin:inference/pinyin"
 # step without a diagnostic. The added rows are derived rather than authored: no reading from the
 # source changes, and a table without kana is emitted unchanged. An added optional reading does not
 # break consumers, so the compatibility floor is unchanged.
-# Revision 5 moves the shared engine package from `cpp-pinyin` 1.x to `cpp-pinyin2` 2.x. The
-# dictionary tree changed shape (each language gained `dialect.json` and `format.txt`) and the word
+# Revision 5 moves the shared engine package from cpp-pinyin 1.x to cpp-pinyin2 2.x. The
+# dictionary tree changed shape (each language gained dialect.json and format.txt), and the word
 # tables are no longer byte-identical, so the readings of a lyric can differ. The engine version
-# already moves the first three components to 2.0.0; this revision records the change in the
+# already moves the first three components to 2.0.0. This revision records the change in the
 # pipeline rather than leaving the fourth component to say nothing happened.
 PACKAGING_REVISION = 5
 
@@ -158,11 +158,11 @@ PACKAGING_REVISION = 5
 # one-off baseline rather than a new rule: after this release the fourth component advances as
 # usual, so a later rebuild of the same source resource becomes 1.0.0.1 and the compatibility floor
 # states a real interval again. Every package carries the same value because the release re-issues
-# all of them at once, which is also why `compatVersion` equals it: the interval is a single point
+# all of them at once, which is also why compatVersion equals it: the interval is a single point
 # until the next release widens it from the bottom.
 #
-# This supersedes the arrangement in which `wolf/g2p-pinyin` took its version from the engine port.
-# The engine is still recorded, as `cppPinyinRef` in `converted.json`, so a dictionary can still be
+# This supersedes the arrangement in which wolf/g2p-pinyin took its version from the engine port.
+# The engine is still recorded, as cppPinyinRef in converted.json, so a dictionary can still be
 # traced back to the engine that produced it even though the version no longer says so.
 RELEASE_BASELINE = "1.0.0.0"
 
@@ -488,7 +488,7 @@ def convert_configuration(variant: str, legacy: dict) -> tuple[dict, list]:
         return config, imports
 
     if variant == "multig2p-onnx":
-        # The legacy file is a complete training configuration; the runtime read only these four
+        # The legacy file is a complete training configuration. The runtime read only these four
         # keys.
         inference = legacy.get("inference") or {}
         mapping = {
@@ -656,7 +656,7 @@ def convert_suite(repo: Path, suite: str, out_root: Path, pinyin_floor: str,
         target_dir = directory / "inferences" / module_id
         target_dir.mkdir(parents=True, exist_ok=True)
 
-        # The files that the chain reads as dictionaries. Only these files are normalised, and the
+        # The files that the chain reads as dictionaries. Only these files are normalized, and the
         # language closure below reads the phoneme inventory from them.
         dictionaries = {Path(step["params"]["file"]).name
                         for step in configuration.get("steps", [])

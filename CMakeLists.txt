@@ -96,7 +96,7 @@ option(WOLF_DISABLE_LUAJIT "Build without LuaJIT even if it is installed" OFF)
 
 # The scripted variants embed LuaJIT, which ships a pkg-config file but no CMake package, so it is
 # also located manually. The Unix makefile installs its headers in a versioned subdirectory
-# (luajit-2.1); the vcpkg port on Windows uses a plain luajit directory instead.
+# (luajit-2.1). The vcpkg port on Windows uses a plain luajit directory instead.
 find_path(WOLF_LUAJIT_INCLUDE_DIR
     NAMES lua.hpp
     PATH_SUFFIXES luajit-2.1 luajit
@@ -151,7 +151,7 @@ set(WOLF_VOICEBANK_FIXTURE_SOURCE "" CACHE PATH
 
 # The fixture packages that the automated tests read. scripts/make-test-fixtures.py generates them
 # and the build does not, so that the repository carries test code rather than package artifacts.
-# Point this variable at the generated directory; the tests that read them are skipped when it is
+# Point this variable at the generated directory. The tests that read them are skipped when it is
 # empty and ctest reports them as not run.
 set(WOLF_TEST_FIXTURES_SOURCE "" CACHE PATH
     "Generated test fixture packages for the automated tests")

@@ -2,10 +2,10 @@ include("${SYNTHRT_MODULES_DIR}/AddAutoTest.cmake")
 
 # One directory per layer, so that the path of a test identifies the layer of a failure. util
 # contains the libraries under src/util, one directory per library, and Support the public support
-# components, both independent of the linguist category; Linguist the category, its declarations and
-# its provider; Runtime the executive tree and the session; EndToEnd the walks over generated
-# packages; plugins the classes of single plugins, one directory per plugin. Every test uses
-# TestSupport.h from this directory.
+# components, both independent of the linguist category. Linguist holds the category, its
+# declarations and its provider. Runtime holds the executive tree and the session. EndToEnd holds
+# the walks over generated packages. plugins holds the classes of single plugins, one directory per
+# plugin. Every test uses TestSupport.h from this directory.
 
 # Registers a test and records its target, so that the common settings below apply to exactly the
 # tests that exist. The alternative was a manually maintained second list of names, and a test

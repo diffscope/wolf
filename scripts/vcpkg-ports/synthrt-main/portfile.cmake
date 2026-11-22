@@ -54,7 +54,7 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 
 # synthrt installs two CMake packages side by side under lib/cmake: synthrt itself and, with the
-# onnx feature, dsinfer. The fixup of one package must not delete the parent directory; otherwise
+# onnx feature, dsinfer. The fixup of one package must not delete the parent directory. Otherwise
 # the other package is silently lost, and consumers must locate the dsinfer library manually.
 vcpkg_cmake_config_fixup(
     PACKAGE_NAME synthrt

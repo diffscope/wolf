@@ -232,9 +232,9 @@ def unbounded_chain(declaration: dict) -> bool:
 
 
 # The S2P variants whose table this lint reads. Both rewrite the symbols of a pronunciation through
-# the table, which is why the host reports a separate pronunciation layer for them; see
+# the table, which is why the host reports a separate pronunciation layer for them. See
 # variantKeepsSymbols() in include/wolf/Api/Inferences/S2p/1/S2pApiL1.h. That header holds the
-# authoritative list, and the variants guide states the same table in §5.0.2; a new table-reading
+# authoritative list, and the variants guide states the same table in §5.0.2. A new table-reading
 # variant must be added in all three places.
 TABLE_VARIANTS = ("dict", "mapping")
 
@@ -360,7 +360,7 @@ def check_identity(declaration: dict, grammar: IdentityGrammar, where: str, erro
     # declarations, and the layer a composition reaches is read from its role set through maxDepth
     # rather than enforced at load time (domain contract §5.0, §5.0.1).
     # A linguist binds only the three fixed roles. The loader ignores any other role, and the
-    # composition is then shallower than the declaration suggests; a misspelt role such as
+    # composition is then shallower than the declaration suggests. A misspelled role such as
     # linguist/onsets is therefore an error instead of a warning.
     for role in roles:
         if role not in LINGUIST_ROLES:
@@ -769,7 +769,7 @@ def check_package(directory: Path, schemas: Schemas, grammar: IdentityGrammar,
             if prefix is None:
                 # The loader interprets such a declaration through the provider registered for its
                 # triple, and this lint has no schema for it. The declaration is reported instead of
-                # passing silently, so that a misspelt interface is detected before load.
+                # passing silently, so that a misspelled interface is detected before load.
                 if category in (LINGUIST_CATEGORY, INFERENCE_CATEGORY):
                     warnings.append(f"{where}: interface {key[0]!r} Level {key[1]!r} has no "
                                     f"schema in this lint; its exports and import options are "

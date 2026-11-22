@@ -30,8 +30,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME wolf)
 # Support/ResourceCache.cpp, re2 only in Verifier.cpp of the static linguistutil library), so neither
 # belongs in the exported link interface.
 # synthrt-wolf-config.cmake.in declares only find_dependency(synthrt), and an exported link
-# interface must not name a target that the config does not import; otherwise
-# find_package(synthrt-wolf) fails at generate time with "but the target was not found" for every
+# interface must not name a target that the config does not import. Otherwise
+# find_package(synthrt-wolf) fails at generate time because the target was not found, for every
 # consumer that has not found that target itself. The tests link the build-tree target and do not
 # use the installed config, so the check below keeps such a target out of the interface.
 set(_wolf_exported_targets synthrt::synthrt synthrt::dsinfer)  # keep in sync with src/synthrt-wolf-config.cmake.in

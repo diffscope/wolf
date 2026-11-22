@@ -287,7 +287,7 @@ class Lint(unittest.TestCase):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)
             cases = {
-                # One row keeps its symbols and one rewrites them; one rewriting row is enough.
+                # One row keeps its symbols and one rewrites them. One rewriting row is enough.
                 "splitting-dict": ("dict", "x\tx\nni\tn i\n"),
                 "rewriting-mapping": ("mapping", "p\tb\n"),
                 # No row has the shape the loader accepts, so the dict table settles nothing.
