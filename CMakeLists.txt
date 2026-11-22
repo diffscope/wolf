@@ -83,7 +83,7 @@ synthrt_find_blake3()
 find_package(re2 CONFIG REQUIRED)
 
 # ----------------------------------
-# Optional inference backend
+# Inference backend
 # ----------------------------------
 # wolf links dsinfer: the model-backed G2P variant runs its models through the driver framework,
 # and the singer language map is part of the DiffSinger singer exports.

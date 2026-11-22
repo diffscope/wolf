@@ -510,7 +510,7 @@ Onset 返回表的长度与输入不符时报错：契约规定每个音素对�
 
 > **本节「移植来源」表与 §8.1 移植差异表中的代码锚点一律取自 synthrt `refactor` 分支上 `scripts/convert-g2p-packages.py` 中固定的 `SOURCE_REF` 所指版本，不在 `main` 树内。** 其余文档的 synthrt 锚点取自 `main` 分支，两者不可混用。
 
-wolf 随附六个推理解释器插件：`s2p`、`onset`、`chain`、`pinyin`，以及按依赖条件构建的 `multig2p`（需要 dsinfer）与 `lua`（需要 LuaJIT，承载两个脚本变体）。另有仅随测试构建、不安装的 `stub` 插件。实现从 **synthrt `refactor` 分支**（同上 `SOURCE_REF`）移植：
+wolf 随附六个推理解释器插件：`s2p`、`onset`、`chain`、`pinyin`，以及 `multig2p`（dsinfer 为硬依赖，始终构建）与按 LuaJIT 条件构建的 `lua`（承载两个脚本变体）。另有仅随测试构建、不安装的 `stub` 插件。实现从 **synthrt `refactor` 分支**（同上 `SOURCE_REF`）移植：
 
 | 变体 | 移植来源 |
 | :-- | :-- |

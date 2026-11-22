@@ -119,7 +119,7 @@ powershell -Command "Invoke-WebRequest -OutFile scripts/vcpkg-workspace.cmake ht
 
 `cmake -P scripts/vcpkg-workspace.cmake help` lists the other commands. `--dry-run` prints the commands without running them. `scripts/vcpkg-sources.local.json` takes precedence over `scripts/vcpkg-sources.json`, for example to use a local overlay.
 
-The manifest defines three optional features, each passed after `--` as `--x-feature=<name>`:
+The manifest defines three features, each passed after `--` as `--x-feature=<name>`:
 
 | Feature | Effect |
 | :-- | :-- |
@@ -145,7 +145,7 @@ cmake --build build --target install
 
 ### Tests
 
-`-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build` runs them. `src/tests/auto/plugins` holds the unit tests of single plugins. A build without LuaJIT omits `test_LuaInterpreters` (the registration conditions are the single source of truth for the list: `src/tests/auto/CMakeLists.txt` and `src/tests/auto/plugins/CMakeLists.txt`; the number of binaries and cases is measured in one place, the verification table of [docs/Status.md](docs/Status.md)).
+`-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build` runs them. `src/tests/auto/plugins` holds the unit tests of single plugins. A build without LuaJIT omits `test_LuaInterpreters` and `test_LuaSandbox` (the registration conditions are the single source of truth for the list: `src/tests/auto/CMakeLists.txt` and `src/tests/auto/plugins/CMakeLists.txt`; the number of binaries and cases is measured in one place, the verification table of [docs/Status.md](docs/Status.md)).
 
 The tests that load real language packages read them from the location given by the cache variable `WOLF_LANG_PACKAGES_SOURCE`, which names a directory of unpacked packages. If the variable is empty, the build uses the tree installed by the `wolf-lang-packages` port (the `lang-packages` feature). The current release, with its bundle version and the version and file name of each archive, is listed in [docs/LinguistDistribution.md](docs/LinguistDistribution.md) §5.1 (the authoritative table; not copied here to avoid drift).
 

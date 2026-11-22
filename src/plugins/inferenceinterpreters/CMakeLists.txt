@@ -6,9 +6,7 @@ set(CURRENT_PLUGIN_CATEGORY ${_dir_name})
 set(CURRENT_PLUGIN_IID org.openvpi.synthrt.plugin.InferenceInterpreter)
 
 add_subdirectory(chain)
-# The model-backed variant requires the driver framework of dsinfer, which the onnx feature
-# provides. Without dsinfer the variant is not built, in the same way that synthrt omits its own
-# ONNX driver.
+# The model-backed variant requires the driver framework of dsinfer, which is a hard dependency.
 if(WOLF_HAS_DSINFER)
     add_subdirectory(multig2p)
 endif()

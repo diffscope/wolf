@@ -1,6 +1,6 @@
 # Wolf 项目状态
 
-本文只记录**现状**：已实现的能力、所处位置与未决项。设计理由见 [LinguistDecisions.md](LinguistDecisions.md)（台账 A1–A80），变更历史见 git 历史。
+本文只记录**现状**：已实现的能力、所处位置与未决项。设计理由见 [LinguistDecisions.md](LinguistDecisions.md)（台账 A1–A84），变更历史见 git 历史。
 
 ## 当前定位
 
@@ -58,11 +58,11 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 
 | 项 | 结果 |
 | :-- | :-- |
-| 完整构建 | 2026-11-22：Windows Release 构建通过，CTest **41/41** 通过 |
-| 最小构建（`-DWOLF_DISABLE_LUAJIT=ON`） | 当时的 15 个测试二进制（不含 `test_LuaInterpreters` 与 `test_MultiG2pInterpreter`）全部通过；现行该配置为 18 个，被排除的四个见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt` 的注册条件，以及 `src/plugins/inferenceinterpreters/CMakeLists.txt` 对 lua 与 multig2p 两个插件的构建条件 |
+| 完整构建 | 2026-11-23：Windows Release 构建通过，CTest **41/41** 通过 |
+| 最小构建（`-DWOLF_DISABLE_LUAJIT=ON`） | LuaJIT 缺席时 `wolflua` 不构建，`test_LuaInterpreters` 与 `test_LuaSandbox` 不注册。其余测试通过，注册条件见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt` |
 | ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2pInterpreter`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
-| Task TSan 复核 | 2026-11-18 以插桩的 synthrt、stdcorelib 与 stdcorelib-plugin 连续执行 `test_ITask` 100 次，12 个用例、70 条断言无报告。旧 `finish()` 通知路径已不存在，Q7 关闭 |
-| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，当时的 17 个测试二进制以该树为数据源通过（A67） |
+| Task TSan 复核 | 2026-11-18 以插桩的 synthrt、stdcorelib 与 stdcorelib-plugin 连续执行 `test_ITask` 100 次，12 个用例、70 条断言无报告。Q7 关闭 |
+| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，CTest 以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(synthrt-wolf)` 并链接；检查 `synthrt::wolf` 目标与安装包中不含 Support 头文件，检查导入的插件目标，并运行程序，检查这些目标所在的两个类别目录。把私有依赖放回公开链接接口时，配置期断言即失败 |
 | 版本区间 | 消费者夹具钉在修订 2，由安装的修订 3 供给：解析结果版本为 `1.0.0.3`，请求侧不是该版本（A68；用例为 `test_LinguistLoad.cpp` 的 `ServesAConsumerPinnedToAnOlderRevision`） |
 | 归档 | `make-lang-release.py --verify` 解开归档后与源逐文件比对通过 |
@@ -77,7 +77,7 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 | `scripts/convert-g2p-packages.py` | 把旧套件转换为 spec 2.4 格式，并生成 `wolf/g2p-pinyin` |
 | `scripts/make-lang-release.py` | 打包、计算 SHA512、重新生成端口的 `assets.cmake` 与 `version-string`；`--verify` 解开归档与源逐文件比对，不一致时拒绝打包 |
 | `scripts/make-voicebank-fixture.py` | 由语言包生成歌手包形状的夹具，补齐语言包不提供的 S2P 与 onset（发布文档 §3.2） |
-| `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供当时的 17 个 ctest 用例中的 7 个读取；`--check` 与已有目录逐字节比对，不一致时非零退出 |
+| `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供读取夹具的用例使用；`--check` 与已有目录逐字节比对，不一致时非零退出 |
 | `scripts/check-declarations.py` | 用 `docs/schemas/` 校验声明，并执行四项打包期 lint（含 `openSet` 推导与 S2P 表内容级恒等）。发布脚本在打包前调用，有错误时拒绝打包 |
 
 夹具包不随仓库分发：生成到构建目录后由 `WOLF_TEST_FIXTURES_SOURCE` 指过去，数据缺失时相关用例以状态 77 报跳过（ctest 记为未运行）。`scripts/test_check_declarations.py` 未配置该变量时会现场生成到临时目录。
@@ -120,6 +120,6 @@ M5 剩余项：`eng` / `por` / `kor` / `ita` 四种语言已构成完整的语�
 ## 外部基线
 
 - synthrt：`synthrt-main` 端口固定 synthrt 的 `onnxruntime-builds-uptake` 分支（基于 synthrt main）；spec 2.4 的文本以 synthrt main 分支的 [`docs/ds-spec-2.4.md`](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md) 为准；转换源为 synthrt `refactor` 分支上由 `convert-g2p-packages.py` 中固定的 `SOURCE_REF` 所指的提交。
-- 随附插件：`linguistproviders/wolflinguist`，推理解释器 `chain` / `pinyin` / `s2p` / `onset`，条件构建的 `multig2p`（需要 dsinfer）与 `lua`（需要 LuaJIT），以及仅在测试构建中存在的桩。**发行的最小构建不含桩**，加载 `wolf/g2p-multi` 会失败（发布文档 §7.5）。桩另外无条件声明一个 `stub-miscount` 变体，供故意违反 provider ABI 的夹具使用（A79）。
+- 随附插件：`linguistproviders/wolflinguist`，推理解释器 `chain` / `pinyin` / `s2p` / `onset`，`multig2p`（dsinfer 为硬依赖，始终构建）与条件构建的 `lua`（需要 LuaJIT），以及仅在测试构建中存在的桩。**发行的最小构建不含桩**，加载 `wolf/g2p-multi` 会失败（发布文档 §7.5）。桩另外无条件声明一个 `stub-miscount` 变体，供故意违反 provider ABI 的夹具使用（A79）。
 - 新增依赖：`re2`（`\p{Han}` 等 Unicode 属性类，`std::regex` 不支持）、`cpp-pinyin` 与 `luajit`；`onnxruntime-builds` 经清单特性 `onnx` 引入，**ORT 版本完全由该端口决定**，wolf 与 synthrt 两个仓库中均不再出现 ORT 版本号（A80）。
 - 词典与模型的音素集不一致：逐包统计，`fil` 100%、`ita` 75%、`eng` 44%，其余六种为 0。后两者早于本轮工作，且已随 `lang-v0.1.0.0` 发布（A48 / A50）。

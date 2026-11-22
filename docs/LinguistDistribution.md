@@ -458,7 +458,7 @@ wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-po
 - `vcpkg_from_git(URL https://github.com/diffscope/synthrt.git REF <提交> HEAD_REF onnxruntime-builds-uptake)`，按提交获取，无需归档哈希；`version-string` 为 `onnxruntime-builds-uptake`；
 - 依赖：`qmsetup`、`stduuid`、`stdcorelib`、`stdcorelib-plugin`、`blake3`、`sparsepp`、`bit7z`；
 - **缺省 `SYNTHRT_BUILD_DSINFER=OFF`**：dsinfer 的命令行工具硬依赖 `onnxdriver`，而后者在没有 onnxruntime 时不构建（`dsinfer/plugins/inferencedrivers/onnxdriver/CMakeLists.txt:1-4` 直接 return），`add_dependencies` 因找不到目标而在配置期失败。wolf 语言域需要的 `inference` 与 `singer` 两个类别都在 synthrt 本体中，不在 dsinfer 中；
-- **必需 feature `onnx`**：为 `multig2p-onnx` 变体和 DiffSinger singer exports 启用 dsinfer 与 ONNX 驱动，见 §6.1.1；
+- **必需 feature `onnx`**：为 `multig2p-onnx` 变体启用 dsinfer 与 ONNX 驱动。DiffSinger singer exports 由 dsinfer 本体解析，与 ONNX 驱动无关，见 §6.1.1；
 - A11 已合入 synthrt 的 `onnxruntime-builds-uptake` 分支，因此端口不带补丁，直接固定在该分支的提交上（A26 补记）。
 
 #### 6.1.1 feature `onnx`：ORT 载荷由端口提供
@@ -520,7 +520,7 @@ wolf 不为自身提供端口，而是直接把 `synthrt-main` 列为清单依�
 4. **替代来源**：设置缓存变量 `WOLF_LANG_PACKAGES_SOURCE` 指向本机解包副本时，不查找 config 包，离线环境无需下载即可运行测试；
 5. **CI**：`.github/workflows/ci.yml` 在 Linux（`x64-linux`）与 Windows（`x64-windows`）上以 `--x-feature=onnx --x-feature=tests` 安装依赖，不启用 `lang-packages`，也不设置 `WOLF_LANG_PACKAGES_SOURCE`，因此依赖数据的测试在 CI 中跳过。CI 另外运行 lint 单元测试、对 `build/test-fixtures/wolf-lang-zxx`（由 CI 的 `Generate the test fixture packages` 步骤产出）运行 `check-declarations.py`，并以 `.github/consumer` 检查安装后的 CMake 包。
 
-> **边界**：端口只保证**包数据**就绪。真实包加载测试的另一项前提是 G2P、S2P、Onset 解释器。wolf 现随附六个解释器插件（`chain`、`pinyin`、`s2p`、`onset`，以及条件构建的 `multig2p` 与 `lua`），端到端用例（`test_ConvertedPackages`、`test_HostFlow`）以此为前提。
+> **边界**：端口只保证**包数据**就绪。真实包加载测试的另一项前提是 G2P、S2P、Onset 解释器。wolf 现随附六个解释器插件（`chain`、`pinyin`、`s2p`、`onset`，以及 `multig2p` 与条件构建的 `lua`），端到端用例（`test_ConvertedPackages`、`test_HostFlow`）以此为前提。
 
 ### 6.6 发布与端口同步
 

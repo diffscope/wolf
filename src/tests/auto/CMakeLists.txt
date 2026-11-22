@@ -69,12 +69,12 @@ if(TARGET test_ContribInterpreterPlugin_Wolf)
     endforeach()
 endif()
 
-# The tests load the library under test, synthrt, its stdcorelib dependencies and, if present,
-# dsinfer and ONNX Runtime at run time. Windows resolves these libraries through PATH; the ELF and
-# Mach-O loaders use their own variables, so all three variables are set. Every test target
-# receives the same environment: an unlisted test would start on Linux, where the build tree
-# carries an rpath, and fail on Windows, where it does not; wolf_add_test() ensures that every test
-# is listed.
+# The tests load the library under test, synthrt, its stdcorelib dependencies, dsinfer and, when
+# the onnx feature provides it, ONNX Runtime at run time. Windows resolves these libraries through
+# PATH. The ELF and Mach-O loaders use their own variables, so all three variables are set. Every
+# test target receives the same environment: an unlisted test would start on Linux, where the
+# build tree carries an rpath, and fail on Windows, where it does not. wolf_add_test() ensures that
+# every test is listed.
 #
 # This covers the executables. A plugin loaded at run time resolves its own dependencies through
 # the plugin search path of the loader, which on Windows consists of the plugin directory, the

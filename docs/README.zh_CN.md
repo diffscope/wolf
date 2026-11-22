@@ -119,7 +119,7 @@ powershell -Command "Invoke-WebRequest -OutFile scripts/vcpkg-workspace.cmake ht
 
 `cmake -P scripts/vcpkg-workspace.cmake help` 列出其余命令，`--dry-run` 只打印命令而不执行。`scripts/vcpkg-sources.local.json` 优先于 `scripts/vcpkg-sources.json`，例如可以用它指向本地的 overlay。
 
-清单定义了三个可选 feature，各自写在 `--` 之后，形如 `--x-feature=<名称>`：
+清单定义了三个 feature，各自写在 `--` 之后，形如 `--x-feature=<名称>`：
 
 | Feature | 作用 |
 | :-- | :-- |
