@@ -10,7 +10,7 @@ Nothing here is a program. It is a library for an editor or a tool to embed, alo
 
 ## The Linguist Contribution
 
-A package lists a linguist in the `contributions.linguist` array of its `desc.json`. Each entry is `{ "id": ..., "path": ... }` and points to a linguist manifest; the entry form is common to all categories (spec 2.4 §功能贡献) and is specified for this category in [docs/linguist-domain-contract.md](docs/linguist-domain-contract.md) §1.1, so it is not repeated here. A linguist manifest looks like this:
+A package lists a linguist in the `contributions.linguist` array of its `desc.json`. Each entry is `{ "id": ..., "path": ... }` and points to a linguist manifest; the entry form is common to all categories (spec 2.4 §功能贡献) and is specified for this category in [docs/LinguistDomainContract.md](docs/LinguistDomainContract.md) §1.1, so it is not repeated here. A linguist manifest looks like this:
 
 ```json
 {
@@ -33,7 +33,7 @@ A package lists a linguist in the `contributions.linguist` array of its `desc.js
 
 The `(interface, level, variant)` triple selects a provider through synthrt's interpreter discovery. The provider interprets `exports`, `configuration`, import options, execution factories, validators, and extensions for that contract.
 
-`language` and `scheme` are fields that the `linguist` category adds to every declaration and reads before a provider is selected; `exports` contains the declaration of the linguist about itself, and `configuration` the provider-specific resources. Relative paths resolve against the declaration file's directory. The category, its identity fields and the singer-side mapping are specified in [docs/linguist-domain-contract.md](docs/linguist-domain-contract.md).
+`language` and `scheme` are fields that the `linguist` category adds to every declaration and reads before a provider is selected; `exports` contains the declaration of the linguist about itself, and `configuration` the provider-specific resources. Relative paths resolve against the declaration file's directory. The category, its identity fields and the singer-side mapping are specified in [docs/LinguistDomainContract.md](docs/LinguistDomainContract.md).
 
 A linguist is referred to like any other contribution:
 
@@ -96,7 +96,7 @@ Every dependency, including synthrt, is installed through vcpkg from the manifes
 
 Boost.Test is required only to build the tests.
 
-`multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. dsinfer is a required dependency: wolf links it for the model backend and for the DiffSinger singer exports. The `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`; ONNX Runtime itself comes from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA).
+`multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. dsinfer is a required dependency: wolf links it for the model backend and for the DiffSinger singer exports. The required `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`; ONNX Runtime itself comes from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA).
 
 `lua`, the scripted S2P and Onset variants, requires LuaJIT, which the manifest lists as a plain dependency. `-DWOLF_DISABLE_LUAJIT=ON` excludes it even if LuaJIT is installed. The test stub always declares a `stub-miscount` variant for the fixtures that violate the provider contract deliberately.
 
@@ -123,7 +123,7 @@ The manifest defines three optional features, each passed after `--` as `--x-fea
 
 | Feature | Effect |
 | :-- | :-- |
-| `onnx` | Builds dsinfer and its ONNX Runtime driver through `synthrt-main[onnx]`, which enables the `multig2p-onnx` variant. |
+| `onnx` | Required. Builds dsinfer and its ONNX Runtime driver through `synthrt-main[onnx]`, which enables the `multig2p-onnx` variant. |
 | `lang-packages` | Installs the default suites of the published language packages (`cmn`, `jpn`, `yue`, `zxx` and the backends they require) through the `wolf-lang-packages` port, for use by the tests. |
 | `tests` | Adds Boost.Test. |
 
@@ -145,9 +145,9 @@ cmake --build build --target install
 
 ### Tests
 
-`-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build` runs them. `src/tests/auto/plugins` holds the unit tests of single plugins. A build without LuaJIT omits `test_LuaInterpreters`, and a build without dsinfer omits `test_MultiG2pInterpreter`, `test_MultiG2pMaxLen` and `test_MultiG2pBundle` (the registration conditions are the single source of truth for the list: `src/tests/auto/CMakeLists.txt` and `src/tests/auto/plugins/CMakeLists.txt`; the number of binaries and cases is measured in one place, the verification table of [docs/Status.md](docs/Status.md)).
+`-DWOLF_BUILD_TESTS=ON` builds the tests and registers them with CTest; `ctest --test-dir build` runs them. `src/tests/auto/plugins` holds the unit tests of single plugins. A build without LuaJIT omits `test_LuaInterpreters` (the registration conditions are the single source of truth for the list: `src/tests/auto/CMakeLists.txt` and `src/tests/auto/plugins/CMakeLists.txt`; the number of binaries and cases is measured in one place, the verification table of [docs/Status.md](docs/Status.md)).
 
-The tests that load real language packages read them from the location given by the cache variable `WOLF_LANG_PACKAGES_SOURCE`, which names a directory of unpacked packages. If the variable is empty, the build uses the tree installed by the `wolf-lang-packages` port (the `lang-packages` feature). The current release, with its bundle version and the version and file name of each archive, is listed in [docs/linguist-distribution.md](docs/linguist-distribution.md) §5.1 (the authoritative table; not copied here to avoid drift).
+The tests that load real language packages read them from the location given by the cache variable `WOLF_LANG_PACKAGES_SOURCE`, which names a directory of unpacked packages. If the variable is empty, the build uses the tree installed by the `wolf-lang-packages` port (the `lang-packages` feature). The current release, with its bundle version and the version and file name of each archive, is listed in [docs/LinguistDistribution.md](docs/LinguistDistribution.md) §5.1 (the authoritative table; not copied here to avoid drift).
 
 The fixture packages that seven of the automated tests read are generated by `scripts/make-test-fixtures.py`, and the repository carries the generator rather than the packages. Point the cache variable `WOLF_TEST_FIXTURES_SOURCE` at a directory that the script produced:
 

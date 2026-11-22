@@ -2,7 +2,7 @@
 
 本文规定**运行时装配层（L4）**与**宿主接入层（L5）**：pipeline extension 的挂载与取用、执行体监督树、任务与并发模型、失败与降级语义、诊断通道，以及宿主的解析次序与呈现策略。
 
-上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；声明形态与加载期裁决见 [linguist-domain-contract.md](linguist-domain-contract.md)；逐调用 IO 词汇见 [linguist-inference-contract.md](linguist-inference-contract.md)。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [LinguistArchitecture.md](LinguistArchitecture.md)；声明形态与加载期裁决见 [LinguistDomainContract.md](LinguistDomainContract.md)；逐调用 IO 词汇见 [LinguistInferenceContract.md](LinguistInferenceContract.md)。
 
 **词汇分层**：**L4 为规范性内容**，宿主依赖其调用面与可观察语义；**L5 为建议级内容**，宿主可自定策略，本文只给出推荐做法及其依据。
 
@@ -23,7 +23,7 @@
 
 ### 1.1 插件安装布局
 
-wolf 的插件安装在 `lib/synthrt-wolf/plugins/<category>/<name>/`，构建树采用相同布局。这是 qmsetup 仓库辅助函数的默认布局 `lib/<安装名>/plugins`，synthrt 与 dsinfer 同样采用，每个库的插件各自位于自己的库目录旁。本节规定的是**运行期查找路径**（路径形态与宿主传给 `setPluginPaths` 的映射）；安装树里装了哪些插件、各自缺什么依赖的后果属于**分发物清单**，见 [linguist-distribution.md](linguist-distribution.md) §7.1。`<category>` 取以下两值：
+wolf 的插件安装在 `lib/synthrt-wolf/plugins/<category>/<name>/`，构建树采用相同布局。这是 qmsetup 仓库辅助函数的默认布局 `lib/<安装名>/plugins`，synthrt 与 dsinfer 同样采用，每个库的插件各自位于自己的库目录旁。本节规定的是**运行期查找路径**（路径形态与宿主传给 `setPluginPaths` 的映射）；安装树里装了哪些插件、各自缺什么依赖的后果属于**分发物清单**，见 [LinguistDistribution.md](LinguistDistribution.md) §7.1。`<category>` 取以下两值：
 
 | 目录 | 插件 | 传给 `setPluginPaths` 的类别 |
 | :-- | :-- | :-- |
@@ -294,7 +294,7 @@ LinguistWordOutput {
 
 ### 7.1 缺省语言
 
-宿主的「跟随歌手」语义取 `extension->defaultLanguage()`。该值来自歌手声明的 `defaultLanguage` 字段，**必然**是 `languages` 的键（由 `SingerCategory` 在 Probe 阶段保证）。
+宿主的「跟随歌手」语义取 `extension->defaultLanguage()`。该值来自 DiffSinger singer 的 `exports.defaultLanguage`，**必然**是 `languages` 的键（由 DiffSinger provider 在 Acquire 阶段保证）。
 
 歌手未声明 `languages` 时不挂载 extension（§2.1），宿主通常按「该歌手无语言功能」处置。
 
@@ -348,7 +348,7 @@ LinguistWordOutput {
 
 ### 9.2 资源缓存
 
-k 路并发对应 k 棵子树，即 k 组 G2P / S2P / Onset 执行体（§4.1），因此执行体之间必须共享解析产物；本层只要求该共享**对本文规定的全部可观察行为透明**（命中仅表示取得同一资源对象，不改变任何 IO）。缓存为何是架构必需件见 [linguist-architecture.md](linguist-architecture.md) §1.2 的 C2；缓存的对象、键、归属、生命周期与验收基线见 [linguist-resource-cache.md](linguist-resource-cache.md)；「k 路并发即 k 组 ONNX session」的更正（对 ONNX 不成立）见该文档 A59 条。
+k 路并发对应 k 棵子树，即 k 组 G2P / S2P / Onset 执行体（§4.1），因此执行体之间必须共享解析产物；本层只要求该共享**对本文规定的全部可观察行为透明**（命中仅表示取得同一资源对象，不改变任何 IO）。缓存为何是架构必需件见 [LinguistArchitecture.md](LinguistArchitecture.md) §1.2 的 C2；缓存的对象、键、归属、生命周期与验收基线见 [LinguistResourceCache.md](LinguistResourceCache.md)；「k 路并发即 k 组 ONNX session」的更正（对 ONNX 不成立）见该文档 A59 条。
 
 ### 9.3 包搜索路径顺序
 
@@ -368,6 +368,6 @@ k 路并发对应 k 棵子树，即 k 组 G2P / S2P / Onset 执行体（§4.1）
 
 | 方面 | 现状 |
 | :-- | :-- |
-| 歌手侧 `languages` / `defaultLanguage` | 读自 synthrt `SingerCategory` 的类别追加字段（A11 已在 synthrt 的 `onnxruntime-builds-uptake` 分支实现，见 A26 补记）。形状与 role 存在性由 synthrt 在打开包时校验；`readSingerLanguages()` 只把已解析的映射转换为 wolf 的形状 |
+| 歌手侧 `languages` / `defaultLanguage` / `reservedPhonemes` | 属于 DiffSinger singer 的 `exports`。Load 后由 DiffSinger provider 解析成 typed `Exports`，wolf 的 `readSingerLanguages()` 读取该对象；DataOnly 下读取 `manifestExports()`。形状与 role 存在性由 DiffSinger provider 在 Acquire 校验 |
 
 取消的现行规则见决策台账 A73 及其补记：子执行体在入口读到未消费的停止请求时以 `Canceled` 返回；linguist 执行体识别出并非本次转换发出的停止请求时，重试一次该阶段。

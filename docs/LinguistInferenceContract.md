@@ -2,7 +2,7 @@
 
 本文规定语言链上三份推理契约的 Level 1：**G2P**（歌词 → 发音）、**S2P**（发音 → 音素序列）、**Onset**（音素 → onset 标记）。
 
-上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；组合规则与语言身份见 [linguist-domain-contract.md](linguist-domain-contract.md)；执行体树、任务与并发见 [linguist-runtime.md](linguist-runtime.md)；`configuration` 键汇与资源格式见 [linguist-variants.md](linguist-variants.md)。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [LinguistArchitecture.md](LinguistArchitecture.md)；组合规则与语言身份见 [LinguistDomainContract.md](LinguistDomainContract.md)；执行体树、任务与并发见 [LinguistRuntime.md](LinguistRuntime.md)；`configuration` 键汇与资源格式见 [LinguistVariants.md](LinguistVariants.md)。
 
 **发布状态**：Level 1 尚未对外发布（规则同语言域契约）。
 
@@ -317,12 +317,12 @@ configuration 仍由具体变体定义，加载器比较完整三元组。
 
 ### 6.4 与运行时的边界
 
-本文只规定**每次调用的 IO 形状与词汇**。任务的创建、并发、取消、停等、诊断通道与降级模型全部由 [linguist-runtime.md](linguist-runtime.md) 规定。
+本文只规定**每次调用的 IO 形状与词汇**。任务的创建、并发、取消、停等、诊断通道与降级模型全部由 [LinguistRuntime.md](LinguistRuntime.md) 规定。
 
 ---
 
 ## 7. 变体治理
 
-变体治理规则（命名与保留、三元组全匹配选择、收录规则）与「新增变体 / 递增 Level / 另立 interface」的判据统一见 [linguist-variants.md](linguist-variants.md) §1，判据的上位规范为 spec 2.4 §声明文件。
+变体治理规则（命名与保留、三元组全匹配选择、收录规则）与「新增变体 / 递增 Level / 另立 interface」的判据统一见 [LinguistVariants.md](LinguistVariants.md) §1，判据的上位规范为 spec 2.4 §声明文件。
 
 本契约只关心其中一件事：**变体可随时新增，新增变体不涉及本契约的修改**（spec 2.4 §何时递增 Level）。需要跨实现互操作而现有词汇表不足时，按 spec 2.4 §声明文件 递增 Level 或另立 interface；模型后端（词 → 发音的张量模型）与词典查询在 Level 1 不单独设立契约（A2），它们是 `pipe-chain` 变体的内部事务，经该变体自身的 `imports` 与 `configuration` 表达。

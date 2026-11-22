@@ -2,7 +2,7 @@ get_filename_component(_dir_name ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(CURRENT_PLUGIN_CATEGORY ${_dir_name})
 
 # The inference category belongs to synthrt, so its interpreters carry the synthrt plugin IID
-# instead of a wolf IID. See docs/linguist-inference-contract.md section 1.
+# instead of a wolf IID. See docs/LinguistInferenceContract.md section 1.
 set(CURRENT_PLUGIN_IID org.openvpi.synthrt.plugin.InferenceInterpreter)
 
 add_subdirectory(chain)

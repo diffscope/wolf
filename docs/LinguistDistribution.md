@@ -2,7 +2,7 @@
 
 本文规定公共语言包的**形态、身份、版本模型与发布渠道**，以及 wolf 的 **vcpkg 端口拓扑**。
 
-上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)。本文属 wolf 实现文档，不构成对外契约。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [LinguistArchitecture.md](LinguistArchitecture.md)。本文属 wolf 实现文档，不构成对外契约。
 
 ---
 
@@ -201,7 +201,7 @@ Phonetic-Suite-**Num**、**Punc**、**Unknown** 合并为**一个**语言包。
 
 **边界**：`SP`、`AP`、连音 `-`、拆音续音符 `+` 等**保留记号**仍由宿主预过滤（运行时文档 §4.3 不变）；歌词中的数字与标点由本包处理。
 
-**本包是发布链的引导包**：本包不含词典与模型，不涉及许可问题，但完整覆盖「`desc.json`、语言声明、两个推理模块、歌手映射」的全链路，因此在实施方案中排在最前（见 [linguist-implementation-plan.md](linguist-implementation-plan.md) M3.5）。本包的声明位于 `scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，由该脚本生成到构建目录（惯例为 `build/test-fixtures/wolf-lang-zxx/`，生成物不入库，CMake 构建**不**生成它），再由 `make-lang-release.py --extra` 指向该生成目录纳入发布。
+**本包是发布链的引导包**：本包不含词典与模型，不涉及许可问题，但完整覆盖「`desc.json`、语言声明、两个推理模块、歌手映射」的全链路，因此它是发布链的引导包。本包的声明位于 `scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，由该脚本生成到构建目录（惯例为 `build/test-fixtures/wolf-lang-zxx/`，生成物不入库，CMake 构建**不**生成它），再由 `make-lang-release.py --extra` 指向该生成目录纳入发布。
 
 ## 3. 结构迁移
 
@@ -432,7 +432,7 @@ wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-po
 ]
 ```
 
-清单定义三个 feature：`onnx`（启用 `synthrt-main[onnx]`）、`lang-packages`（依赖 `wolf-lang-packages`）与 `tests`（依赖 `boost-test`）。
+清单定义三个 feature：`onnx`（必需，启用 `synthrt-main[onnx]`）、`lang-packages`（依赖 `wolf-lang-packages`）与 `tests`（依赖 `boost-test`）。
 
 | 端口 | 类型 | 位置 | 说明 |
 | :-- | :-- | :-- | :-- |
@@ -458,7 +458,7 @@ wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-po
 - `vcpkg_from_git(URL https://github.com/diffscope/synthrt.git REF <提交> HEAD_REF onnxruntime-builds-uptake)`，按提交获取，无需归档哈希；`version-string` 为 `onnxruntime-builds-uptake`；
 - 依赖：`qmsetup`、`stduuid`、`stdcorelib`、`stdcorelib-plugin`、`blake3`、`sparsepp`、`bit7z`；
 - **缺省 `SYNTHRT_BUILD_DSINFER=OFF`**：dsinfer 的命令行工具硬依赖 `onnxdriver`，而后者在没有 onnxruntime 时不构建（`dsinfer/plugins/inferencedrivers/onnxdriver/CMakeLists.txt:1-4` 直接 return），`add_dependencies` 因找不到目标而在配置期失败。wolf 语言域需要的 `inference` 与 `singer` 两个类别都在 synthrt 本体中，不在 dsinfer 中；
-- **可选 feature `onnx`**：为 `multig2p-onnx` 变体启用 dsinfer 与 ONNX 驱动，见 §6.1.1；
+- **必需 feature `onnx`**：为 `multig2p-onnx` 变体和 DiffSinger singer exports 启用 dsinfer 与 ONNX 驱动，见 §6.1.1；
 - A11 已合入 synthrt 的 `onnxruntime-builds-uptake` 分支，因此端口不带补丁，直接固定在该分支的提交上（A26 补记）。
 
 #### 6.1.1 feature `onnx`：ORT 载荷由端口提供
@@ -553,7 +553,7 @@ wolf 仓库自 2026-09-28 起公开，release 资产可匿名下载，端口可�
 
 `cmake --install` 安装七个插件（各带 `plugin.json`）与一个库：
 
-本节列的是**分发物清单**（安装了哪些插件、各自缺什么依赖的后果）；这些目录的**运行期查找路径**（路径形态、类别目录与宿主传给 `setPluginPaths` 的映射）见 [linguist-runtime.md](linguist-runtime.md) §1.1。
+本节列的是**分发物清单**（安装了哪些插件、各自缺什么依赖的后果）；这些目录的**运行期查找路径**（路径形态、类别目录与宿主传给 `setPluginPaths` 的映射）见 [LinguistRuntime.md](LinguistRuntime.md) §1.1。
 
 ```
 lib/libsynthrt-wolf.so                                  # 注册 linguist 类别

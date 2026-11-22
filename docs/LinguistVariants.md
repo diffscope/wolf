@@ -1,8 +1,8 @@
 # wolf 语言域变体参考（正交面）
 
-本文是**变体面**，记录各 `variant` 的 `configuration` 键集与资源格式。变体面与分层主栈正交：契约层（[linguist-domain-contract.md](linguist-domain-contract.md)、[linguist-inference-contract.md](linguist-inference-contract.md)）只规定「`configuration` 由 `variant` 全权规定」，具体内容由本文规定。
+本文是**变体面**，记录各 `variant` 的 `configuration` 键集与资源格式。变体面与分层主栈正交：契约层（[LinguistDomainContract.md](LinguistDomainContract.md)、[LinguistInferenceContract.md](LinguistInferenceContract.md)）只规定「`configuration` 由 `variant` 全权规定」，具体内容由本文规定。
 
-本文属 **wolf 实现文档**，不是对外契约。上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；决策见 [linguist-decisions.md](linguist-decisions.md)。
+本文属 **wolf 实现文档**，不是对外契约。上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [LinguistArchitecture.md](LinguistArchitecture.md)；决策见 [LinguistDecisions.md](LinguistDecisions.md)。
 
 > **口径**：本文描述**目标形态**。各变体的键集已逐条与 synthrt `refactor` 分支的实现核对（移植来源与移植差异表见 §8），实现与目标的差异集中在 §8.1。原变体草案中涉及 G2PModel / DictQuery 契约、`options.languageId`、按贡献 ID 匹配语言的部分**一律作废**（A2 / A3 / A16），该草案已删除。
 
@@ -520,13 +520,13 @@ wolf 随附六个推理解释器插件：`s2p`、`onset`、`chain`、`pinyin`，
 | S2P `dict`/`direct`/`mapping`/`lua` | `lib/S2P/**`（原为 istream 库类，无模块外壳） |
 | Onset `rule`/`lua` | `lib/S2P/RuleOnsetMarker.*`、`LuaOnsetMarker.*` |
 
-**口径：旧栈是「待移植的参考实现」，不是「待规范化的现状」。** 本文描述目标键集；旧实现与目标的差异集中在 §8.1，不作逐条现状盘点。现状记录归入 [linguist-decisions.md](linguist-decisions.md) 的 D 系列保留区（D3 / D4 / D5 / D6 / D7 / D12 / D13）。
+**口径：旧栈是「待移植的参考实现」，不是「待规范化的现状」。** 本文描述目标键集；旧实现与目标的差异集中在 §8.1，不作逐条现状盘点。现状记录归入 [LinguistDecisions.md](LinguistDecisions.md) 的 D 系列保留区（D3 / D4 / D5 / D6 / D7 / D12 / D13）。
 
 移植时须按 synthrt main 的新框架重构，而非照搬：
 
 - 分派键从旧的 TaskPlugin `key()` 字符串改为 (`interface`, `level`, `variant`) 三元组；
 - 任务面从旧的 G2pTask 改为 `srt::InferenceExecutive` + `srt::ITask`（单任务面，见 A14）；
-- 资源装配点移至 Acquire，并接入 `wolf::ResourceCache`（[linguist-resource-cache.md](linguist-resource-cache.md)）；
+- 资源装配点移至 Acquire，并接入 `wolf::ResourceCache`（[LinguistResourceCache.md](LinguistResourceCache.md)）；
 - 内部语言引用（旧栈的 `langRef`、下划线词法 `eng_plus`）不越过模块边界，改用契约的 `(language, scheme)` 二元组（链推理契约 §2.4）。
 
 ### 8.1 旧栈 → 目标的移植差异

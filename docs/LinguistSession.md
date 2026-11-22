@@ -2,7 +2,7 @@
 
 本文规定**宿主直接持有的会话对象**。会话位于层栈最上层，把执行体树、就绪状态、并发与保留词收进语言域内部，宿主只需提供三项输入：歌手、语言与待转换的词。
 
-上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [linguist-architecture.md](linguist-architecture.md)；决策见 [linguist-decisions.md](linguist-decisions.md)。本文属 **wolf 实现文档**，不是对外契约。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)；分层见 [LinguistArchitecture.md](LinguistArchitecture.md)；决策见 [LinguistDecisions.md](LinguistDecisions.md)。本文属 **wolf 实现文档**，不是对外契约。
 
 > **口径**：本文描述**目标形态**，该形态已全部实现（§9）。实现状态见 [Status.md](Status.md)；实施阶段对原设计的修正集中列于 §12.1。
 
@@ -275,7 +275,7 @@ LinguistSession
 
 前两条**是 G2P 契约的义务**，由模块侧承担：三个 G2P 变体各自遵守，并共用一个判定组件（与 `Verifier` 的理由相同：同一条规则的两份副本终将分叉）。该组件即 `wolf::classifyLyric()`（`linguistutil/InputRules.h`），三个变体在执行任何步骤之前先调用它。
 
-第三条**是宿主惯例**，由会话侧承担，分两层：歌手自身声明的标记集合优先。`reservedPhonemes` 是 synthrt `singer` 类别的追加字段，写在声明根，类别校验其形状，DiffSinger 校验器在加载期对每个模型校验；会话在扫描目录时直接从 `SingerSpec` 读入 `SingerEntry::reservedMarkers`，宿主无需转交。未声明的歌手使用会话级集合，缺省为 `{SP, AP}`，采用其他记法的宿主可通过 `setReservedMarkers()` 替换。域契约 §4 已规定保留音素不进入 `exports.phonemes`，两处口径一致。
+第三条**是宿主惯例**，由会话侧承担，分两层：歌手自身声明的标记集合优先。`reservedPhonemes` 属于 DiffSinger singer 的 `exports`，由 DiffSinger provider 在 Load 时解析成 typed `Exports` 并对每个模型校验；会话在扫描目录时通过 `readSingerLanguages()` 读入 `SingerEntry::reservedMarkers`，宿主无需转交。未声明的歌手使用会话级集合，缺省为 `{SP, AP}`，采用其他记法的宿主可通过 `setReservedMarkers()` 替换。域契约 §4 已规定保留音素不进入 `exports.phonemes`，两处口径一致。
 
 **项目专属标记仍归宿主**：连音符、`+` 后缀、切分标记属于 lite 的工程模型，不是语言域的概念。宿主对这类词预置 `pronunciation`，或不将其送入会话。
 
@@ -348,7 +348,7 @@ LinguistSession
 - **不做后台重试与超时**，失败缓存的唯一失效点是 `refresh()`（§4）；
 - **不解释项目模型**：不处理连音、切分、时值与音符 id（§7）；
 - **不另立数据模型**：转换的输入输出沿用 L4 的形状（§3）；
-- **不缓存逐词结果**：逐词缓存属于记忆化，与资源去重是不同的机制（[linguist-resource-cache.md](linguist-resource-cache.md) §1）。
+- **不缓存逐词结果**：逐词缓存属于记忆化，与资源去重是不同的机制（[LinguistResourceCache.md](LinguistResourceCache.md) §1）。
 
 ## 11. 与 lite 的对接映射
 

@@ -2,7 +2,7 @@
 
 本文规定**语言域身份层（L1）**与**语言组合契约层（L2）**：`linguist` 贡献类别、语言身份、`WolfLinguist` Level 1 契约，以及歌手侧的语言映射。
 
-上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)，分层与跨层不变量见 [linguist-architecture.md](linguist-architecture.md)，冲突时按索引所定的可信源顺序裁决。链推理契约（G2P / S2P / Onset）见 [linguist-inference-contract.md](linguist-inference-contract.md)；运行时与宿主接入见 [linguist-runtime.md](linguist-runtime.md)；`configuration` 键汇与资源格式见 [linguist-variants.md](linguist-variants.md)。
+上位规范为 [spec 2.4](https://github.com/diffscope/synthrt/blob/main/docs/ds-spec-2.4.md)，分层与跨层不变量见 [LinguistArchitecture.md](LinguistArchitecture.md)，冲突时按索引所定的可信源顺序裁决。链推理契约（G2P / S2P / Onset）见 [LinguistInferenceContract.md](LinguistInferenceContract.md)；运行时与宿主接入见 [LinguistRuntime.md](LinguistRuntime.md)；`configuration` 键汇与资源格式见 [LinguistVariants.md](LinguistVariants.md)。
 
 **发布状态**：Level 1 尚未对外发布。稳定前的原地修订不构成 spec 2.4 §interface 契约规范「契约发布后不得作不兼容修改」意义上的发布后修改。
 
@@ -285,8 +285,8 @@ synthrt、wolf、otter 与 ds-editor-lite 四个仓库中均没有非空的 Onse
 
 > **随包发布的部署组合（语言包 + 声库）必须让每个声明语言达到 `Depth::Onsets`；两方都无法提供规则资源时，发布方必须把该语言显式登记为「无卡拍层（已知限制）」，不允许默默缺层。**
 
-- **生效的是歌手实际绑定到的那个 linguist**：宿主先按歌手的语言映射取该语言的 role，再取该 role 的**绑定目标**（`src/plugins/linguistproviders/wolflinguist/WolfLinguistProvider.cpp:272-276`），层深由 **该目标自身**的 `linguist/s2p` 与 `linguist/onset` 导入决定（:293-296）。因此**「语言包或声库任一方提供即可」不成立**：生效的只有**被绑定的那一个** linguist。声库因条目自带 `s2pFile`/`dict` 而**自建 linguist** 时（音节语言的词典与 onset 规则属于歌手包内容，见 [linguist-distribution.md](linguist-distribution.md) §3.2），被绑定的是声库自己的 linguist，**语言包那个带 `linguist/onset` 的 linguist 不会被绑定**，它的 onset 成员对本次组合不生效，组合因此仍停在音素层。本要求**不**要求语言包自带 `linguist/onset` 模块；§5.1 的基数、§5.3 的匹配与 §5.0 的降级产出均不因绑定关系改变；
-- **缺层必须登记，不允许默默缺层**：被绑定的 linguist 取不到卡拍层（语言包与声库都不提供规则资源）时，发布方必须在发布清单中把该语言登记为**无卡拍层（已知限制）**，登记项必须写明宿主的实际行为：音素按无起音处理，因此该音符不产生自己的 word、音素归入前一个词的 word、时长偏移的基准随之改变（详述见下条「不达标的后果」）。登记是**发布动作**：不改变引擎行为，也不新增加载期校验。逐语言的现状核对清单见 [linguist-distribution.md](linguist-distribution.md) §3.3；
+- **生效的是歌手实际绑定到的那个 linguist**：宿主先按歌手的语言映射取该语言的 role，再取该 role 的**绑定目标**（`src/plugins/linguistproviders/wolflinguist/WolfLinguistProvider.cpp:272-276`），层深由 **该目标自身**的 `linguist/s2p` 与 `linguist/onset` 导入决定（:293-296）。因此**「语言包或声库任一方提供即可」不成立**：生效的只有**被绑定的那一个** linguist。声库因条目自带 `s2pFile`/`dict` 而**自建 linguist** 时（音节语言的词典与 onset 规则属于歌手包内容，见 [LinguistDistribution.md](LinguistDistribution.md) §3.2），被绑定的是声库自己的 linguist，**语言包那个带 `linguist/onset` 的 linguist 不会被绑定**，它的 onset 成员对本次组合不生效，组合因此仍停在音素层。本要求**不**要求语言包自带 `linguist/onset` 模块；§5.1 的基数、§5.3 的匹配与 §5.0 的降级产出均不因绑定关系改变；
+- **缺层必须登记，不允许默默缺层**：被绑定的 linguist 取不到卡拍层（语言包与声库都不提供规则资源）时，发布方必须在发布清单中把该语言登记为**无卡拍层（已知限制）**，登记项必须写明宿主的实际行为：音素按无起音处理，因此该音符不产生自己的 word、音素归入前一个词的 word、时长偏移的基准随之改变（详述见下条「不达标的后果」）。登记是**发布动作**：不改变引擎行为，也不新增加载期校验。逐语言的现状核对清单见 [LinguistDistribution.md](LinguistDistribution.md) §3.3；
 - **检测方式**：对每个声明语言查询 `WolfPipelineExtension::maxDepth` / `LanguageStatus::maxDepth`（§5.0.1）。报 `Depth::Phonemes` 即该语言没有 onset 成员；报 `Depth::Pronunciation` 更浅，同样没有卡拍层。**`onsets` 的取值不能用作判据**：该成员缺席时逐位输出 `false`（§5.0），与「有卡拍层而本音节无起音」不可区分。`hasSeparatePronunciationLayer` 回答的是另一个问题（§5.0.2），不能替代本检测；
 - **不达标的后果**：宿主看到的卡拍层与「有卡拍层而无起音」同形，编辑器侧据此折平；音素因此归属到前一个词、该音符不产生 word，时长偏移的基准随之改变，结果是**词与音符的关联整体错位一个音符**。该后果发生在宿主侧，源头是组合缺少 onset 成员。
 
@@ -298,7 +298,7 @@ synthrt、wolf、otter 与 ds-editor-lite 四个仓库中均没有非空的 Onse
 
 导入方省略 `options` 时框架交付空 object（`PackageLoader.cpp:1358`）；显式给出非 object（如 `null`）或含任何键的 object 时，provider 返回 `InvalidFormat`。机器可读 schema 为 `docs/schemas/linguist-1-import-options.schema.json`。
 
-运行时的语言选定不经 import options：组合 provider 在创建子执行体时经 `RuntimeOptions` 注入 `(language, scheme)`（见 [linguist-runtime.md](linguist-runtime.md) §3.1）。清单因此无需重复语言声明中已有的信息，两侧也不存在不一致的可能。
+运行时的语言选定不经 import options：组合 provider 在创建子执行体时经 `RuntimeOptions` 注入 `(language, scheme)`（见 [LinguistRuntime.md](LinguistRuntime.md) §3.1）。清单因此无需重复语言声明中已有的信息，两侧也不存在不一致的可能。
 
 ## 7. Configuration
 
@@ -314,17 +314,21 @@ Level 1 不定义任何 `configuration` 键。`wolf` 变体要求 **`configurati
 
 ## 9. 变体治理
 
-本层只有一个变体：三元组固定为 (`WolfLinguist`, 1, `wolf`)；变体可随时新增，新增变体不涉及本契约的修改（spec 2.4 §何时递增 Level）。其余规则（框架按三元组全匹配选择 provider、`configuration` 不参与选择、裸变体名由 wolf 官方保留、第三方用反向域名变体）见 [linguist-variants.md](linguist-variants.md) §1.1、§1.2。
+本层只有一个变体：三元组固定为 (`WolfLinguist`, 1, `wolf`)；变体可随时新增，新增变体不涉及本契约的修改（spec 2.4 §何时递增 Level）。其余规则（框架按三元组全匹配选择 provider、`configuration` 不参与选择、裸变体名由 wolf 官方保留、第三方用反向域名变体）见 [LinguistVariants.md](LinguistVariants.md) §1.1、§1.2。
 
 ---
 
 ## 10. 歌手侧：语言映射
 
-歌手用两个**类别追加字段**声明所支持的语言及缺省语言。二者由 `SingerCategory`（synthrt）解析，与 `avatar` / `background` / `demoAudio` 同层。
+DiffSinger singer 在 `exports` 中声明语言映射与缺省语言。这三个字段不属于 singer 类别的根字段，由 `DiffSingerProvider::createExports()` 解析成 `ds::Api::DiffSinger::L1::Exports`；wolf 在 Load 后读取该 typed 对象。`DataOnly` 下没有 typed exports，消费者只能读 `SingerSpec::manifestExports()`。
 
 ```json
-{ "languages": { "cmn": "lang/mandarin", "jpn": "lang/japanese" },
-  "defaultLanguage": "cmn",
+{ "interface": "org.openvpi.dsinfer.singer.DiffSinger", "level": 1, "variant": "openvpi",
+  "exports": {
+    "languages": { "cmn": "lang/mandarin", "jpn": "lang/japanese" },
+    "defaultLanguage": "cmn",
+    "reservedPhonemes": ["AP", "SP"]
+  },
   "imports": [
       { "role": "singer/acoustic", "ref": ":inference/acoustic" },
       { "role": "lang/mandarin",   "ref": ":linguist/cmn-pinyin" },
@@ -335,6 +339,7 @@ Level 1 不定义任何 `configuration` 键。`wolf` 变体要求 **`configurati
 | :-- | :-- | :-- | :-- |
 | `languages` | map&lt;string, string&gt; | 否 | **语言句柄 → 本声明内的 import role** |
 | `defaultLanguage` | string | `languages` 非空时**必选** | 缺省语言句柄，必须是 `languages` 的键 |
+| `reservedPhonemes` | array&lt;string&gt; | 否 | 保留音素列表；元素必须是互不相同的非空字符串 |
 
 ### 10.1 映射值取 role 的设计理由
 
@@ -360,34 +365,35 @@ ImportBinding 只由 `imports` 数组产生（`PackageLoader.cpp:894-917`）；�
 
 - **无加载期与运行时语义**，仅作为宿主策略的输入，语言域自身不读取该字段；
 - 必须显式给出而不能取「第一个」键的原因：`languages` 是 object，成员按键排序，**声明顺序不保留**（stdcorelib `support/json.h:68`），object 中不存在「第一个」成员；
-- 宿主的「跟随歌手」语义据此解析（见 [linguist-runtime.md](linguist-runtime.md) §7.1）。
+- 宿主的「跟随歌手」语义据此解析（见 [LinguistRuntime.md](LinguistRuntime.md) §7.1）。
 
 ### 10.5 校验分工
 
 | 校验 | 执行者 | 阶段 |
 | :-- | :-- | :-- |
-| `languages` 是 object、值全为 string；每个键是非空合法 segment | `SingerCategory` | Probe |
-| 每个值命中本声明 `imports` 中的某个 role（`ContribCreateContext::imports()`，`ContribCategory.h:60`） | `SingerCategory` | Probe |
-| `defaultLanguage` 为 string 且是 `languages` 的键；`languages` 非空时必填 | `SingerCategory` | Probe |
+| `languages` 是 object、值全为 string；每个键是非空合法 segment | **DiffSinger provider** | Acquire |
+| 每个值命中本声明 `imports` 中的某个 role（`ContribSpec::findImport()`） | **DiffSinger provider** | Acquire |
+| `defaultLanguage` 为 string 且是 `languages` 的键；`languages` 非空时必填 | **DiffSinger provider** | Acquire |
+| `reservedPhonemes` 是 array，元素为互不相同的非空字符串 | **DiffSinger provider** | Acquire |
 | 键形如 `[a-z]{3}`。不单独校验：目标声明的 `language` 已在 Probe 通过该形状校验，末行的相等判定蕴含本项 | **wolf validator** | Ready-2 |
 | 值指向的 import，其目标类别为 `linguist`，且目标三元组为 (`WolfLinguist`, 1, `wolf`) | **wolf validator** | Ready-2 |
 | 目标声明的 `language` 等于映射键 | **wolf validator** | Ready-2 |
+| 每个 `reservedPhoneme` 出现在所有带音素表模型（Duration、Pitch、Variance、Acoustic）的 `phonemes` 中 | **DiffSinger provider** | Ready-2 |
 
-**synthrt 只处理「一个语言标签映射到一个 import role」，不涉及 linguist 的语义。** 形状与 role 存在性由框架校验，语言域语义由 wolf 校验。两个字段因此对任何语言体系通用，wolf 的领域知识不进入框架。
+**`SingerCategory` 不解析也不校验这些字段。** 结构校验由 DiffSinger provider 在 Acquire 执行，跨模块语义由 wolf validator 与 DiffSinger provider 在 Ready-2 执行。
 
 ---
-
 ## 11. 校验的分层落点
 
 框架**没有「仅告警」通道**：凡进入加载事务的校验，失败即整次加载失败（spec 2.4 §加载事务；`PackageLoader.cpp` 的 Acquire/Ready 钩子失败即中止，不存在旁路告警分支）。提示级检查一律由编辑器 lint 与宿主日志承担。
 
-本文各节的落点**不另立整表**。整表——列为「相 | 执行者 | 校验内容 | 层 | 框架执行点」，含 L1 / L2 各行与 `synthrt/lib/Core/PackageLoader.cpp` 行号——见 [linguist-architecture.md](linguist-architecture.md) §6「校验矩阵」。本文各节的对应关系为：§2.3 → Probe / `LinguistCategory::createSpec`；§10.5 前三行 → Probe / `SingerCategory::createSpec`；§4、§7 → Acquire / 组合 provider；§6 → Ready-1；§5.1 下界、§5.2、§5.3、§10.5 后三行 → Ready-2 / wolf validator；Ready-3 的挂载由 L4 规定。
+本文各节的落点**不另立整表**。整表——列为「相 | 执行者 | 校验内容 | 层 | 框架执行点」，含 L1 / L2 各行与 `synthrt/lib/Core/PackageLoader.cpp` 行号——见 [LinguistArchitecture.md](LinguistArchitecture.md) §6「校验矩阵」。本文各节的对应关系为：§2.3 → Probe / `LinguistCategory::createSpec`；§10.5 前四行 → Acquire / DiffSinger provider；§4、§7 → Acquire / 组合 provider；§6 → Ready-1；§5.1 下界、§5.2、§5.3、§10.5 后四行 → Ready-2 / wolf validator 与 DiffSinger provider；Ready-3 的挂载由 L4 规定。
 
 ### 11.1 Ready-2 的已知盲区
 
 `ContribImportValidator` 只来自**已加载的解释器**（`ContribPluginFactory.cpp:128-131`），而解释器只在事务内有贡献选中其三元组时才会加载。因此，**依赖闭包内不含任何 linguist 贡献时，wolf 的歌手侧校验不执行。**
 
-后果与对策：对于声明了 `languages` 却未 import 任何 linguist 的歌手包，`SingerCategory` 仍会检出映射值「role 不存在」（该校验在框架侧恒定执行），但「role 指向的不是 linguist」这类判定缺失。因此，**必须恒成立的结构性规则一律放在 Probe（L1），Ready-2 只承载需要跨模块信息的判定**。本文的分工按此原则划定。
+后果与对策：对于声明了 `languages` 却未 import 任何 linguist 的歌手包，DiffSinger provider 仍会在 Acquire 检出映射值「role 不存在」，但「role 指向的不是 linguist」这类判定缺失。因此，**结构规则由 DiffSinger provider 在 Acquire 执行，Ready-2 只承载需要跨模块信息的判定**。本文的分工按此原则划定。
 
 ## 12. 归编辑期 lint 的比对
 

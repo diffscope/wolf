@@ -48,7 +48,7 @@ synthrt 锚点一律带树内前缀（`synthrt/` 或 `dsinfer/`），两棵树�
 | # | 约束 | 后果 |
 | :-- | :-- | :-- |
 | C1 | `RuntimeOptions` 三元组必须等于**目标 spec** 三元组 | `G2pRuntimeOptions` 必须由构造参数接收目标变体；不得沿用 dsinfer 单变体契约的硬编码写法（`synthrt/lib/SVS/InferenceContrib.cpp:25-30`） |
-| C2 | `srt::InferenceExecutive` 是单任务面（`state()/stop()/waitForFinished()`，`quit()/wait()` private-final） | 并发通过创建多个执行体实现，而非在一个执行体上运行多个任务；**资源缓存因此是架构必需件而非优化**（`InferenceExecutive.h:39-50`；缓存的键、归属与生命周期见 [linguist-resource-cache.md](linguist-resource-cache.md)） |
+| C2 | `srt::InferenceExecutive` 是单任务面（`state()/stop()/waitForFinished()`，`quit()/wait()` private-final） | 并发通过创建多个执行体实现，而非在一个执行体上运行多个任务；**资源缓存因此是架构必需件而非优化**（`InferenceExecutive.h:39-50`；缓存的键、归属与生命周期见 [LinguistResourceCache.md](LinguistResourceCache.md)） |
 | C3 | validator 仅来自**已加载**解释器 | 必须始终成立的规则不能只放在 Ready-2；依赖闭包内无 linguist 贡献时，wolf 的校验不会执行（`ContribPluginFactory.cpp:128-131`） |
 
 ### 1.3 依赖的框架超集
@@ -77,7 +77,7 @@ L1  语言域身份层    linguist 类别 / (language, scheme) / ID 语法    wo
 L0  框架不变量      role 唯一 / 三元组 / 事务四相 / 监督树 / vars    synthrt，只可依赖
 ```
 
-> **L6 位于 L5 之上**：L6 是宿主**持有**的对象，不是宿主**实现**的层。L5 仍是宿主自定的策略面（解析次序、呈现）；每个宿主都需要实现且只有一个正确答案的部分由 L6 收归语言域内部。详见 [linguist-session.md](linguist-session.md)。
+> **L6 位于 L5 之上**：L6 是宿主**持有**的对象，不是宿主**实现**的层。L5 仍是宿主自定的策略面（解析次序、呈现）；每个宿主都需要实现且只有一个正确答案的部分由 L6 收归语言域内部。详见 [LinguistSession.md](LinguistSession.md)。
 
 以下两个正交平面不属于主栈，各自独立演进：
 
@@ -99,7 +99,7 @@ L0  框架不变量      role 唯一 / 三元组 / 事务四相 / 监督树 / va
 
 ## 3. 决策台账
 
-全部 A1–A80 的编号、现行结论与论证过程见 [linguist-decisions.md](linguist-decisions.md)。**本文不维护决策副本**：本节的表只列跨层高频引用的五条结论，便于在阅读上文各节时就近对照；取舍与依据一律以台账为准，含作废与取代关系（台账中以删除线标注）。
+全部 A1–A80 的编号、现行结论与论证过程见 [LinguistDecisions.md](LinguistDecisions.md)。**本文不维护决策副本**：本节的表只列跨层高频引用的五条结论，便于在阅读上文各节时就近对照；取舍与依据一律以台账为准，含作废与取代关系（台账中以删除线标注）。
 
 | # | 跨层高频结论 |
 | :-- | :-- |
@@ -116,9 +116,11 @@ L0  框架不变量      role 唯一 / 三元组 / 事务四相 / 监督树 / va
 **结论：符合 spec 2.4。** synthrt 使用「个别必需字段」额度中的 2 项，其余为 wolf 侧的增补。
 
 ```
-synthrt  synthrt/lib/SVS/SingerContrib.cpp:33-36   白名单 +2（languages, defaultLanguage）
-         synthrt/lib/SVS/SingerContrib.cpp         createSpec 解析 + 三条结构校验
-         synthrt/include/synthrt/SVS/SingerContrib.h   SingerSpec +2 成员 +2 访问器
+dsinfer  dsinfer/Api/Singers/DiffSinger/1/DiffSingerApiL1.h   Exports + languages/defaultLanguage/reservedPhonemes
+         dsinfer/plugins/singerproviders/diffsinger/DiffSingerProvider.cpp
+                                                       createExports 解析 + 结构校验
+synthrt  synthrt/lib/SVS/SingerContrib.cpp            不解析这三个字段
+         synthrt/include/synthrt/SVS/SingerContrib.h  SingerSpec 只保留显示字段
 
 wolf     src/lib/Linguist/LinguistContrib.cpp:56-62    白名单 +2（language, scheme）
          src/lib/Linguist/LinguistContrib.{h,cpp}      LinguistSpec +2 访问器、language/scheme 形状校验
@@ -134,7 +136,7 @@ dsinfer  0 处
 
 ### 一处已知张力（记录在案）
 
-1. **歌手侧校验依赖框架超集**（见 §1.3），并受 C3 盲区约束。原第 2 条张力（spec 把 Package 定义为 `.dspk` ZIP，而加载器只接受目录）**已由上游消除**：spec 2.4 现将 Package 定义为「一个根目录下含有 `desc.json` 的目录」，并把分发格式整体移出该规范，归 DSPK 格式规范。规范因此与 wolf 早已发布的「解包即目录」一致，不再需要在此记录差异（见 [linguist-distribution.md](linguist-distribution.md)）。
+1. **歌手侧校验依赖框架超集**（见 §1.3），并受 C3 盲区约束。原第 2 条张力（spec 把 Package 定义为 `.dspk` ZIP，而加载器只接受目录）**已由上游消除**：spec 2.4 现将 Package 定义为「一个根目录下含有 `desc.json` 的目录」，并把分发格式整体移出该规范，归 DSPK 格式规范。规范因此与 wolf 早已发布的「解包即目录」一致，不再需要在此记录差异（见 [LinguistDistribution.md](LinguistDistribution.md)）。
 
 ---
 
@@ -163,15 +165,17 @@ dsinfer  0 处
 ```json
 // singers/singer1/singer.json                                              ← L2 歌手侧
 { "interface": "org.openvpi.dsinfer.singer.DiffSinger", "level": 1, "variant": "openvpi",
-  "languages": { "cmn": "lang/mandarin", "jpn": "lang/japanese" },
-  "defaultLanguage": "cmn",
+  "exports": {
+    "languages": { "cmn": "lang/mandarin", "jpn": "lang/japanese" },
+    "defaultLanguage": "cmn"
+  },
   "configuration": { "dict": "./dict.txt" },
   "imports": [ { "role": "singer/acoustic", "ref": ":inference/acoustic" },
                { "role": "lang/mandarin",   "ref": ":linguist/cmn-pinyin" },
                { "role": "lang/japanese",   "ref": "wolf/lang-jpn:linguist/jpn-romaji" } ] }
 ```
 
-由 ISO 代码到实际 linguist 贡献 ID 的解析路径：`"cmn"` → role `lang/mandarin` → 该 import 的 `locator().contributionId()` = `cmn-pinyin`，全程在 DataOnly 模式下可读。
+由 ISO 代码到实际 linguist 贡献 ID 的解析路径：`"cmn"` → role `lang/mandarin` → 该 import 的 `locator().contributionId()` = `cmn-pinyin`，DataOnly 读 `manifestExports()` 的原始 JSON，Load 后读 typed `Exports`。
 
 ---
 
@@ -179,18 +183,19 @@ dsinfer  0 处
 
 任何校验失败均使整次加载失败（spec 2.4 §加载事务）。框架没有告警通道，提示级检查全部由编辑期 lint 执行。
 
-本表是校验落点的**唯一权威表**：分层文档只写各自小节的判定规则，不再另立整表。L1 / L2 各行的契约归属（哪条规则写在哪个小节）见 [linguist-domain-contract.md](linguist-domain-contract.md) §11，Ready-2 的盲区见该文 §11.1。
+本表是校验落点的**唯一权威表**：分层文档只写各自小节的判定规则，不再另立整表。L1 / L2 各行的契约归属（哪条规则写在哪个小节）见 [LinguistDomainContract.md](LinguistDomainContract.md) §11，Ready-2 的盲区见该文 §11.1。
 
 | 相 | 执行者 | 校验内容 | 层 | 框架执行点 |
 | :-- | :-- | :-- | :-- | :-- |
 | Probe | 框架 | `role` 在模块内唯一 ⇒ linguist 三个固定 role 的**基数上界结构性成立** | L0 | `synthrt/lib/Core/PackageLoader.cpp:1365-1369` |
 | Probe | 框架 | `languages` 映射键唯一 ⇒ **每语言至多一个语言导入** | L0 | 同上 |
 | Probe | `LinguistCategory::createSpec` | 条目 schema；`language` 形如 `[a-z]{3}`；`scheme` 形状 | L1 | `synthrt/lib/Core/PackageLoader.cpp:1377` |
-| Probe | `SingerCategory::createSpec` | `languages` 形状；每个值命中本声明某条 import role；`defaultLanguage` 是其键 | L1 | 同上 |
+| Acquire | DiffSinger provider | singer `exports.languages` 形状；每个值命中本声明某条 import role；`defaultLanguage` 是其键；`reservedPhonemes` 形状 | L2 | 同 Acquire |
 | Acquire | 组合 provider | `exports.phonemes` 形状；`configuration` 为空 object | L2 | `synthrt/lib/Core/PackageLoader.cpp:833/845` |
 | Acquire | 三推理 provider | 各自 `exports`（含 `languages` 形状）与 `configuration` | L3 / 变体面 | 同上（每个模块各经同一对钩子） |
 | Ready-1 | 被引目标 provider | 单条 import `options` | L2 / L3 | `synthrt/lib/Core/PackageLoader.cpp:873-893` |
 | Ready-2 | wolf validator | linguist：`linguist/g2p` `linguist/s2p` 存在、目标 interface 相符、**自身二元组命中两者的 `exports.languages`**；singer：映射值指向的 import 目标类别为 `linguist`、**目标 `language` == 映射键** | L2 | `synthrt/lib/Core/PackageLoader.cpp:924-944` |
+| Ready-2 | DiffSinger provider | 每个 `reservedPhonemes` 出现在所有带音素表模型（Duration、Pitch、Variance、Acoustic）的表中 | L2 | 同 Ready-2 |
 | Ready-3 | 组合 provider | pipeline extension 挂载 | L4 | `synthrt/lib/Core/PackageLoader.cpp:1004-1007` |
 | 运行时 | 执行体 | 未映射的语言标签、IO 形状 | L4 | 不适用（不在加载事务内） |
 | 打包 / 编辑期 | lint | `phonemes` ⊆ 各 stage 音素表交集；S2P 产出集 ⊆ 语言 `phonemes`；Onset 覆盖；未被映射引用的 linguist import；贡献 ID 书写惯例 | — | 不适用（由 lint 脚本执行） |
@@ -199,10 +204,10 @@ dsinfer  0 处
 
 ## 7. 执行体树
 
-树形图与逐层机制见 [linguist-runtime.md](linguist-runtime.md) §3「执行体监督树」；本节只保留跨层不变量：
+树形图与逐层机制见 [LinguistRuntime.md](LinguistRuntime.md) §3「执行体监督树」；本节只保留跨层不变量：
 
 - **一条链对应一棵子树与一个在飞任务**（C2）。宿主的 k 路并发即调用 `createLinguist` k 次；
-- 跨子树的资源共享由 `wolf::ResourceCache` 承担（C2 的直接推论；键、归属与生命周期见 [linguist-resource-cache.md](linguist-resource-cache.md)）。
+- 跨子树的资源共享由 `wolf::ResourceCache` 承担（C2 的直接推论；键、归属与生命周期见 [LinguistResourceCache.md](LinguistResourceCache.md)）。
 
 ---
 
@@ -211,16 +216,16 @@ dsinfer  0 处
 | 文档 | 覆盖 | 状态 |
 | :-- | :-- | :-- |
 | 本文 | 索引、层栈、跨层不变量、决策结论 | 现行 |
-| [linguist-domain-contract.md](linguist-domain-contract.md) | **L1 + L2**：类别、身份、组合、歌手侧映射、裁决 | 现行 |
-| [linguist-inference-contract.md](linguist-inference-contract.md) | **L3**：G2P / S2P / Onset 的 IO 词汇与 exports | 现行 |
-| [linguist-runtime.md](linguist-runtime.md) | **L4 + L5**：执行体树、任务、诊断、降级、宿主接入 | 现行 |
-| [linguist-variants.md](linguist-variants.md) | 变体面：`configuration` 键汇与资源格式 | 现行 |
-| [linguist-distribution.md](linguist-distribution.md) | 发布面：包身份、版本兼容模型、更新纪律 | 现行 |
-| [linguist-resource-cache.md](linguist-resource-cache.md) | 资源缓存（**架构必需件**，非优化） | 现行 |
-| [plugin-internals.md](plugin-internals.md) | **插件内部**：骨架、版本与世代、解析与诊断纪律、契约身份、演进检查清单 | 现行（V1 待评审） |
-| [linguist-decisions.md](linguist-decisions.md) | 决策台账（全部 A / D 编号与论证） | 现行 |
-| [linguist-implementation-plan.md](linguist-implementation-plan.md) | 实施顺序、里程碑与验收判据 | 现行 |
+| [LinguistDomainContract.md](LinguistDomainContract.md) | **L1 + L2**：类别、身份、组合、歌手侧映射、裁决 | 现行 |
+| [LinguistInferenceContract.md](LinguistInferenceContract.md) | **L3**：G2P / S2P / Onset 的 IO 词汇与 exports | 现行 |
+| [LinguistRuntime.md](LinguistRuntime.md) | **L4 + L5**：执行体树、任务、诊断、降级、宿主接入 | 现行 |
+| [LinguistVariants.md](LinguistVariants.md) | 变体面：`configuration` 键汇与资源格式 | 现行 |
+| [LinguistDistribution.md](LinguistDistribution.md) | 发布面：包身份、版本兼容模型、更新纪律 | 现行 |
+| [LinguistResourceCache.md](LinguistResourceCache.md) | 资源缓存（**架构必需件**，非优化） | 现行 |
+| [PluginInternals.md](PluginInternals.md) | **插件内部**：骨架、版本与世代、解析与诊断纪律、契约身份、演进检查清单 | 现行（V1 待评审） |
+| [LinguistDecisions.md](LinguistDecisions.md) | 决策台账（全部 A / D 编号与论证） | 现行 |
+
 
 ### 旧 draft 迁移映射（存档）
 
-五份草案已删除，去向均已落实：`linguist-level-1-draft.md` → [linguist-domain-contract.md](linguist-domain-contract.md)（§前置说明 / `linguist` 类别 / WolfLinguist / Singer 侧配套）与 [linguist-inference-contract.md](linguist-inference-contract.md)（G2P / S2P / Onset 三章），其中 G2PModel / DictQuery 两章作废（A2）、§公共语言包 → [linguist-distribution.md](linguist-distribution.md)；`linguist-runtime-api-draft.md`（§3.2 多任务形状按 C2 重写）→ [linguist-runtime.md](linguist-runtime.md)；`linguist-g2p-variants-wolf-draft.md` §1–§7 → [linguist-variants.md](linguist-variants.md)、§8 → 决策台账；`linguist-g2p-package-distribution-draft.md` → [linguist-distribution.md](linguist-distribution.md)；`linguist-g2p-resource-cache-draft.md` → [linguist-resource-cache.md](linguist-resource-cache.md)。最终版本见删除前的提交。
+五份草案已删除，去向均已落实：`linguist-level-1-draft.md` → [LinguistDomainContract.md](LinguistDomainContract.md)（§前置说明 / `linguist` 类别 / WolfLinguist / Singer 侧配套）与 [LinguistInferenceContract.md](LinguistInferenceContract.md)（G2P / S2P / Onset 三章），其中 G2PModel / DictQuery 两章作废（A2）、§公共语言包 → [LinguistDistribution.md](LinguistDistribution.md)；`linguist-runtime-api-draft.md`（§3.2 多任务形状按 C2 重写）→ [LinguistRuntime.md](LinguistRuntime.md)；`linguist-g2p-variants-wolf-draft.md` §1–§7 → [LinguistVariants.md](LinguistVariants.md)、§8 → 决策台账；`linguist-g2p-package-distribution-draft.md` → [LinguistDistribution.md](LinguistDistribution.md)；`linguist-g2p-resource-cache-draft.md` → [LinguistResourceCache.md](LinguistResourceCache.md)。最终版本见删除前的提交。

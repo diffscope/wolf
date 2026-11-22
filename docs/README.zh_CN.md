@@ -10,7 +10,7 @@ synthrt 认识歌手与推理，不认识 linguist 贡献，也不需要认识�
 
 ## Linguist 贡献
 
-包在 `desc.json` 的 `contributions.linguist` 数组中列出 linguist。每个条目形如 `{ "id": ..., "path": ... }`，指向一份 linguist 清单。条目的形式是所有类别通用的（spec 2.4 §功能贡献），本类别的规定见 [linguist-domain-contract.md](linguist-domain-contract.md) §1.1，这里不再重复。linguist 清单形如：
+包在 `desc.json` 的 `contributions.linguist` 数组中列出 linguist。每个条目形如 `{ "id": ..., "path": ... }`，指向一份 linguist 清单。条目的形式是所有类别通用的（spec 2.4 §功能贡献），本类别的规定见 [LinguistDomainContract.md](LinguistDomainContract.md) §1.1，这里不再重复。linguist 清单形如：
 
 ```json
 {
@@ -33,7 +33,7 @@ synthrt 认识歌手与推理，不认识 linguist 贡献，也不需要认识�
 
 `(interface, level, variant)` 三元组经由 synthrt 的解释器发现选出一个 provider。provider 为该契约解释 `exports`、`configuration`、import options、执行工厂、校验器与扩展。
 
-`language` 与 `scheme` 是 `linguist` 类别加给每份声明的字段，在选出 provider 之前就会读取。`exports` 是 linguist 对自身的声明，`configuration` 是 provider 专用的资源。相对路径以声明文件所在目录为基准。类别、它的身份字段以及歌手侧的映射规定在 [linguist-domain-contract.md](linguist-domain-contract.md) 中。
+`language` 与 `scheme` 是 `linguist` 类别加给每份声明的字段，在选出 provider 之前就会读取。`exports` 是 linguist 对自身的声明，`configuration` 是 provider 专用的资源。相对路径以声明文件所在目录为基准。类别、它的身份字段以及歌手侧的映射规定在 [LinguistDomainContract.md](LinguistDomainContract.md) 中。
 
 引用 linguist 与引用其他贡献一样：
 
@@ -96,7 +96,7 @@ CMake 3.19 或更高版本，以及 Git，用于检出 vcpkg 及其 overlay。
 
 只有构建测试时才需要 Boost.Test。
 
-`multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。dsinfer 是硬依赖：wolf 为模型后端和 DiffSinger singer exports 链接它。`onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。
+`multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。dsinfer 是硬依赖：wolf 为模型后端和 DiffSinger singer exports 链接它。必需的 `onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。
 
 `lua`，脚本化的 S2P 与 Onset 变体，需要 LuaJIT，清单把它列为普通依赖。`-DWOLF_DISABLE_LUAJIT=ON` 即使 LuaJIT 已安装也会排除它。测试桩总是声明一个 `stub-miscount` 变体，供故意违反 provider 契约的夹具使用。
 
@@ -123,7 +123,7 @@ powershell -Command "Invoke-WebRequest -OutFile scripts/vcpkg-workspace.cmake ht
 
 | Feature | 作用 |
 | :-- | :-- |
-| `onnx` | 经由 `synthrt-main[onnx]` 构建 dsinfer 及其 ONNX Runtime 驱动，从而启用 `multig2p-onnx` 变体。 |
+| `onnx` | 必需。经由 `synthrt-main[onnx]` 构建 dsinfer 及其 ONNX Runtime 驱动，从而启用 `multig2p-onnx` 变体。 |
 | `lang-packages` | 经由 `wolf-lang-packages` 端口安装已发布语言包的默认套件（`cmn`、`jpn`、`yue`、`zxx` 及它们需要的后端），供测试使用。 |
 | `tests` | 加入 Boost.Test。 |
 
@@ -145,9 +145,9 @@ cmake --build build --target install
 
 ### 测试
 
-`-DWOLF_BUILD_TESTS=ON` 构建测试并注册到 CTest，`ctest --test-dir build` 运行它们。`src/tests/auto/plugins` 里是单个插件的单元测试。不带 LuaJIT 的构建不含 `test_LuaInterpreters`，不带 dsinfer 的构建不含 `test_MultiG2pInterpreter`、`test_MultiG2pMaxLen` 与 `test_MultiG2pBundle`（测试清单唯一的依据是注册条件，见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt`；二进制与用例的数量只在一处统计，即 [Status.md](Status.md) 的验证表）。
+`-DWOLF_BUILD_TESTS=ON` 构建测试并注册到 CTest，`ctest --test-dir build` 运行它们。`src/tests/auto/plugins` 里是单个插件的单元测试。不带 LuaJIT 的构建不含 `test_LuaInterpreters`（测试清单唯一的依据是注册条件，见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt`；二进制与用例的数量只在一处统计，即 [Status.md](Status.md) 的验证表）。
 
-加载真实语言包的测试从缓存变量 `WOLF_LANG_PACKAGES_SOURCE` 指定的位置读取，它指向一个放着解包后语言包的目录。该变量为空时，构建使用 `wolf-lang-packages` 端口安装的目录树（`lang-packages` feature）。当前发布版的套件版本以及每个归档的版本与文件名列在 [linguist-distribution.md](linguist-distribution.md) §5.1（那是权威表，为免漂移不在这里复述）。
+加载真实语言包的测试从缓存变量 `WOLF_LANG_PACKAGES_SOURCE` 指定的位置读取，它指向一个放着解包后语言包的目录。该变量为空时，构建使用 `wolf-lang-packages` 端口安装的目录树（`lang-packages` feature）。当前发布版的套件版本以及每个归档的版本与文件名列在 [LinguistDistribution.md](LinguistDistribution.md) §5.1（那是权威表，为免漂移不在这里复述）。
 
 七个自动测试读取的夹具包由 `scripts/make-test-fixtures.py` 生成，仓库只带生成器而不带包。把缓存变量 `WOLF_TEST_FIXTURES_SOURCE` 指向该脚本生成的目录：
 

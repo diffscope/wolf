@@ -8,15 +8,15 @@
 
 | 面 | 权威 | 本文引用处 |
 | :-- | :-- | :-- |
-| 路径解析的两级基准 | [linguist-variants.md](linguist-variants.md) §2.1 | R3 |
+| 路径解析的两级基准 | [LinguistVariants.md](LinguistVariants.md) §2.1 | R3 |
 | 格式版本自验 | 同上 §2.2 | R1、R3、R5 |
 | 拒绝未知键的适用范围 | 同上 §2.3 | R6 |
 | S2P / Onset 的豁免 | 同上 §3.3 | R3 |
 | `rule` 文件 schema | 同上 §3.3「`rule` 文件结构」 | R9、R3 |
 | 兜底成功与 `error` | 同上 §3.3 兜底段落 | R17 |
-| 三级失败与诊断通道 | [linguist-runtime.md](linguist-runtime.md) §5.1、§5.2、§6 | R16、R17 |
-| 无原生版本字段资源的版本载体 | [linguist-resource-cache.md](linguist-resource-cache.md) §2 | R2、R5 |
-| role 的开放集 | [linguist-domain-contract.md](linguist-domain-contract.md) §5 | R22 |
+| 三级失败与诊断通道 | [LinguistRuntime.md](LinguistRuntime.md) §5.1、§5.2、§6 | R16、R17 |
+| 无原生版本字段资源的版本载体 | [LinguistResourceCache.md](LinguistResourceCache.md) §2 | R2、R5 |
+| role 的开放集 | [LinguistDomainContract.md](LinguistDomainContract.md) §5 | R22 |
 | 包身份三方比对与导入选项时机 | synthrt `lib/Core/PackageLoader.cpp` 的 `validatePayloadIdentity`（三方比对）与 `createImportOptions`（导入选项时机） | R23、R24 |
 | 契约头常量 | `include/wolf/Api/**` 的 `Contract` / `Triplet` | R23 |
 
@@ -56,7 +56,7 @@
 | 变体 `configuration` 键汇 | `formatVersion` | §2.2 |
 | 家族配置文件（经路径键定位的 JSON，如 `chain.json`） | `formatVersion`；S2P/Onset 的 rule 文件见 R3 | §2.2 |
 | 资源 bundle（multig2p `bundle.json`） | 文件内的 `bundle_version`，上限为 `Bundle.h` 的 `SUPPORTED_VERSION` | §5.3 |
-| 无原生版本字段的表（s2p dict/mapping TSV、chain 词典 TSV） | **kind 语法世代常量**（形如 `s2p-dict-tsv@1`） | [resource-cache](linguist-resource-cache.md) §2 |
+| 无原生版本字段的表（s2p dict/mapping TSV、chain 词典 TSV） | **kind 语法世代常量**（形如 `s2p-dict-tsv@1`） | [resource-cache](LinguistResourceCache.md) §2 |
 | Lua 脚本 | 无（脚本即代码） | — |
 | `lua` 插件的 `configuration` | **豁免**（无版本载体） | 定案说明见下 |
 | wolf linguist 的 `configuration` | **豁免**（无版本载体） | 定案说明见下 |
@@ -101,9 +101,9 @@
 
 ## 5. 错误、诊断与日志
 
-**[规范性] R16 失败按三级通道归属**：词级 → `LinguistWordOutput::error`；批级 → `start` / `startAsync` 返回的 `Expected`；加载级 → Package `Load` 失败（依据 `linguist-runtime.md` §5.1）。**异常路径必须经批级 `Expected` 报告**，不得表现为「产出为空且无 error」（§5.1 补充规则）；L4 组合层不新增加载期失败事由（§5.2）。[现状：lua 的**运行期**失败沿用加载级的 `InvalidFormat`（`LuaSandbox.cpp` 中入口函数执行失败与返回值形状错误的分支），与分级不一致]
+**[规范性] R16 失败按三级通道归属**：词级 → `LinguistWordOutput::error`；批级 → `start` / `startAsync` 返回的 `Expected`；加载级 → Package `Load` 失败（依据 `LinguistRuntime.md` §5.1）。**异常路径必须经批级 `Expected` 报告**，不得表现为「产出为空且无 error」（§5.1 补充规则）；L4 组合层不新增加载期失败事由（§5.2）。[现状：lua 的**运行期**失败沿用加载级的 `InvalidFormat`（`LuaSandbox.cpp` 中入口函数执行失败与返回值形状错误的分支），与分级不一致]
 
-**[规范性] R17 词级诊断只经 `hitStage` 报告**，不得写入词级 `error`；兜底成功时 `error` 必须为空且 `hitSource = fallback`（§3.3 兜底段落、`linguist-runtime.md` §6）。
+**[规范性] R17 词级诊断只经 `hitStage` 报告**，不得写入词级 `error`；兜底成功时 `error` 必须为空且 `hitSource = fallback`（§3.3 兜底段落、`LinguistRuntime.md` §6）。
 
 **[规范性] R18 日志**使用 `wolf::logCategory()`；历史沿革只在库侧记录一处，插件侧只写不变量。
 
@@ -117,7 +117,7 @@
 
 ## 7. 契约身份与分派
 
-**[规范性] R22 role 的命名空间**：以 `linguist/` 开头的 role 名属于本契约族的保留命名空间；Level 1 核心集恒为 `linguist/g2p`、`linguist/s2p`、`linguist/onset`；**新增核心 role 必须递增契约 `level`**，不得以 `configuration` 键或资源 `formatVersion` 承载（L1 的 linguist `configuration` 必须为空 object，见 `WolfLinguistProvider.cpp` 的 `the wolf linguist configuration must be empty at Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](linguist-domain-contract.md) §5「其他」放行，不判加载失败**。validator 对未识别 role 记一条 `srtWarning`（`WolfLinguistProvider.cpp` 中按 `ROLE_G2P` / `ROLE_S2P` / `ROLE_ONSET` 分派的三个分支的 `else`，消息为 `linguist %1 imports the role "%2", which the %3 contract does not bind; the import is ignored`）后放行，**这是承重行为，不是缺陷**，不得改为拒绝。
+**[规范性] R22 role 的命名空间**：以 `linguist/` 开头的 role 名属于本契约族的保留命名空间；Level 1 核心集恒为 `linguist/g2p`、`linguist/s2p`、`linguist/onset`；**新增核心 role 必须递增契约 `level`**，不得以 `configuration` 键或资源 `formatVersion` 承载（L1 的 linguist `configuration` 必须为空 object，见 `WolfLinguistProvider.cpp` 的 `the wolf linguist configuration must be empty at Level 1`）。**不以 `linguist/` 开头的 role 按 [domain-contract](LinguistDomainContract.md) §5「其他」放行，不判加载失败**。validator 对未识别 role 记一条 `srtWarning`（`WolfLinguistProvider.cpp` 中按 `ROLE_G2P` / `ROLE_S2P` / `ROLE_ONSET` 分派的三个分支的 `else`，消息为 `linguist %1 imports the role "%2", which the %3 contract does not bind; the import is ignored`）后放行，**这是承重行为，不是缺陷**，不得改为拒绝。
 
 **[规范性] R23 `level` 判定写成集合成员判定**：不得写成与单一常量的等值比较。[现状：全仓 15 处固定为 L1；其中 `WolfLinguistProvider.cpp` 对 `LinguistApi::Contract.level()` 的五处比较影响最大。L2 组合被 L1 声库导入时，synthrt 在加载期即获取导入选项（`lib/Core/PackageLoader.cpp` 的 `createImportOptions`），而该处要求三元组完全相等（同文件的 `validatePayloadIdentity`），结果是以 unsupported contract 加载失败，而不是降级]
 

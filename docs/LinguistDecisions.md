@@ -4,7 +4,9 @@
 
 编号规则：**A 系列**为现行架构决策（2026-09-08 重构轮），**D 系列**为历史草案轮次的决策（保留谱系，多数已被 A 系列取代）。**编号永久不复用，也不因清理而重排。**
 
-锚点口径见 [linguist-architecture.md](linguist-architecture.md)。
+锚点口径见 [LinguistArchitecture.md](LinguistArchitecture.md)。
+
+**现行实现提示**：A11、A12、A13 描述的 singer 根字段已被 DiffSinger singer 的 exports 取代。字段现由 DiffSinger provider 解析，wolf 读取 typed Exports；现行契约见 [LinguistDomainContract.md](LinguistDomainContract.md) §10。本文保留决策当时的论证。`WOLF_DISABLE_DSINFER` 开关也已移除；wolf 现在硬依赖 dsinfer。
 
 ---
 
@@ -234,7 +236,7 @@
 - 当时的 16 个套件切成三类：**12 个语言包** `wolf/lang-<iso>`、**1 个共享后端包** `wolf/g2p-multi`、**1 个直通包** `wolf/lang-zxx`（Num / Punc / Unknown 三合一，见 A25）；
 - 一次 release = 一次全量快照（14 个资产 + `manifest.json`），各包 `version` 独立演进。
 
-> **后续（A30）**：新增共享后端包 `wolf/g2p-pinyin`，一次 release 现为 15 个资产（当前发布的版本号见 [linguist-distribution.md](linguist-distribution.md) §5.1，不在本处维护以免漂移）。
+> **后续（A30）**：新增共享后端包 `wolf/g2p-pinyin`，一次 release 现为 15 个资产（当前发布的版本号见 [LinguistDistribution.md](LinguistDistribution.md) §5.1，不在本处维护以免漂移）。
 
 **取代**：D-P1（独立资源仓 `wolf-g2p-packages`）。原方案的理由是「资源版本节奏与代码发布解耦、许可证隔离」。tag 命名空间隔离已实现前者，`manifest.json` 的可机检边界已实现后者，无须增加一个仓库。
 
@@ -823,7 +825,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 
 ### A56 — 层栈增 L6 会话层
 
-**决策**：新增 `wolf::LinguistSession`，位于 L5 之上，承载歌手→语言快照、就绪状态与负缓存、执行体池、保留词与空词处置、取消句柄。完整设计见 [linguist-session.md](linguist-session.md)。
+**决策**：新增 `wolf::LinguistSession`，位于 L5 之上，承载歌手→语言快照、就绪状态与负缓存、执行体池、保留词与空词处置、取消句柄。完整设计见 [LinguistSession.md](LinguistSession.md)。
 
 **动因来自现场证据，而非推演**：ds-editor-lite 已在 refactor 线上自建了一套同类实现（`VoicebankSession` + `GetPronunciationTask` / `GetPhonemeNameTask` 中的附属逻辑）。其中补充的每一项，即 `readyLanguages` / `failedS2pLanguages` 两个集合、SP/AP 特判、按语言分组、分阶段就绪，都不是 lite 的业务判断，而是语言域的实现细节。
 
@@ -855,7 +857,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 
 **`probe()` 必须无副作用**：宿主的 UI 可能每帧查询一次某语言是否可用，该查询不应触发模型加载。在此之前，宿主唯一的查询方式是尝试创建一个执行体，即查询与动作不可分。
 
-**不设后台重试与超时**：重新检查的时机由宿主掌握（安装了新包、切换了搜索路径），会话不作推测。因此唯一的失效点是显式的 `refresh()`——失败缓存只由它清除，`release()` 明确保留（`LinguistSession.cpp:646` 清空，`:697-699` 保留）。**宿主侧重试一条失败路由的入口因此就是重新扫描声库、让会话重建目录**，不存在单独的「清除失败缓存」接口；lite 的对应操作即重扫声库（`SynthrtEngine::refreshVoicebanks()`，详见 [linguist-session.md](linguist-session.md) §4 与 §11）。
+**不设后台重试与超时**：重新检查的时机由宿主掌握（安装了新包、切换了搜索路径），会话不作推测。因此唯一的失效点是显式的 `refresh()`——失败缓存只由它清除，`release()` 明确保留（`LinguistSession.cpp:646` 清空，`:697-699` 保留）。**宿主侧重试一条失败路由的入口因此就是重新扫描声库、让会话重建目录**，不存在单独的「清除失败缓存」接口；lite 的对应操作即重扫声库（`SynthrtEngine::refreshVoicebanks()`，详见 [LinguistSession.md](LinguistSession.md) §4 与 §11）。
 
 **`reason` 以失败层自己的诊断为主体，但不只是它的文本**：宿主只拿得到字符串，拿不到错误对象，因此命中失败缓存时由 `describeFailure()` 渲染**错误码的 kind（`error.code().message()`）与整条 cause 链（`error.toString()`）**（`LinguistSession.cpp:236-252` 的辅助函数，`probe()` 在 `:744` 使用它）；message 本身就是该 code 的罐头文本时省略 kind，以免读成 "file not found: file not found"。诊断已足够明确，再加一层人工包装只会增加排查成本。
 
@@ -903,7 +905,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 | 含空白的非空词 | 原词透传 + `error = InvalidInput` | **G2P 模块**（同上第 2 条） |
 | 保留标记（缺省 `SP` / `AP`） | `mode = copy` + 单个保留音素 | **会话**（生态惯例，非契约） |
 
-**前两条是既有的契约义务，而三个 G2P 变体原先都未实现**：空词经 `verify` 落入 `copy` 并产出空发音，含空白的词被当作普通词送进词典，`mode = skip` 是一个已定义却无人产出的枚举值。现已实现：判定逻辑抽为共用组件 `wolf::classifyLyric()`，只实现一次（理由同 `Verifier`：同一条规则的两份副本终将产生分歧），三个变体在任何步骤之前调用它。实现细节见 [linguist-session.md](linguist-session.md) §8.3。
+**前两条是既有的契约义务，而三个 G2P 变体原先都未实现**：空词经 `verify` 落入 `copy` 并产出空发音，含空白的词被当作普通词送进词典，`mode = skip` 是一个已定义却无人产出的枚举值。现已实现：判定逻辑抽为共用组件 `wolf::classifyLyric()`，只实现一次（理由同 `Verifier`：同一条规则的两份副本终将产生分歧），三个变体在任何步骤之前调用它。实现细节见 [LinguistSession.md](LinguistSession.md) §8.3。
 
 **第三条不是契约义务**，因此不能放入模块：保留标记集合随生态变化，写死在 G2P 变体中会把宿主惯例固化为契约。该集合作为会话选项，缺省为 `{SP, AP}`，使用其他记法的宿主可以替换。
 
@@ -911,7 +913,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 
 ### A62 — L6 设计的自检结论
 
-**决策**：在实现之前按三条判据自检设计（能否稳定实现、扩展接口是否足够、有无过度冗余），并据此修正。完整清单见 [linguist-session.md](linguist-session.md) §12。
+**决策**：在实现之前按三条判据自检设计（能否稳定实现、扩展接口是否足够、有无过度冗余），并据此修正。完整清单见 [LinguistSession.md](LinguistSession.md) §12。
 
 **两处不修正即会导致崩溃**：
 
@@ -1219,7 +1221,7 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 
 **不做的**：不把该值放进 `LinguistConvertResult`（组合级常量塞进每次结果属过度设计，且与 `LinguistApiL1.h:96-99`、`:211-215` 的「宿主在转换前查询，不从输出推断」取向相反）；不新增 `Depth` 取值。
 
-**依据**：`WolfLinguistProvider.cpp` 构造 extension 时已读 S2P 目标的 variant（与 `maxDepth` 同一处）；`docs/linguist-variants.md` §3.2 变体表；`test_LinguistSession`（direct / 无 S2P / 未声明 / 不可用四种形态）与 `test_HostFlow`（字典形态为真）各有断言。
+**依据**：`WolfLinguistProvider.cpp` 构造 extension 时已读 S2P 目标的 variant（与 `maxDepth` 同一处）；`docs/LinguistVariants.md` §3.2 变体表；`test_LinguistSession`（direct / 无 S2P / 未声明 / 不可用四种形态）与 `test_HostFlow`（字典形态为真）各有断言。
 
 **来源**：用户拍板 D1（语义）、D2（判据来源）、D3（事前查询形态）、D4（wolf 实现并顺带接线 lite 的 `maxDepth` 缺口）。
 
@@ -1282,11 +1284,11 @@ spec 2.4 §interface 契约规范 把这两份 Schema 列为 interface 契约的
 | D11 | **推翻**。原判定「基数上界未执行」不成立：role 在模块内的唯一性由框架强制（spec 2.4 §`imports`；`PackageLoader.cpp:1365-1369`、`ContribCategory_p.h::addImport`），三个固定 role 的上界在结构上成立，不是缺口，无须收敛，也不产生「就地加严须在发布注记列明」的义务 | — |
 | D12 | 作废：`ds-dict` G2P 化路线随 A2 取消 | — |
 | D13 | 已并入 | 变体 §3.3 的「已知实现缺陷」注、Status B2 |
-| D14 | 被 L4 诊断通道取代 | `linguist-runtime.md` §6 |
+| D14 | 被 L4 诊断通道取代 | `LinguistRuntime.md` §6 |
 | D19-D23 | 已并入 | 链推理契约 §2.1 / §4.1 / §5.1 的可省略条款 |
 | D20 | 作废：`lstm-onnx` 备案，A2 之后归 `pipe-chain` 变体内部事务，不再是待收录契约 | — |
-| D26-D28、D-P1~P8 | D-P1 被 A19 取代（独立资源仓 → wolf 仓 Release）；其余已并入 | `linguist-distribution.md` |
-| D-R1~D-R6 | D-R2 被 A14 部分取代（单一任务门保留，多任务形状作废）；其余已并入 | `linguist-runtime.md` §8 |
+| D26-D28、D-P1~P8 | D-P1 被 A19 取代（独立资源仓 → wolf 仓 Release）；其余已并入 | `LinguistDistribution.md` |
+| D-R1~D-R6 | D-R2 被 A14 部分取代（单一任务门保留，多任务形状作废）；其余已并入 | `LinguistRuntime.md` §8 |
 
 ## 复核轮次记录处置
 
