@@ -113,7 +113,7 @@ L0  框架不变量      role 唯一 / 三元组 / 事务四相 / 监督树 / va
 
 ## 4. 符合性与改动清单
 
-**结论：符合 spec 2.4。** synthrt 使用「个别必需字段」额度中的 2 项，其余为 wolf 侧的增补。
+**结论：符合 spec 2.4。** 语言映射属于 DiffSinger singer 的 `exports`；synthrt 的 singer 类别只保留显示字段。
 
 ```
 dsinfer  dsinfer/Api/Singers/DiffSinger/1/DiffSingerApiL1.h   Exports + languages/defaultLanguage/reservedPhonemes
@@ -129,7 +129,6 @@ wolf     src/lib/Linguist/LinguistContrib.cpp:56-62    白名单 +2（language, 
          新文件                                        include/wolf/Api/Inferences/**（含 Common/1）
                                                        LinguistExecutive 具体实现类
                                                        wolf::ResourceCache
-dsinfer  0 处
 ```
 
 `WolfLinguistProvider::createExports` 为纯增量（现有逻辑不动）；`createConfiguration` 不改（A9）。
