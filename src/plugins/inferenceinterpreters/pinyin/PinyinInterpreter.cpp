@@ -28,21 +28,21 @@ namespace wolf::pinyin {
 
     namespace {
 
-        /// Exports of the G2P contract: the language/scheme pairs that the module produces, its
-        /// symbols, and openSet.
+        // Exports of the G2P contract: the language/scheme pairs that the module produces, its
+        // symbols, and openSet.
         constexpr ExportsShape G2P_EXPORTS{true, "symbols", false, true};
 
-        /// Highest configuration format version supported by this build. A declaration with a
-        /// higher version is rejected rather than read leniently.
+        // Highest configuration format version supported by this build. A declaration with a
+        // higher version is rejected rather than read leniently.
         constexpr int FORMAT_VERSION = 1;
 
-        /// One contract pair and the engine that converts it.
+        // One contract pair and the engine that converts it.
         using MappedLanguage = LanguageMapEntry;
 
-        /// Checks that \a ref names an engine compiled into this plugin. An unknown ref is a
-        /// declaration error and is reported at load time rather than at conversion time.
-        ///
-        /// \return Success if the ref is known; otherwise a FeatureNotSupported error.
+        // Checks that \a ref names an engine compiled into this plugin. An unknown ref is a
+        // declaration error and is reported at load time rather than at conversion time.
+        //
+        // \return Success if the ref is known; otherwise a FeatureNotSupported error.
         srt::Expected<void> checkEngineRef(const std::string &position, const std::string &ref) {
             if (!PinyinEngineRegistry::isKnownRef(ref)) {
                 return srt::Error(srt::Error::FeatureNotSupported,
@@ -171,15 +171,15 @@ namespace wolf::pinyin {
             }
 
         private:
-            /// Joins the character readings of one word.
-            ///
-            /// A word is converted completely or not at all. A partially converted word would
-            /// require an invented reading for the failed characters, so such a word is returned
-            /// without a pronunciation, and the fallback step of the chain determines its result.
-            ///
-            /// \return A word with the error PhonemeGenerationFailed if the word has no characters
-            /// or if any character has no reading; otherwise the converted word with its
-            /// candidates.
+            // Joins the character readings of one word.
+            //
+            // A word is converted completely or not at all. A partially converted word would
+            // require an invented reading for the failed characters, so such a word is returned
+            // without a pronunciation, and the fallback step of the chain determines its result.
+            //
+            // \return A word with the error PhonemeGenerationFailed if the word has no characters
+            // or if any character has no reading; otherwise the converted word with its
+            // candidates.
             static G2pApi::WordOutput assemble(const std::vector<CharacterResult> &converted,
                                                std::size_t begin, std::size_t end) {
                 G2pApi::WordOutput word;

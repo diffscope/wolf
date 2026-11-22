@@ -27,8 +27,8 @@ namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class PinyinPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -56,7 +56,7 @@ namespace {
         return base ? base->as<LinguistApi::WolfPipelineExtension>() : nullptr;
     }
 
-    /// Converts one batch of lyrics through a language declared by a singer.
+    // Converts one batch of lyrics through a language declared by a singer.
     std::vector<LinguistApi::WordOutput> convert(srt::SynthUnit &unit,
                                                  const std::string &singerPackage,
                                                  const std::string &language,
@@ -96,7 +96,7 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_PinyinInterpreter)
 
-/// Regression: both languages resolve through one dictionary root; no engine may disable another.
+// Regression: both languages resolve through one dictionary root; no engine may disable another.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesBothLanguagesAtOnce) {
     srt::SynthUnit unit;
     configure(unit);
@@ -113,13 +113,13 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesBothLanguagesAtOnce) {
     BOOST_CHECK_EQUAL(cantonese[1].pronunciation, "gwok");
 }
 
-/// The two languages of one voicebank must warm concurrently, not sequentially.
-///
-/// The 1.x arbiter held a lock around the publication of the process-global dictionary path, and
-/// this case pinned that the lock did not cover engine construction. The 2.x library has neither
-/// the global path nor the lock, but the property still holds: two `Engine::open` calls for one
-/// root must not serialize, and under ThreadSanitizer this case still checks the upstream
-/// constructor for data races.
+// The two languages of one voicebank must warm concurrently, not sequentially.
+//
+// The 1.x arbiter held a lock around the publication of the process-global dictionary path, and
+// this case pinned that the lock did not cover engine construction. The 2.x library has neither
+// the global path nor the lock, but the property still holds: two `Engine::open` calls for one
+// root must not serialize, and under ThreadSanitizer this case still checks the upstream
+// constructor for data races.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BuildsEnginesConcurrently) {
     srt::SynthUnit unit;
     configure(unit);
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BuildsEnginesConcurrently) {
     BOOST_CHECK_EQUAL(wrong.load(), 0);
 }
 
-/// The neighbours of a word determine its reading, so the chain passes the backend runs of
-/// adjacent words rather than one flat list of all remaining words.
+// The neighbours of a word determine its reading, so the chain passes the backend runs of
+// adjacent words rather than one flat list of all remaining words.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_KeepsPhraseContext) {
     srt::SynthUnit unit;
     configure(unit);
@@ -194,13 +194,13 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_KeepsPhraseContext) {
     BOOST_CHECK_EQUAL(broken[2].pronunciation, "xing");
 }
 
-/// The same rule applies if a host binds the backend directly instead of through the chain.
-///
-/// The chain splits its batches into runs of convertible words before any call, so the chain never
-/// exposed this defect. The backend must still split runs itself, because a host that binds the
-/// G2P contract directly passes every word of the song, including gaps. Flattening the batch made
-/// the characters on either side of a skipped word adjacent, so they were read as a phrase that
-/// the song does not contain.
+// The same rule applies if a host binds the backend directly instead of through the chain.
+//
+// The chain splits its batches into runs of convertible words before any call, so the chain never
+// exposed this defect. The backend must still split runs itself, because a host that binds the
+// G2P contract directly passes every word of the song, including gaps. Flattening the batch made
+// the characters on either side of a skipped word adjacent, so they were read as a phrase that
+// the song does not contain.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BreaksRunsWhenCalledDirectly) {
     srt::SynthUnit unit;
     configure(unit);
@@ -245,8 +245,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BreaksRunsWhenCalledDirectly) {
     BOOST_CHECK_EQUAL(separated[2].pronunciation, "xing");
 }
 
-/// A word for which the engine has no reading reaches the fallback of the chain. The ported engine
-/// instead returned such a word with both a pronunciation and an error.
+// A word for which the engine has no reading reaches the fallback of the chain. The ported engine
+// instead returned such a word with both a pronunciation and an error.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_FallsBackThroughTheChain) {
     srt::SynthUnit unit;
     configure(unit);
@@ -267,11 +267,11 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_FallsBackThroughTheChain) {
     BOOST_CHECK_EQUAL(words[1].pronunciation, "zhong");
 }
 
-/// Two packages that ship different dictionary roots coexist.
-///
-/// The 1.x library kept one dictionary root in a process-global variable, so a second root had to
-/// be rejected by an arbiter. The 2.x library takes the root as an argument to `Engine::open`, so
-/// both roots are simply loaded; this test pins that the second load no longer fails.
+// Two packages that ship different dictionary roots coexist.
+//
+// The 1.x library kept one dictionary root in a process-global variable, so a second root had to
+// be rejected by an arbiter. The 2.x library takes the root as an argument to `Engine::open`, so
+// both roots are simply loaded; this test pins that the second load no longer fails.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesTwoDictionaryRoots) {
     srt::SynthUnit unit;
     configure(unit);
@@ -290,12 +290,12 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesTwoDictionaryRoots) {
     BOOST_CHECK(second->contribution("inference", "pinyin") != nullptr);
 }
 
-/// A failed load must not leave state behind that stops the next load.
-///
-/// The rollback fixture fails on a second, broken module after the pinyin module was configured.
-/// The 1.x arbiter had to release the process-wide root here; the 2.x library has no such root, so
-/// what this test pins now is the weaker but still useful property that the failed transaction does
-/// not poison the unit.
+// A failed load must not leave state behind that stops the next load.
+//
+// The rollback fixture fails on a second, broken module after the pinyin module was configured.
+// The 1.x arbiter had to release the process-wide root here; the 2.x library has no such root, so
+// what this test pins now is the weaker but still useful property that the failed transaction does
+// not poison the unit.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ReturnsTheRootWhenTheLoadFails) {
     srt::SynthUnit unit;
     configure(unit);
@@ -314,10 +314,10 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ReturnsTheRootWhenTheLoadFails) {
     }
 }
 
-/// The engine takes the alternatives of a character from its per-character table but may take the
-/// reading itself from a phrase, so the two differ exactly where a phrase determined the reading.
-/// The contract requires the pronunciation to be the first candidate, so the variant places it
-/// first.
+// The engine takes the alternatives of a character from its per-character table but may take the
+// reading itself from a phrase, so the two differ exactly where a phrase determined the reading.
+// The contract requires the pronunciation to be the first candidate, so the variant places it
+// first.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_LeadsCandidatesWithThePronunciation) {
     srt::SynthUnit unit;
     configure(unit);
@@ -339,9 +339,9 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_LeadsCandidatesWithThePronunciation)
     BOOST_CHECK_EQUAL(phrase[1].candidates[1], "xing");
 }
 
-/// Checks the same ordering on the engine-backed chain. A word already decided by a rule must not
-/// join a conversion run either, because the engine reads the neighbours of each word and a word
-/// removed by the contract is not a neighbour.
+// Checks the same ordering on the engine-backed chain. A word already decided by a rule must not
+// join a conversion run either, because the engine reads the neighbours of each word and a word
+// removed by the contract is not a neighbour.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_HonoursTheInputOrdering) {
     srt::SynthUnit unit;
     configure(unit);

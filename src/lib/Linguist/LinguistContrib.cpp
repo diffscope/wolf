@@ -21,12 +21,12 @@ namespace wolf {
 
     namespace {
 
-        /// Reports a desc.json entry key that this category does not read.
-        ///
-        /// The report is a warning for the same reason as for the declaration root below. The
-        /// JSON profile of the specification requires that an unknown field not invalidate a
-        /// document, and this category defines the structure of the entry, so an entry with a
-        /// field added by a later wolf version must load in this version.
+        // Reports a desc.json entry key that this category does not read.
+        //
+        // The report is a warning for the same reason as for the declaration root below. The
+        // JSON profile of the specification requires that an unknown field not invalidate a
+        // document, and this category defines the structure of the entry, so an entry with a
+        // field added by a later wolf version must load in this version.
         void warnAboutUnknownEntryFields(const srt::JsonObject &entry) {
             static const std::set<std::string_view> fields = {"id", "path"};
             for (const auto &item : entry) {
@@ -38,17 +38,17 @@ namespace wolf {
             }
         }
 
-        /// Reports a declaration root key that neither the framework nor this category defines.
-        ///
-        /// The report is a warning instead of a failure. The upper specification defines the
-        /// module declaration root and requires that unknown fields in such objects not cause
-        /// rejection. A category that rejected them would cause every field that the framework
-        /// adds later to fail to load in earlier builds of wolf. Strict validation applies where
-        /// wolf defines the schema: `exports`, `configuration` and `imports[].options`.
-        ///
-        /// The warning loses no error. A misspelled required field still fails, because the
-        /// intended field is then missing. Only a misspelled optional field is reported as a
-        /// warning instead of an error, which is the tradeoff that the specification requires.
+        // Reports a declaration root key that neither the framework nor this category defines.
+        //
+        // The report is a warning instead of a failure. The upper specification defines the
+        // module declaration root and requires that unknown fields in such objects not cause
+        // rejection. A category that rejected them would cause every field that the framework
+        // adds later to fail to load in earlier builds of wolf. Strict validation applies where
+        // wolf defines the schema: `exports`, `configuration` and `imports[].options`.
+        //
+        // The warning loses no error. A misspelled required field still fails, because the
+        // intended field is then missing. Only a misspelled optional field is reported as a
+        // warning instead of an error, which is the tradeoff that the specification requires.
         void warnAboutUnknownFields(const srt::JsonObject &declaration,
                                     const std::filesystem::path *path) {
             // Common module fields of the framework, as defined by the upper specification. `vars`
@@ -90,7 +90,7 @@ namespace wolf {
             return value;
         }
 
-        /// Returns \a value without leading and trailing space.
+        // Returns \a value without leading and trailing space.
         std::string trimmed(std::string_view value) {
             const auto isSpace = [](char character) {
                 return character == ' ' || character == '\t' || character == '\r' ||
@@ -105,13 +105,13 @@ namespace wolf {
             return std::string(value);
         }
 
-        /// Reads the optional default lyric of a linguist declaration.
-        ///
-        /// The field is optional and carries no matching semantics, so a value this build cannot
-        /// use is reported and ignored instead of failing the load. A package that declares the
-        /// field, in whatever form, therefore keeps loading, and consumers fall back to their own
-        /// default. The value is stored trimmed, and one that is empty after trimming counts as
-        /// absent, because a lyric that only holds space is not a lyric.
+        // Reads the optional default lyric of a linguist declaration.
+        //
+        // The field is optional and carries no matching semantics, so a value this build cannot
+        // use is reported and ignored instead of failing the load. A package that declares the
+        // field, in whatever form, therefore keeps loading, and consumers fall back to their own
+        // default. The value is stored trimmed, and one that is empty after trimming counts as
+        // absent, because a lyric that only holds space is not a lyric.
         std::string readDefaultLyric(const srt::JsonObject &declaration,
                                      const std::filesystem::path *path) {
             const auto it = declaration.find("defaultLyric");

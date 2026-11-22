@@ -27,8 +27,8 @@ namespace {
         wolf::test::configure(unit, {wolf::test::fixtureRoot()});
     }
 
-    /// Loads the passthrough singer and returns its package handle. The handle must outlive every
-    /// use of the package because the handle keeps the package, and therefore the specs, alive.
+    // Loads the passthrough singer and returns its package handle. The handle must outlive every
+    // use of the package because the handle keeps the package, and therefore the specs, alive.
     srt::PackageHandle load(srt::SynthUnit &unit, const char *name) {
         return wolf::test::load(unit, wolf::test::fixtureRoot() / name);
     }
@@ -37,8 +37,8 @@ namespace {
         return {srt::ContribLocator(package.id(), "singer", id), package.version()};
     }
 
-    /// A conversion input is a task payload, which is neither copyable nor movable, so the input is
-    /// constructed in place and passed by reference.
+    // A conversion input is a task payload, which is neither copyable nor movable, so the input is
+    // constructed in place and passed by reference.
     struct Line {
         LinguistApi::ConvertInput input;
 
@@ -58,8 +58,8 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_LinguistSession)
 
-/// The catalog provides the information that a host requires before any conversion: the available
-/// singers, the languages that each singer declares, and the binding of each language.
+// The catalog provides the information that a host requires before any conversion: the available
+// singers, the languages that each singer declares, and the binding of each language.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_CatalogsWhatIsLoaded) {
     srt::SynthUnit unit;
     configure(unit);
@@ -86,8 +86,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_CatalogsWhatIsLoaded) {
     BOOST_CHECK_EQUAL(catalog->singers().size(), 1u);
 }
 
-/// Cold indicates that a route exists and has not been built; Ready indicates that the next
-/// conversion loads nothing. A readiness query must never trigger loading.
+// Cold indicates that a route exists and has not been built; Ready indicates that the next
+// conversion loads nothing. A readiness query must never trigger loading.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ProbeDoesNotWarm) {
     srt::SynthUnit unit;
     configure(unit);
@@ -111,8 +111,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ProbeDoesNotWarm) {
     BOOST_CHECK(session.probe(singer, "zxx").readiness == wolf::Readiness::Cold);
 }
 
-/// A language that the singer does not declare and a singer that does not exist are both
-/// Unavailable, with a reason that a host can display rather than a bare failure.
+// A language that the singer does not declare and a singer that does not exist are both
+// Unavailable, with a reason that a host can display rather than a bare failure.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_NamesWhyItIsUnavailable) {
     srt::SynthUnit unit;
     configure(unit);
@@ -144,13 +144,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_NamesWhyItIsUnavailable) {
     BOOST_CHECK(!missing.hasSeparatePronunciationLayer);
 }
 
-/// Every entry point rejects an undeclared language in the same way, based on the catalog rather
-/// than on a build attempt: a phrase of five hundred notes must not turn one rejection into five
-/// hundred attempts. lite currently maintains this cache manually.
-///
-/// This case checks only the inexpensive part, a fact already recorded in the catalog. The other
-/// part, a route that is declared but fails to build, requires a resource that fails only at
-/// executive creation. No fixture here provides such a resource, so that part is not covered.
+// Every entry point rejects an undeclared language in the same way, based on the catalog rather
+// than on a build attempt: a phrase of five hundred notes must not turn one rejection into five
+// hundred attempts. lite currently maintains this cache manually.
+//
+// This case checks only the inexpensive part, a fact already recorded in the catalog. The other
+// part, a route that is declared but fails to build, requires a resource that fails only at
+// executive creation. No fixture here provides such a resource, so that part is not covered.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_RefusesAnUndeclaredLanguageEveryTime) {
     srt::SynthUnit unit;
     configure(unit);
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_RefusesAnUndeclaredLanguageEveryTime) 
     BOOST_CHECK(session.probe(singer, "zxx").readiness == wolf::Readiness::Cold);
 }
 
-/// Conversion keeps the L4 structures: the same input, the same per-word output, and the same
-/// depth cut-offs.
+// Conversion keeps the L4 structures: the same input, the same per-word output, and the same
+// depth cut-offs.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertsThroughThePool) {
     srt::SynthUnit unit;
     configure(unit);
@@ -197,9 +197,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertsThroughThePool) {
     BOOST_CHECK_EQUAL((*again)->words[0].pronunciation, "3");
 }
 
-/// The session converts reserved markers itself and never passes them to a language, so the
-/// session must produce their output structure at every depth. Otherwise an S2P dictionary would
-/// receive a lookup for SP.
+// The session converts reserved markers itself and never passes them to a language, so the
+// session must produce their output structure at every depth. Otherwise an S2P dictionary would
+// receive a lookup for SP.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_AnswersReservedMarkersItself) {
     srt::SynthUnit unit;
     configure(unit);
@@ -239,8 +239,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_AnswersReservedMarkersItself) {
     BOOST_CHECK((*phonemes)->words[0].onsets.empty());
 }
 
-/// A host that uses another notation replaces the marker set, and a pinned pronunciation expresses
-/// an intent that the session does not override.
+// A host that uses another notation replaces the marker set, and a pinned pronunciation expresses
+// an intent that the session does not override.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersAreAConventionNotAContract) {
     srt::SynthUnit unit;
     configure(unit);
@@ -267,9 +267,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersAreAConventionNotAContract) {
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "s p");
 }
 
-/// The marker declaration of a singer (reservedPhonemes in the DiffSinger singer exports) takes
-/// precedence over the session-wide set and leaves the session-wide set unchanged for every other
-/// singer. No caller passes the set to the session; the session reads it from the declaration.
+// The marker declaration of a singer (reservedPhonemes in the DiffSinger singer exports) takes
+// precedence over the session-wide set and leaves the session-wide set unchanged for every other
+// singer. No caller passes the set to the session; the session reads it from the declaration.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersDeclaredBySingerWinOverTheSessionSet) {
     srt::SynthUnit unit;
     configure(unit);
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersDeclaredBySingerWinOverTheSessi
     BOOST_CHECK_EQUAL(session.reservedMarkers().size(), 2u);
 }
 
-/// A line that consists only of markers never reaches a language and is still returned complete.
+// A line that consists only of markers never reaches a language and is still returned complete.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HandlesALineOfOnlyMarkers) {
     srt::SynthUnit unit;
     configure(unit);
@@ -303,9 +303,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HandlesALineOfOnlyMarkers) {
     BOOST_CHECK_EQUAL((*result)->words[1].pronunciation, "AP");
 }
 
-/// Installing a package while the user is editing is a common operation, so a refresh must be safe
-/// during a running conversion. The pool advances to a new generation instead of emptying: idle
-/// executives are destroyed immediately, and borrowed executives are destroyed when returned.
+// Installing a package while the user is editing is a common operation, so a refresh must be safe
+// during a running conversion. The pool advances to a new generation instead of emptying: idle
+// executives are destroyed immediately, and borrowed executives are destroyed when returned.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_RefreshesUnderAConversion) {
     srt::SynthUnit unit;
     configure(unit);
@@ -348,8 +348,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_RefreshesUnderAConversion) {
     BOOST_CHECK(session.convert(singer, "zxx", Line({"4"}, LinguistApi::Depth::Onsets)));
 }
 
-/// Releasing one singer discards its pool entry and its package handle and leaves all other state
-/// unchanged. A host requires this release point before unloading a voicebank.
+// Releasing one singer discards its pool entry and its package handle and leaves all other state
+// unchanged. A host requires this release point before unloading a voicebank.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReleasesOneSinger) {
     srt::SynthUnit unit;
     configure(unit);
@@ -367,10 +367,10 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReleasesOneSinger) {
     BOOST_CHECK(session.convert(singer, "zxx", Line({"1"}, LinguistApi::Depth::Onsets)));
 }
 
-/// Releasing a singer while a conversion holds one of its executives must neither destroy that
-/// executive during the conversion nor prevent the session from serving the singer afterwards.
-/// The slot discarded by a release is destroyed outside the session lock, and a borrowed
-/// executive is destroyed only when returned, following the same generation rule as refresh().
+// Releasing a singer while a conversion holds one of its executives must neither destroy that
+// executive during the conversion nor prevent the session from serving the singer afterwards.
+// The slot discarded by a release is destroyed outside the session lock, and a borrowed
+// executive is destroyed only when returned, following the same generation rule as refresh().
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReleasesUnderAConversion) {
     srt::SynthUnit unit;
     configure(unit);
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReleasesUnderAConversion) {
     BOOST_CHECK(session.convert(singer, "zxx", Line({"4"}, LinguistApi::Depth::Onsets)));
 }
 
-/// A token set before the conversion starts cancels the conversion before it runs.
+// A token set before the conversion starts cancels the conversion before it runs.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HonoursACancelledToken) {
     srt::SynthUnit unit;
     configure(unit);
@@ -443,11 +443,11 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HonoursACancelledToken) {
     BOOST_CHECK(session.convert(singer, "zxx", Line({"3"}, LinguistApi::Depth::Onsets)));
 }
 
-/// A marker note whose phoneme layer the user pinned keeps that layer.
-///
-/// The session converts reserved markers itself instead of sending them to a language, but a pin
-/// takes precedence: an earlier version checked only for a pinned pronunciation, so a manual edit
-/// of the phonemes of SP was discarded and replaced by the marker.
+// A marker note whose phoneme layer the user pinned keeps that layer.
+//
+// The session converts reserved markers itself instead of sending them to a language, but a pin
+// takes precedence: an earlier version checked only for a pinned pronunciation, so a manual edit
+// of the phonemes of SP was discarded and replaced by the marker.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPinnedLayerOnAReservedMarker) {
     srt::SynthUnit unit;
     configure(unit);
@@ -481,9 +481,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPinnedLayerOnAReservedMarker) {
     BOOST_CHECK((*marker)->words.front().phonemes == std::vector<std::string>({"SP"}));
 }
 
-/// The pool allows several conversions to run concurrently, and an executive runs one execution at
-/// a time. Many threads on one singer and one language must work: each thread receives its own
-/// executive, and returning an executive must not pass it to a thread still using it.
+// The pool allows several conversions to run concurrently, and an executive runs one execution at
+// a time. Many threads on one singer and one language must work: each thread receives its own
+// executive, and returning an executive must not pass it to a thread still using it.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertsInParallel) {
     srt::SynthUnit unit;
     configure(unit);
@@ -519,8 +519,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ConvertsInParallel) {
     BOOST_CHECK_EQUAL(wrong.load(), 0);
 }
 
-/// probe() must remain responsive while conversions are running: a host calls it to draw its user
-/// interface, and a pool that made drawing wait for a model to open would be worse than no pool.
+// probe() must remain responsive while conversions are running: a host calls it to draw its user
+// interface, and a pool that made drawing wait for a model to open would be worse than no pool.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_StaysAnswerableWhileConverting) {
     srt::SynthUnit unit;
     configure(unit);
@@ -545,9 +545,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_StaysAnswerableWhileConverting) {
     worker.join();
 }
 
-/// A ContribLocator carries no version, so two loaded versions of one voicebank make a request
-/// that specifies only the locator ambiguous. Selecting one version would route to a version that
-/// no caller requested, so the request is rejected with a reason distinct from "not found".
+// A ContribLocator carries no version, so two loaded versions of one voicebank make a request
+// that specifies only the locator ambiguous. Selecting one version would route to a version that
+// no caller requested, so the request is rejected with a reason distinct from "not found".
 BOOST_AUTO_TEST_CASE(test_LinguistSession_RefusesAnAmbiguousSinger) {
     srt::SynthUnit unit;
     configure(unit);
@@ -582,13 +582,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_RefusesAnAmbiguousSinger) {
     BOOST_CHECK(session.probe(refOf(second, "s"), "zxx").readiness == wolf::Readiness::Ready);
 }
 
-/// Two sessions on one unit are safe, and neither interferes with the other.
-///
-/// The L6 design recorded "one session per unit" as a simplification, but no code enforced or
-/// checked the restriction, so a host that created a second session would discover the problem
-/// only at run time. The restriction has no basis: sessions share no mutable state except the unit
-/// itself, which the framework locks, and two process-wide singletons with their own locks. Each
-/// session builds its own pipeline, its own pool and its own caches.
+// Two sessions on one unit are safe, and neither interferes with the other.
+//
+// The L6 design recorded "one session per unit" as a simplification, but no code enforced or
+// checked the restriction, so a host that created a second session would discover the problem
+// only at run time. The restriction has no basis: sessions share no mutable state except the unit
+// itself, which the framework locks, and two process-wide singletons with their own locks. Each
+// session builds its own pipeline, its own pool and its own caches.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_TwoSessionsShareOneUnit) {
     srt::SynthUnit unit;
     configure(unit);
@@ -632,13 +632,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_TwoSessionsShareOneUnit) {
     BOOST_CHECK_EQUAL(wrong.load(), 0);
 }
 
-/// A composition without a phoneme member is valid, and the session reports its maximum depth.
-///
-/// The ecosystem already uses this combination for the syllable languages: the language package
-/// supplies the G2P and a voicebank supplies the phoneme stage.
-///
-/// Regression: a linguist without linguist/s2p must load and report Pronunciation, instead of
-/// requiring the whole composition to be placed in the voicebank.
+// A composition without a phoneme member is valid, and the session reports its maximum depth.
+//
+// The ecosystem already uses this combination for the syllable languages: the language package
+// supplies the G2P and a voicebank supplies the phoneme stage.
+//
+// Regression: a linguist without linguist/s2p must load and report Pronunciation, instead of
+// requiring the whole composition to be placed in the voicebank.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsHowDeepALanguageGoes) {
     srt::SynthUnit unit;
     configure(unit);
@@ -666,13 +666,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsHowDeepALanguageGoes) {
     BOOST_CHECK((*result)->words[0].onsets.empty());
 }
 
-/// A composition that stops at the phoneme layer reports that depth, so a host can ask for it.
-///
-/// The ecosystem already uses this combination: the language package supplies the G2P and an S2P
-/// member, and a voicebank supplies the onset stage, which leaves the phoneme layer as the deepest
-/// one the composition reaches. This fixture is that shape with an S2P member that only splits the
-/// pronunciation, so it is not a layer of its own either: the two answers are independent, which is
-/// why the depth alone cannot tell a host whether a deeper request would lose a layer.
+// A composition that stops at the phoneme layer reports that depth, so a host can ask for it.
+//
+// The ecosystem already uses this combination: the language package supplies the G2P and an S2P
+// member, and a voicebank supplies the onset stage, which leaves the phoneme layer as the deepest
+// one the composition reaches. This fixture is that shape with an S2P member that only splits the
+// pronunciation, so it is not a layer of its own either: the two answers are independent, which is
+// why the depth alone cannot tell a host whether a deeper request would lose a layer.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsAPhonemeLayerAsTheDeepestLayer) {
     srt::SynthUnit unit;
     configure(unit);
@@ -697,19 +697,19 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsAPhonemeLayerAsTheDeepestLayer)
                 (*result)->words[0].onsets.size() == (*result)->words[0].phonemes.size());
 }
 
-/// A composition whose linguist binds an onset member reports the onset layer as its deepest one.
-///
-/// This is the depth that the release wording of the domain contract (§5.4) reads to detect whether
-/// a published composition reaches the onset layer: a deployment (language package plus voicebank)
-/// must let every language it declares reach Depth::Onsets, and a report of Depth::Phonemes or
-/// Depth::Pronunciation is the signal that the language has no onset member at all. The voicebank
-/// fixture is that shape: the language packages supply the G2P, the voicebank supplies the S2P
-/// dictionary and the onset rules, and no shallower module in the chain can stop the composition
-/// early.
-///
-/// Regression: the two cases above pin the shallower depths, so a session that reported one layer
-/// short of the composition would leave every case green while a release check passed a composition
-/// that cannot reach the onset layer at all.
+// A composition whose linguist binds an onset member reports the onset layer as its deepest one.
+//
+// This is the depth that the release wording of the domain contract (§5.4) reads to detect whether
+// a published composition reaches the onset layer: a deployment (language package plus voicebank)
+// must let every language it declares reach Depth::Onsets, and a report of Depth::Phonemes or
+// Depth::Pronunciation is the signal that the language has no onset member at all. The voicebank
+// fixture is that shape: the language packages supply the G2P, the voicebank supplies the S2P
+// dictionary and the onset rules, and no shallower module in the chain can stop the composition
+// early.
+//
+// Regression: the two cases above pin the shallower depths, so a session that reported one layer
+// short of the composition would leave every case green while a release check passed a composition
+// that cannot reach the onset layer at all.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheOnsetLayerAsTheDeepestLayer) {
     const auto voicebank = wolf::test::voicebankRoot();
     if (!fs::is_directory(voicebank / "wolf-voicebank-zh")) {
@@ -754,17 +754,17 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheOnsetLayerAsTheDeepestLayer)
     BOOST_CHECK((*result)->words[0].onsets[0]);
 }
 
-/// The layer query answers from the declaration even when the session cannot use the composition.
-///
-/// This pins the wording of LanguageStatus::hasSeparatePronunciationLayer: it describes the shape
-/// that the composition declares, so a declared language keeps its value when routing turns it
-/// unavailable after the declaration has been read. The coverage verdict of probe() is made after
-/// describeCoverage() has filled the status in, so an unusable status still carries that value.
-///
-/// The voicebank fixture supplies the real resources: cmn reaches phonemes through an S2P member
-/// that reads a dictionary, so its pronunciation is a layer of its own, and the language declares a
-/// phoneme list. A singer with one phoneme that the language does not declare covers none of them,
-/// which is the one coverage outcome the session turns into Unavailable.
+// The layer query answers from the declaration even when the session cannot use the composition.
+//
+// This pins the wording of LanguageStatus::hasSeparatePronunciationLayer: it describes the shape
+// that the composition declares, so a declared language keeps its value when routing turns it
+// unavailable after the declaration has been read. The coverage verdict of probe() is made after
+// describeCoverage() has filled the status in, so an unusable status still carries that value.
+//
+// The voicebank fixture supplies the real resources: cmn reaches phonemes through an S2P member
+// that reads a dictionary, so its pronunciation is a layer of its own, and the language declares a
+// phoneme list. A singer with one phoneme that the language does not declare covers none of them,
+// which is the one coverage outcome the session turns into Unavailable.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheDeclaredShapeOfAnUnroutableLanguage) {
     const auto voicebank = wolf::test::voicebankRoot();
     if (!fs::is_directory(voicebank / "wolf-voicebank-zh")) {
@@ -809,16 +809,16 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsTheDeclaredShapeOfAnUnroutableL
     BOOST_CHECK_MESSAGE(status.reason.find("sings none of") != std::string::npos, status.reason);
 }
 
-/// The layer query answers from the declaration, before any conversion and for a language whose S2P
-/// member copies the symbols of its input.
-///
-/// wolf/lang-zxx declares the direct variant, which splits the pronunciation on the reserved
-/// delimiter without changing the symbols, so the pronunciation of zxx is its phoneme layer. The
-/// other shape that reports true, a member that converts the symbols, is covered by the test above
-/// and by the end-to-end test, which converts a package that reaches phonemes through a dictionary.
-///
-/// Regression: a declared language whose S2P member copies the symbols must report false instead of
-/// reporting a layer of its own, and an undeclared handle must not report true.
+// The layer query answers from the declaration, before any conversion and for a language whose S2P
+// member copies the symbols of its input.
+//
+// wolf/lang-zxx declares the direct variant, which splits the pronunciation on the reserved
+// delimiter without changing the symbols, so the pronunciation of zxx is its phoneme layer. The
+// other shape that reports true, a member that converts the symbols, is covered by the test above
+// and by the end-to-end test, which converts a package that reaches phonemes through a dictionary.
+//
+// Regression: a declared language whose S2P member copies the symbols must report false instead of
+// reporting a layer of its own, and an undeclared handle must not report true.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsWhetherThePronunciationIsALayerOfItsOwn) {
     srt::SynthUnit unit;
     configure(unit);
@@ -837,7 +837,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsWhetherThePronunciationIsALayer
     BOOST_CHECK(!session.probe(singer, "cmn").hasSeparatePronunciationLayer);
 }
 
-/// Coverage is reported without a verdict, except if no phoneme is covered.
+// Coverage is reported without a verdict, except if no phoneme is covered.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsPhonemeCoverage) {
     srt::SynthUnit unit;
     configure(unit);
@@ -866,11 +866,11 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ReportsPhonemeCoverage) {
     BOOST_CHECK_MESSAGE(none.reason.find("none of the") != std::string::npos, none.reason);
 }
 
-/// A phoneme table for a singer absent from the catalog is ignored rather than stored, and a table
-/// survives a refresh only while its singer remains loaded.
-///
-/// Regression: a table for a singer that unloaded must be reclaimed, and a voicebank reinstalled
-/// after an unload must not report the coverage of the previous installation.
+// A phoneme table for a singer absent from the catalog is ignored rather than stored, and a table
+// survives a refresh only while its singer remains loaded.
+//
+// Regression: a table for a singer that unloaded must be reclaimed, and a voicebank reinstalled
+// after an unload must not report the coverage of the previous installation.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_PhonemeTablesFollowTheCatalog) {
     srt::SynthUnit unit;
     configure(unit);
@@ -905,14 +905,14 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_PhonemeTablesFollowTheCatalog) {
                 wolf::LanguageStatus::CoverageKind::Unknown);
 }
 
-/// Checks a singer whose languages all route to modules that are not linguist contributions,
-/// loaded in a transaction that contains no linguist contribution.
-///
-/// The loader invokes only the validators of providers already created, and nothing in this
-/// transaction creates the wolf provider, so the language map is not checked and the package
-/// loads. The same map loaded together with a language package is rejected (singer-wrong-target).
-/// wolf cannot reject the package at this point; instead, it reports why the singer has no
-/// languages rather than reporting that the singer does not exist.
+// Checks a singer whose languages all route to modules that are not linguist contributions,
+// loaded in a transaction that contains no linguist contribution.
+//
+// The loader invokes only the validators of providers already created, and nothing in this
+// transaction creates the wolf provider, so the language map is not checked and the package
+// loads. The same map loaded together with a language package is rejected (singer-wrong-target).
+// wolf cannot reject the package at this point; instead, it reports why the singer has no
+// languages rather than reporting that the singer does not exist.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ExplainsASingerWhoseLanguagesWereNotMounted) {
     srt::SynthUnit unit;
     configure(unit);
@@ -943,13 +943,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_ExplainsASingerWhoseLanguagesWereNotMo
                         other.reason);
 }
 
-/// A conversion whose executive fails the whole batch is a property of the route rather than of
-/// the words: the failure is cached like a failure of executive creation, probe() reports the
-/// language Unavailable, and only refresh() clears the verdict.
-///
-/// Regression: the failure of executive->start() was returned to the caller and then forgotten, so
-/// probe() reported Cold and later conversions paid for a batch that cannot succeed. The
-/// miscounting g2p of the fixture is a fault that fails the batch as a whole.
+// A conversion whose executive fails the whole batch is a property of the route rather than of
+// the words: the failure is cached like a failure of executive creation, probe() reports the
+// language Unavailable, and only refresh() clears the verdict.
+//
+// Regression: the failure of executive->start() was returned to the caller and then forgotten, so
+// probe() reported Cold and later conversions paid for a batch that cannot succeed. The
+// miscounting g2p of the fixture is a fault that fails the batch as a whole.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_RemembersABatchFailureUntilRefresh) {
     srt::SynthUnit unit;
     configure(unit);
@@ -983,11 +983,11 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_RemembersABatchFailureUntilRefresh) {
     BOOST_CHECK(rescued.reason.empty());
 }
 
-/// A per-word failure is a result of the conversion and not a failed route: the batch ran, the
-/// words that no stage produced carry their own error, and the language must stay usable.
-///
-/// This is the counter-example to the case above: the same session path, with the failure reported
-/// per word by the chain instead of for the whole batch, must leave nothing in the failure cache.
+// A per-word failure is a result of the conversion and not a failed route: the batch ran, the
+// words that no stage produced carry their own error, and the language must stay usable.
+//
+// This is the counter-example to the case above: the same session path, with the failure reported
+// per word by the chain instead of for the whole batch, must leave nothing in the failure cache.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPerWordFailureOutOfTheCache) {
     srt::SynthUnit unit;
     configure(unit);
@@ -1011,13 +1011,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsAPerWordFailureOutOfTheCache) {
     BOOST_CHECK(status.reason.empty());
 }
 
-/// A cancelled conversion is not a failed route either: the executive reports the cancellation
-/// through its state and returns the part of the batch that it finished, so the session caches
-/// nothing and keeps serving the language.
-///
-/// The runaway fixture is the only one whose batch runs long enough to be cancelled while it is
-/// running. It needs the scripted inference variants, and a build without them cannot load it, so
-/// the case skips instead of reporting a pass.
+// A cancelled conversion is not a failed route either: the executive reports the cancellation
+// through its state and returns the part of the batch that it finished, so the session caches
+// nothing and keeps serving the language.
+//
+// The runaway fixture is the only one whose batch runs long enough to be cancelled while it is
+// running. It needs the scripted inference variants, and a build without them cannot load it, so
+// the case skips instead of reporting a pass.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsACancelledConversionOutOfTheCache) {
     srt::SynthUnit unit;
     configure(unit);
@@ -1068,13 +1068,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_KeepsACancelledConversionOutOfTheCache
     BOOST_CHECK(session.convert(singer, "nld", Line({"x"}, LinguistApi::Depth::Phonemes)));
 }
 
-/// A cached failure is replayed with the kind of its error code and with the whole text of the
-/// error, not with the message alone.
-///
-/// Regression: the reason used to be the message of the cached error, so a host received "the g2p
-/// stage returned 1 entries for 2 inputs" without the code that says what kind of fault it is. The
-/// kind is the canned text of the code, which synthrt fixes, and the case compares against that
-/// text as a prefix rather than against a substring that every message happens to contain.
+// A cached failure is replayed with the kind of its error code and with the whole text of the
+// error, not with the message alone.
+//
+// Regression: the reason used to be the message of the cached error, so a host received "the g2p
+// stage returned 1 entries for 2 inputs" without the code that says what kind of fault it is. The
+// kind is the canned text of the code, which synthrt fixes, and the case compares against that
+// text as a prefix rather than against a substring that every message happens to contain.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_ReplaysACachedFailureWithItsCodeKind) {
     srt::SynthUnit unit;
     configure(unit);

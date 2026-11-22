@@ -15,8 +15,8 @@ namespace wolf::chain {
 
     namespace {
 
-        /// Removes a CMU-style variant suffix, so that word(2) belongs to the candidate group of
-        /// word.
+        // Removes a CMU-style variant suffix, so that word(2) belongs to the candidate group of
+        // word.
         std::string baseWord(std::string word) {
             if (word.size() < 4 || word.back() != ')') {
                 return word;
@@ -68,9 +68,9 @@ namespace wolf::chain {
 
     namespace {
 
-        /// Returns an InvalidFormat error that names the file and the line number. A dictionary
-        /// contains thousands of lines, so a message without the line number does not identify
-        /// the malformed line.
+        // Returns an InvalidFormat error that names the file and the line number. A dictionary
+        // contains thousands of lines, so a message without the line number does not identify
+        // the malformed line.
         srt::Error parseError(const fs::path &path, std::size_t line, const std::string &what) {
             return srt::Error(srt::Error::InvalidFormat, stdc::path::to_utf8(path) + " line " +
                                                              std::to_string(line) + ": " + what);

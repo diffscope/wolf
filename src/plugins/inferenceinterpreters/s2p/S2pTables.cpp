@@ -18,7 +18,7 @@ namespace wolf::s2p {
                                                              std::to_string(line) + ": " + what);
         }
 
-        /// Splits one TSV line into exactly two columns and rejects every other shape.
+        // Splits one TSV line into exactly two columns and rejects every other shape.
         srt::Expected<std::pair<std::string_view, std::string_view>>
             twoColumns(const fs::path &path, std::size_t number, std::string_view line) {
             const auto tab = line.find('\t');

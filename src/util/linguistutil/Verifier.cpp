@@ -22,14 +22,14 @@ namespace wolf {
         constexpr char ARRAY[] = "array";
         constexpr char DICT[] = "dict";
 
-        /// Memory budget of one compiled expression. RE2 rejects a program larger than its budget
-        /// instead of growing without bound, so that a pathological pattern in a declaration fails
-        /// the package at load instead of exhausting memory. The shipped patterns require a small
-        /// fraction of this budget.
+        // Memory budget of one compiled expression. RE2 rejects a program larger than its budget
+        // instead of growing without bound, so that a pathological pattern in a declaration fails
+        // the package at load instead of exhausting memory. The shipped patterns require a small
+        // fraction of this budget.
         constexpr std::int64_t REGEX_MEMORY_BYTES = 8 << 20;
 
-        /// One compiled entry. A regex entry holds the expression, and the other two types hold a
-        /// word set. Both forms are small, and one struct is clearer than a class hierarchy.
+        // One compiled entry. A regex entry holds the expression, and the other two types hold a
+        // word set. Both forms are small, and one struct is clearer than a class hierarchy.
         struct Compiled {
             std::unique_ptr<RE2> regex;
             std::set<std::string> words;
@@ -43,13 +43,13 @@ namespace wolf {
             }
         };
 
-        /// Merges the expressions of one entry into a single alternation.
-        ///
-        /// Alternation has the lowest precedence, so the merged expression fully matches a word if
-        /// any branch fully matches it, which is the semantics of a pattern list. Each branch is
-        /// wrapped in its own non-capturing group, because an inline flag such as (?i) applies to
-        /// the remainder of the enclosing group. Without the groups, a flag in one pattern would
-        /// change the matching of every later pattern of the entry.
+        // Merges the expressions of one entry into a single alternation.
+        //
+        // Alternation has the lowest precedence, so the merged expression fully matches a word if
+        // any branch fully matches it, which is the semantics of a pattern list. Each branch is
+        // wrapped in its own non-capturing group, because an inline flag such as (?i) applies to
+        // the remainder of the enclosing group. Without the groups, a flag in one pattern would
+        // change the matching of every later pattern of the entry.
         std::string mergePatterns(const std::vector<std::string> &patterns) {
             std::string merged;
             for (const auto &pattern : patterns) {
@@ -63,7 +63,7 @@ namespace wolf {
             return merged;
         }
 
-        /// Reads the first tab separated column of every non-empty line.
+        // Reads the first tab separated column of every non-empty line.
         srt::Expected<void> loadWords(const fs::path &path, std::set<std::string> &words) {
             std::ifstream file;
             if (auto opened = openForReading(file, path, "verify dictionary"); !opened) {

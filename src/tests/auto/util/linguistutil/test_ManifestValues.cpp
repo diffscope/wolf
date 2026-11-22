@@ -31,9 +31,9 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_ManifestValues)
 
-/// The published schema for exports.languages specifies the structure of a pair. The loader must
-/// agree with the schema; otherwise a schema-invalid package could still load, and the schema
-/// would be documentation rather than a contract.
+// The published schema for exports.languages specifies the structure of a pair. The loader must
+// agree with the schema; otherwise a schema-invalid package could still load, and the schema
+// would be documentation rather than a contract.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_PairsMatchTheirGrammar) {
     auto read = wolf::readLanguageSchemes(parse(R"json([{ "language": "cmn", "scheme": "pinyin" },
                       { "language": "eng", "scheme": "arpabet-plus" }])json"),
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_PairsMatchTheirGrammar) {
                     .find("unique") != std::string::npos);
 }
 
-/// A set may be written inline or as a path, and both forms are equivalent.
+// A set may be written inline or as a path, and both forms are equivalent.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_StringSetsRejectEmptyAndRepeated) {
     auto read = wolf::readStringSet(parse(R"json(["a", "b"])json"), ".", "exports phonemes");
     BOOST_REQUIRE(read);
@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_StringSetsRejectEmptyAndRepeated) {
     BOOST_CHECK(!wolf::readStringSet(parse("42"), ".", "exports phonemes"));
 }
 
-/// Each of the two identity grammars is a single rule shared by the identity fields and by the
-/// pairs inside exports.
+// Each of the two identity grammars is a single rule shared by the identity fields and by the
+// pairs inside exports.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_IdentityGrammars) {
     BOOST_CHECK(wolf::isLanguageHandle("cmn"));
     BOOST_CHECK(wolf::isLanguageHandle("qaa"));
@@ -93,9 +93,9 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_IdentityGrammars) {
     BOOST_CHECK(!wolf::isSchemeName("pin_yin"));
 }
 
-/// Level 1 import options are an empty object. The loader substitutes an empty object for an
-/// omitted key, so a null value can only come from the declaration itself. The contract, the
-/// schema and the lint all reject it, and the loader must reject it too.
+// Level 1 import options are an empty object. The loader substitutes an empty object for an
+// omitted key, so a null value can only come from the declaration itself. The contract, the
+// schema and the lint all reject it, and the loader must reject it too.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_ImportOptionsMustBeAnEmptyObject) {
     BOOST_CHECK(wolf::requireNoImportOptions(parse("{}"), "inference"));
 
@@ -107,9 +107,9 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_ImportOptionsMustBeAnEmptyObject) {
     BOOST_CHECK(!wolf::requireNoImportOptions(parse(R"({"depth": 1})"), "inference"));
 }
 
-/// A string set written as a path follows the same rule as every other reader: a missing file
-/// yields FileNotFound, an existing file that cannot be read yields FileNotOpen, and both messages
-/// name the path. Regression: the two faults must not be collapsed into FileNotOpen.
+// A string set written as a path follows the same rule as every other reader: a missing file
+// yields FileNotFound, an existing file that cannot be read yields FileNotOpen, and both messages
+// name the path. Regression: the two faults must not be collapsed into FileNotOpen.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_NamesTheStringSetFileItCannotRead) {
     namespace fs = std::filesystem;
     const auto base = fs::temp_directory_path() / "wolf_manifest_values";
@@ -130,10 +130,10 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_NamesTheStringSetFileItCannotRead) {
     fs::remove_all(base);
 }
 
-/// A declared path treats `\` as a separator, as the specification requires, so the same
-/// declaration names the same file on a host that recognizes only `/` as a separator. On such a
-/// host, a reader that passed the string to the file system unchanged would look for a single file
-/// whose name contains backslashes.
+// A declared path treats `\` as a separator, as the specification requires, so the same
+// declaration names the same file on a host that recognizes only `/` as a separator. On such a
+// host, a reader that passed the string to the file system unchanged would look for a single file
+// whose name contains backslashes.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_BackslashesSeparateDeclaredPaths) {
     namespace fs = std::filesystem;
     BOOST_CHECK(wolf::pathFromManifest("assets\\dict\\words.txt") ==

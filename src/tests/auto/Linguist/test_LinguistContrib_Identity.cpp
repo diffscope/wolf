@@ -24,18 +24,18 @@ namespace {
         return wolf::test::fixtureRoot() / name;
     }
 
-    /// Fails the current test with the error text if \a handle holds an error. Calling error() on
-    /// an Expected that holds a value is undefined behavior; the check therefore precedes the
-    /// construction of the message.
+    // Fails the current test with the error text if \a handle holds an error. Calling error() on
+    // an Expected that holds a value is undefined behavior; the check therefore precedes the
+    // construction of the message.
     void requireOpened(const srt::Expected<srt::PackageHandle> &handle, const char *what) {
         if (!handle) {
             BOOST_FAIL(std::string(what) + " should have opened: " + handle.error().toString());
         }
     }
 
-    /// Opens the package at \a path in DataOnly mode. DataOnly stops after manifest construction
-    /// and therefore exercises the parsing of the category without requiring any interpreter
-    /// plugin.
+    // Opens the package at \a path in DataOnly mode. DataOnly stops after manifest construction
+    // and therefore exercises the parsing of the category without requiring any interpreter
+    // plugin.
     srt::Expected<srt::PackageHandle> openData(srt::SynthUnit &unit, const fs::path &path) {
         return unit.openPackage(path, srt::SynthUnit::DataOnly);
     }
@@ -110,17 +110,17 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_RejectsMalformedIdentity) {
     }
 }
 
-/// Checks that an unknown field in the declaration root is ignored rather than rejected.
-///
-/// The root is an object defined by the upstream specification, which requires the framework to
-/// validate only the fields that it defines and forbids rejection because of unknown fields. A
-/// category that rejected unknown fields would cause every field that the framework adds later to
-/// fail to load on wolf builds that predate the field. Such a forward-compatibility break is not
-/// wolf's to impose on its upstream. wolf remains strict for the schemas that it owns: `exports`,
-/// `configuration` and `imports[].options` all reject keys that they do not define.
-///
-/// No validation is lost. A misspelt *required* field still fails because the correctly spelt
-/// field is then missing; the identity cases above cover that failure.
+// Checks that an unknown field in the declaration root is ignored rather than rejected.
+//
+// The root is an object defined by the upstream specification, which requires the framework to
+// validate only the fields that it defines and forbids rejection because of unknown fields. A
+// category that rejected unknown fields would cause every field that the framework adds later to
+// fail to load on wolf builds that predate the field. Such a forward-compatibility break is not
+// wolf's to impose on its upstream. wolf remains strict for the schemas that it owns: `exports`,
+// `configuration` and `imports[].options` all reject keys that they do not define.
+//
+// No validation is lost. A misspelt *required* field still fails because the correctly spelt
+// field is then missing; the identity cases above cover that failure.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_IgnoresUnknownDeclarationField) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("unknown-field"));

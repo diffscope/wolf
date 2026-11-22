@@ -28,28 +28,28 @@ namespace wolf::lua {
 
     namespace {
 
-        /// Names of the two interpreters of this variant in diagnostics. The variant name alone
-        /// does not identify the contract under which a rejected declaration was read.
+        // Names of the two interpreters of this variant in diagnostics. The variant name alone
+        // does not identify the contract under which a rejected declaration was read.
         constexpr char LUA_S2P[] = "lua S2P";
         constexpr char LUA_ONSET[] = "lua onset";
 
-        /// Global function that each contract requires the script to define.
+        // Global function that each contract requires the script to define.
         constexpr char S2P_ENTRY[] = "s2p";
         constexpr char ONSET_ENTRY[] = "markonset";
 
-        /// Shape of the S2P contract exports: the language pairs the module consumes, its
-        /// phonemes, and openSet.
+        // Shape of the S2P contract exports: the language pairs the module consumes, its
+        // phonemes, and openSet.
         constexpr ExportsShape S2P_EXPORTS{true, "phonemes", false, true};
 
-        /// Shape of the Onset contract exports: the phonemes that the rules recognize, as a lower
-        /// bound.
+        // Shape of the Onset contract exports: the phonemes that the rules recognize, as a lower
+        // bound.
         constexpr ExportsShape ONSET_EXPORTS{false, "knownPhonemes", false, false};
 
-        /// Holds the script text for the executives of one module.
-        ///
-        /// The configuration holds the text rather than a running interpreter, because an
-        /// interpreter state cannot be shared. Each executive compiles its own interpreter from
-        /// this text.
+        // Holds the script text for the executives of one module.
+        //
+        // The configuration holds the text rather than a running interpreter, because an
+        // interpreter state cannot be shared. Each executive compiles its own interpreter from
+        // this text.
         class S2pConfiguration : public srt::ContribConfiguration {
         public:
             S2pConfiguration() : ContribConfiguration(S2pTriplet) {
@@ -95,11 +95,11 @@ namespace wolf::lua {
             return file.lexically_normal();
         }
 
-        /// Reads the script and checks that it defines the global function \a entry.
-        ///
-        /// The script is compiled here as well as in every executive, so that a script that does
-        /// not compile or does not define \a entry fails the package rather than the first
-        /// conversion that uses it.
+        // Reads the script and checks that it defines the global function \a entry.
+        //
+        // The script is compiled here as well as in every executive, so that a script that does
+        // not compile or does not define \a entry fails the package rather than the first
+        // conversion that uses it.
         template <class Configuration>
         srt::Expected<std::unique_ptr<Configuration>>
             readScriptConfiguration(const srt::ContribSpec &spec, const char *entry) {
@@ -172,12 +172,12 @@ namespace wolf::lua {
                 return result;
             }
 
-            /// See Sandbox::interrupt(): the interrupt ends the script call in progress as well.
+            // See Sandbox::interrupt(): the interrupt ends the script call in progress as well.
             void onStop() override {
                 m_sandbox->interrupt();
             }
 
-            /// See Sandbox::resume(): it clears the interrupt left by a stop.
+            // See Sandbox::resume(): it clears the interrupt left by a stop.
             void onSettled() override {
                 m_sandbox->resume();
             }
@@ -225,12 +225,12 @@ namespace wolf::lua {
                 return result;
             }
 
-            /// See Sandbox::interrupt(): the interrupt ends the script call in progress as well.
+            // See Sandbox::interrupt(): the interrupt ends the script call in progress as well.
             void onStop() override {
                 m_sandbox->interrupt();
             }
 
-            /// See Sandbox::resume(): it clears the interrupt left by a stop.
+            // See Sandbox::resume(): it clears the interrupt left by a stop.
             void onSettled() override {
                 m_sandbox->resume();
             }

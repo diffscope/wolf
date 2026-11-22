@@ -23,9 +23,9 @@ namespace fs = std::filesystem;
 
 namespace wolf {
 
-    /// Reads the index of the process-wide cache. Sharing and reclamation are observable only by
-    /// counting, and the library exports no interface for counting: ResourceCache declares this
-    /// class as a friend, and the class is defined only in this test.
+    // Reads the index of the process-wide cache. Sharing and reclamation are observable only by
+    // counting, and the library exports no interface for counting: ResourceCache declares this
+    // class as a friend, and the class is defined only in this test.
     class ResourceCacheProbe {
     public:
         static std::size_t parseCount() {
@@ -40,8 +40,8 @@ namespace wolf {
             return impl.entries.size();
         }
 
-        /// Discards every live entry and the path memo, so that each case starts from an empty
-        /// cache.
+        // Discards every live entry and the path memo, so that each case starts from an empty
+        // cache.
         static void clear() {
             auto &impl = *ResourceCache::instance()._impl;
             std::unique_lock lock(impl.mutex);
@@ -86,7 +86,7 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_ResourceCache)
 
-/// Checks the acceptance criterion of the design: two holders of the same resource cost one parse.
+// Checks the acceptance criterion of the design: two holders of the same resource cost one parse.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_ParsesSharedResourceOnce) {
     Probe::clear();
 
@@ -101,8 +101,8 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_ParsesSharedResourceOnce) {
     BOOST_CHECK_EQUAL((*first)->text, "a\tb\n");
 }
 
-/// Addressing by content rather than by path ensures that an override which copies a resource
-/// verbatim incurs no additional cost.
+// Addressing by content rather than by path ensures that an override which copies a resource
+// verbatim incurs no additional cost.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_SharesAcrossPathsWithEqualContent) {
     Probe::clear();
 
@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_SharesAcrossPathsWithEqualContent) {
     BOOST_CHECK(one->get() == two->get());
 }
 
-/// The same file read by two families produces two entries. A dictionary parsed leniently and the
-/// same dictionary parsed strictly do not produce interchangeable values, so the two values must
-/// not share an entry.
+// The same file read by two families produces two entries. A dictionary parsed leniently and the
+// same dictionary parsed strictly do not produce interchangeable values, so the two values must
+// not share an entry.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_SeparatesKindsAndGenerations) {
     Probe::clear();
 
@@ -134,8 +134,8 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_SeparatesKindsAndGenerations) {
     BOOST_CHECK(lenient->get() != newer->get());
 }
 
-/// Entries are held weakly, so an entry is destroyed with its last holder instead of retaining
-/// memory for the lifetime of the process.
+// Entries are held weakly, so an entry is destroyed with its last holder instead of retaining
+// memory for the lifetime of the process.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_ReleasesWithItsLastHolder) {
     Probe::clear();
 
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_ReleasesWithItsLastHolder) {
     BOOST_CHECK_EQUAL(Probe::parseCount(), 2u);
 }
 
-/// Hosts that warm several languages at once create executives in parallel, so the double-checked
-/// insert must remain correct under contention.
+// Hosts that warm several languages at once create executives in parallel, so the double-checked
+// insert must remain correct under contention.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_ParsesOnceUnderContention) {
     Probe::clear();
 
@@ -176,14 +176,14 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_ParsesOnceUnderContention) {
     }
 }
 
-/// The index must not grow without limit across a session of loading and unloading.
-///
-/// Regression: an entry whose value is destroyed with its last holder must be reclaimed, instead
-/// of occupying a map node and a control block for the lifetime of the process.
-///
-/// Each round uses a separate path. Reusing one path would allow the stamp memo to return the
-/// previous digest whenever the rewrite preserved both size and modification time, so most rounds
-/// would collapse onto one entry and the case would measure nothing.
+// The index must not grow without limit across a session of loading and unloading.
+//
+// Regression: an entry whose value is destroyed with its last holder must be reclaimed, instead
+// of occupying a map node and a control block for the lifetime of the process.
+//
+// Each round uses a separate path. Reusing one path would allow the stamp memo to return the
+// previous digest whenever the rewrite preserved both size and modification time, so most rounds
+// would collapse onto one entry and the case would measure nothing.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_ReclaimsDeadEntries) {
     Probe::clear();
 
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_ReclaimsDeadEntries) {
     Probe::clear();
 }
 
-/// A failed parse is reported to every executive that waited on it, with the error code of the
-/// parser, and leaves no state behind: the next acquisition of the same resource parses again.
+// A failed parse is reported to every executive that waited on it, with the error code of the
+// parser, and leaves no state behind: the next acquisition of the same resource parses again.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_HandsAFailureToEveryWaiter) {
     auto &cache = wolf::ResourceCache::instance();
     Probe::clear();
@@ -250,11 +250,11 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_HandsAFailureToEveryWaiter) {
     fs::remove(path);
 }
 
-/// A parser that throws must not leave its resource permanently in progress.
-///
-/// Regression: the key must not remain in the in-flight index, where later acquisitions would wait
-/// on a promise that is never fulfilled and waiting executives would receive a broken promise
-/// instead of an error.
+// A parser that throws must not leave its resource permanently in progress.
+//
+// Regression: the key must not remain in the in-flight index, where later acquisitions would wait
+// on a promise that is never fulfilled and waiting executives would receive a broken promise
+// instead of an error.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_SurvivesAParserThatThrows) {
     auto &cache = wolf::ResourceCache::instance();
     Probe::clear();
@@ -296,12 +296,12 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_SurvivesAParserThatThrows) {
     fs::remove(path);
 }
 
-/// The error for a resource that cannot be read must name the resource.
-///
-/// This message leaves the layer and reaches the user through the host, which prints "could not
-/// open <package>: failed to interpret module configuration: ...". If only "failed to size a
-/// resource" followed the last colon, the message would omit the path, which is the information
-/// the user requires, although the path is available when the message is constructed.
+// The error for a resource that cannot be read must name the resource.
+//
+// This message leaves the layer and reaches the user through the host, which prints "could not
+// open <package>: failed to interpret module configuration: ...". If only "failed to size a
+// resource" followed the last colon, the message would omit the path, which is the information
+// the user requires, although the path is available when the message is constructed.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_NamesTheResourceItCannotRead) {
     Probe::clear();
 

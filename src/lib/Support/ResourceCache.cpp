@@ -30,24 +30,24 @@ namespace wolf {
         static_assert(std::tuple_size_v<Digest> == BLAKE3_OUT_LEN,
                       "the digest type of ResourceCache_p.h must hold a BLAKE3 hash");
 
-        /// Chunk size of one hash read. The resources reach several megabytes, so a whole file is
-        /// never held in memory. A buffer of this size keeps the read loop short at a negligible
-        /// memory cost.
+        // Chunk size of one hash read. The resources reach several megabytes, so a whole file is
+        // never held in memory. A buffer of this size keeps the read loop short at a negligible
+        // memory cost.
         constexpr std::size_t HASH_CHUNK_BYTES = 64 * 1024;
 
-        /// Returns an error that distinguishes a missing resource from an existing resource that
-        /// cannot be read.
-        ///
-        /// This check runs before a parser reads the file, and the two faults are therefore
-        /// distinguished at this layer by the rule that every reader in wolf applies
-        /// (fileErrorCode). The message uses the wording of this layer, which names the failed
-        /// step.
+        // Returns an error that distinguishes a missing resource from an existing resource that
+        // cannot be read.
+        //
+        // This check runs before a parser reads the file, and the two faults are therefore
+        // distinguished at this layer by the rule that every reader in wolf applies
+        // (fileErrorCode). The message uses the wording of this layer, which names the failed
+        // step.
         srt::Error unreadable(const fs::path &path, const std::string &what) {
             return srt::Error(fileErrorCode(path), stdc::path::to_utf8(path) + ": " + what);
         }
 
-        /// Streams a file through the hash instead of holding it in memory, because these
-        /// resources reach hundreds of thousands of lines.
+        // Streams a file through the hash instead of holding it in memory, because these
+        // resources reach hundreds of thousands of lines.
         srt::Expected<Digest> hashFile(const fs::path &path) {
             std::ifstream file(path, std::ios::binary);
             if (!file.is_open()) {

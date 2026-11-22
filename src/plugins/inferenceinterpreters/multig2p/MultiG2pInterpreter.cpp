@@ -35,19 +35,19 @@ namespace wolf::multig2p {
 
     namespace {
 
-        /// Shape of the G2P contract exports: the language pairs the module produces, its
-        /// symbols, and openSet.
+        // Shape of the G2P contract exports: the language pairs the module produces, its
+        // symbols, and openSet.
         constexpr ExportsShape G2P_EXPORTS{true, "symbols", false, true};
 
-        /// The driver backend of this variant, which is also the name of its Runtime Service.
+        // The driver backend of this variant, which is also the name of its Runtime Service.
         constexpr char BACKEND[] = "onnx";
 
         constexpr char BUNDLE_KIND[] = "multig2p-bundle-json@1";
         constexpr char VOCABULARY_KIND[] = "multig2p-vocabulary-json@1";
 
-        /// One contract pair and the bundle language it selects.
+        // One contract pair and the bundle language it selects.
         struct MappedLanguage : LanguageMapEntry {
-            /// The language id of ref in the bundle, resolved after the bundle is read.
+            // The language id of ref in the bundle, resolved after the bundle is read.
             std::int64_t id = -1;
         };
 
@@ -60,7 +60,7 @@ namespace wolf::multig2p {
             std::shared_ptr<const Vocabulary> vocabulary;
             std::vector<MappedLanguage> languageMap;
 
-            /// The directory holding the bundle and its models.
+            // The directory holding the bundle and its models.
             fs::path directory;
 
             int maxLength = 48;

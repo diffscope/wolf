@@ -21,18 +21,18 @@ namespace wolf::pinyin {
         constexpr char MANDARIN[] = "mandarin";
         constexpr char CANTONESE[] = "cantonese";
 
-        /// The registry of the built-in dialects, which the 2.x library keeps in the caller.
-        ///
-        /// A function-local static, so that the engines opened against it outlive every static that
-        /// could still call into them during shutdown. `Registry` is neither copyable nor movable.
+        // The registry of the built-in dialects, which the 2.x library keeps in the caller.
+        //
+        // A function-local static, so that the engines opened against it outlive every static that
+        // could still call into them during shutdown. `Registry` is neither copyable nor movable.
         cpp_pinyin::v2::Registry &registry() {
             static cpp_pinyin::v2::Registry instance;
             return instance;
         }
 
-        /// Returns the number of UTF-16 code units of \a text, counting one per code point and two
-        /// for every code point above U+FFFF. The 2.x library refuses a whole batch when one element
-        /// is not exactly one code unit, and a 4-byte UTF-8 sequence is two of them.
+        // Returns the number of UTF-16 code units of \a text, counting one per code point and two
+        // for every code point above U+FFFF. The 2.x library refuses a whole batch when one element
+        // is not exactly one code unit, and a 4-byte UTF-8 sequence is two of them.
         std::size_t utf16CodeUnits(std::string_view text) {
             std::size_t units = 0;
             for (const char byte : text) {
@@ -45,7 +45,7 @@ namespace wolf::pinyin {
             return units;
         }
 
-        /// One cpp-pinyin engine plus the dialect it was opened for.
+        // One cpp-pinyin engine plus the dialect it was opened for.
         class ConvertibleEngine final : public Engine {
         public:
             ConvertibleEngine(cpp_pinyin::v2::Engine engine, bool mandarin)

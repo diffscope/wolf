@@ -17,7 +17,7 @@ using wolf::chain::toLowercase;
 
 namespace {
 
-    /// Writes \a content to a scratch file byte for byte and returns its path.
+    // Writes \a content to a scratch file byte for byte and returns its path.
     fs::path writeDictionary(const std::string &name, const std::string &content) {
         const auto path = fs::temp_directory_path() / ("wolf-chaintables-" + name + ".txt");
         std::ofstream(path, std::ios::binary) << content;
@@ -46,9 +46,9 @@ BOOST_AUTO_TEST_CASE(test_ChainTables_LowercasesAsciiAndLatin1) {
     BOOST_CHECK_EQUAL(toLowercase("\xC3\x9F"), "\xC3\x9F");
 }
 
-/// Latin Extended-A places the capital on the even code point of each pair, but on the odd one
-/// from U+0139 to U+0148 and from U+0179 to U+017E. A word that is already lowercase must come back
-/// unchanged, or a dictionary lookup after the cleanup step misses it.
+// Latin Extended-A places the capital on the even code point of each pair, but on the odd one
+// from U+0139 to U+0148 and from U+0179 to U+017E. A word that is already lowercase must come back
+// unchanged, or a dictionary lookup after the cleanup step misses it.
 BOOST_AUTO_TEST_CASE(test_ChainTables_LowercasesLatinExtendedA) {
     // A with macron, C with caron, G with breve: capitals on even code points
     BOOST_CHECK_EQUAL(toLowercase("\xC4\x80\xC4\x8C\xC4\x9E"), "\xC4\x81\xC4\x8D\xC4\x9F");
@@ -95,9 +95,9 @@ BOOST_AUTO_TEST_CASE(test_ChainTables_SpacesPhonesApart) {
     BOOST_CHECK_EQUAL(addSpaceBetweenPhones(""), "");
 }
 
-/// The upstream dictionaries carry a byte order mark and CRLF endings, and number additional
-/// readings by the CMU convention. Only a parenthesised run of digits after a word is such a
-/// number.
+// The upstream dictionaries carry a byte order mark and CRLF endings, and number additional
+// readings by the CMU convention. Only a parenthesised run of digits after a word is such a
+// number.
 BOOST_AUTO_TEST_CASE(test_ChainTables_GroupsReadingsOfOneWord) {
     const auto path = writeDictionary("groups", "\xEF\xBB\xBFread\tr iy d\r\n"
                                                 "read(2)\tr eh d\r\n"

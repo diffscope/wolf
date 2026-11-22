@@ -9,7 +9,7 @@
 
 namespace {
 
-    /// Decodes the first code point of \a text and reports what the decoder returned.
+    // Decodes the first code point of \a text and reports what the decoder returned.
     struct Decoded {
         std::size_t length = 0;
         std::uint32_t code = 0;
@@ -21,8 +21,8 @@ namespace {
         return decoded;
     }
 
-    /// Decodes \a text after the given number of leading bytes, so that a truncated sequence and a
-    /// sequence at the end of a longer text are both covered.
+    // Decodes \a text after the given number of leading bytes, so that a truncated sequence and a
+    // sequence at the end of a longer text are both covered.
     Decoded decodeAt(std::string_view text, std::size_t offset) {
         Decoded decoded;
         decoded.length = wolf::decodeUtf8(text.data() + offset, text.size() - offset, decoded.code);

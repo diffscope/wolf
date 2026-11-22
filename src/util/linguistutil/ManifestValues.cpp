@@ -83,13 +83,13 @@ namespace wolf {
         return stdc::path::from_utf8(normalized);
     }
 
-    /// Matches an ISO 639-3 code: exactly three ASCII lowercase letters.
+    // Matches an ISO 639-3 code: exactly three ASCII lowercase letters.
     bool isLanguageHandle(std::string_view value) {
         return value.size() == 3 && std::all_of(value.begin(), value.end(),
                                                 [](char ch) { return ch >= 'a' && ch <= 'z'; });
     }
 
-    /// Matches [a-z0-9]+( "-" [a-z0-9]+ )*
+    // Matches [a-z0-9]+( "-" [a-z0-9]+ )*
     bool isSchemeName(std::string_view value) {
         if (value.empty() || value.front() == '-' || value.back() == '-') {
             return false;

@@ -27,18 +27,18 @@ namespace wolf::s2p {
 
     namespace {
 
-        /// Exports of the S2P contract: the language/scheme pairs that the module consumes, its
-        /// phonemes, and openSet.
+        // Exports of the S2P contract: the language/scheme pairs that the module consumes, its
+        // phonemes, and openSet.
         constexpr ExportsShape S2P_EXPORTS{true, "phonemes", false, true};
 
-        /// Cache generations of the table parsers. A generation is raised when the table syntax
-        /// changes, so cache entries from an older parser no longer match, without explicit
-        /// invalidation.
+        // Cache generations of the table parsers. A generation is raised when the table syntax
+        // changes, so cache entries from an older parser no longer match, without explicit
+        // invalidation.
         constexpr char DICT_KIND[] = "s2p-dict-tsv@1";
         constexpr char MAPPING_KIND[] = "s2p-mapping-tsv@1";
 
-        /// Holds the table of the variant, if the variant uses one. Tables come from the shared
-        /// resource cache, so a file used by several modules is parsed once.
+        // Holds the table of the variant, if the variant uses one. Tables come from the shared
+        // resource cache, so a file used by several modules is parsed once.
         using Table = std::variant<std::monostate, std::shared_ptr<const DictionaryTable>,
                                    std::shared_ptr<const MappingTable>>;
 
@@ -49,22 +49,22 @@ namespace wolf::s2p {
                                         std::move(variant)}) {
             }
 
-            /// Parsed during Acquire rather than when an executive is created, because the
-            /// upper specification requires the provider to validate its configuration
-            /// during Acquire, and a malformed dictionary must fail the package rather than the
-            /// first conversion that uses it.
+            // Parsed during Acquire rather than when an executive is created, because the
+            // upper specification requires the provider to validate its configuration
+            // during Acquire, and a malformed dictionary must fail the package rather than the
+            // first conversion that uses it.
             Table table;
         };
 
-        /// Reads the single configuration key of these variants.
-        ///
-        /// Unknown keys are rejected rather than ignored, so a misspelled key produces an error
-        /// instead of silently leaving a default in place.
-        ///
-        /// \return The normalized file path, resolved against the declaration directory if
-        /// relative. An empty path if the key is absent and \a required is false. An InvalidFormat
-        /// error if the configuration is malformed, or if the key is absent and \a required is
-        /// true.
+        // Reads the single configuration key of these variants.
+        //
+        // Unknown keys are rejected rather than ignored, so a misspelled key produces an error
+        // instead of silently leaving a default in place.
+        //
+        // \return The normalized file path, resolved against the declaration directory if
+        // relative. An empty path if the key is absent and \a required is false. An InvalidFormat
+        // error if the configuration is malformed, or if the key is absent and \a required is
+        // true.
         srt::Expected<fs::path> readFile(const srt::ContribSpec &spec, bool required) {
             const auto &value = spec.manifestConfiguration();
             if (!value.isObject()) {
@@ -96,10 +96,10 @@ namespace wolf::s2p {
             return file.lexically_normal();
         }
 
-        /// Loads the table of a variant through the shared resource cache.
-        ///
-        /// \return The table for the dict and mapping variants; an empty Table for any other
-        /// variant; the load error if the table cannot be loaded.
+        // Loads the table of a variant through the shared resource cache.
+        //
+        // \return The table for the dict and mapping variants; an empty Table for any other
+        // variant; the load error if the table cannot be loaded.
         srt::Expected<Table> loadTable(const std::string &variant, const fs::path &file) {
             auto &cache = ResourceCache::instance();
             if (variant == DictTriplet.variant()) {

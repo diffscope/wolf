@@ -25,9 +25,9 @@ namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
 
-    /// The voicebank-shaped fixture, built by scripts/make-voicebank-fixture.py from the real
-    /// converted language packages. Both directories are required: the voicebank supplies the
-    /// syllable dictionary and the onset rules, and the language packages supply the G2P.
+    // The voicebank-shaped fixture, built by scripts/make-voicebank-fixture.py from the real
+    // converted language packages. Both directories are required: the voicebank supplies the
+    // syllable dictionary and the onset rules, and the language packages supply the G2P.
     using wolf::test::convertedRoot;
     using wolf::test::voicebankRoot;
 
@@ -41,12 +41,12 @@ namespace {
         }
     };
 
-    /// A note as stored by a host, before and after each stage.
+    // A note as stored by a host, before and after each stage.
     struct Note {
         std::string language;
         std::string lyric;
 
-        /// Written by the pronunciation stage and editable by the user before the phoneme stage.
+        // Written by the pronunciation stage and editable by the user before the phoneme stage.
         std::string pronunciation;
         std::vector<std::string> candidates;
 
@@ -55,16 +55,16 @@ namespace {
         bool converted = false;
     };
 
-    /// A minimal host that calls the domain in the order used by a real host.
-    ///
-    /// The structure follows lite: two passes over the same notes, with the user free to edit the
-    /// pronunciation between the passes, and every decision that the domain leaves open
-    /// implemented here.
-    ///
-    /// This class is not part of wolf and is not intended to become part of it. It is written out
-    /// so that the domain can be evaluated by the work it leaves to a host. Everything below that
-    /// is not a project decision is work that every host would repeat; the session layer exists
-    /// to absorb that work.
+    // A minimal host that calls the domain in the order used by a real host.
+    //
+    // The structure follows lite: two passes over the same notes, with the user free to edit the
+    // pronunciation between the passes, and every decision that the domain leaves open
+    // implemented here.
+    //
+    // This class is not part of wolf and is not intended to become part of it. It is written out
+    // so that the domain can be evaluated by the work it leaves to a host. Everything below that
+    // is not a project decision is work that every host would repeat; the session layer exists
+    // to absorb that work.
     class Host {
     public:
         explicit Host(srt::SynthUnit &unit) : m_unit(unit) {
@@ -104,13 +104,13 @@ namespace {
             return m_extension->defaultLanguage();
         }
 
-        /// Returns whether \a language is ready; a host performs this check before it allows the
-        /// user to enter text in the language.
-        ///
-        /// The host keeps two caches because each repeated request to the domain incurs its cost
-        /// again: one cache for created executives and one for failed languages. The only way
-        /// to determine readiness is currently to build the executive, so the readiness check and
-        /// the executive pool share one call.
+        // Returns whether \a language is ready; a host performs this check before it allows the
+        // user to enter text in the language.
+        //
+        // The host keeps two caches because each repeated request to the domain incurs its cost
+        // again: one cache for created executives and one for failed languages. The only way
+        // to determine readiness is currently to build the executive, so the readiness check and
+        // the executive pool share one call.
         bool ensureLanguageReady(const std::string &language) {
             const auto ready = m_ready.find(language);
             if (ready != m_ready.end()) {
@@ -132,32 +132,32 @@ namespace {
             return true;
         }
 
-        /// Returns the number of executive creation requests sent to the domain. A repeated
-        /// request loads the same dictionaries again, so the test counts the requests.
+        // Returns the number of executive creation requests sent to the domain. A repeated
+        // request loads the same dictionaries again, so the test counts the requests.
         int creations() const {
             return m_creations;
         }
 
-        /// Stage A. Fills in the pronunciation of every note that requires one.
+        // Stage A. Fills in the pronunciation of every note that requires one.
         void convertPronunciation(std::vector<Note> &notes) {
             run(notes, LinguistApi::Depth::Pronunciation, false);
         }
 
-        /// Stage B. Converts the current pronunciation of each note into phonemes and onsets.
-        ///
-        /// The pronunciation is sent as input rather than recomputed, because the user may have
-        /// edited it after stage A and the edited pronunciation is the input.
+        // Stage B. Converts the current pronunciation of each note into phonemes and onsets.
+        //
+        // The pronunciation is sent as input rather than recomputed, because the user may have
+        // edited it after stage A and the edited pronunciation is the input.
         void convertPhonemes(std::vector<Note> &notes) {
             run(notes, LinguistApi::Depth::Onsets, true);
         }
 
     private:
-        /// Returns whether \a note is a reserved marker, which the host converts itself and never
-        /// sends to a language.
-        ///
-        /// SP and AP are the reserved markers of the ecosystem. The markers checked by
-        /// projectMarker() are project notation, such as a slur or a syllable continuation, and
-        /// have no meaning in any language.
+        // Returns whether \a note is a reserved marker, which the host converts itself and never
+        // sends to a language.
+        //
+        // SP and AP are the reserved markers of the ecosystem. The markers checked by
+        // projectMarker() are project notation, such as a slur or a syllable continuation, and
+        // have no meaning in any language.
         static bool reserved(const Note &note) {
             return note.lyric == "SP" || note.lyric == "AP";
         }
@@ -259,7 +259,7 @@ namespace {
         wolf::test::configure(unit, {voicebankRoot(), convertedRoot()});
     }
 
-    /// Opens the fixture in \a host, or fails the test case.
+    // Opens the fixture in \a host, or fails the test case.
     void openFixture(Host &host) {
         auto opened = host.open(voicebankRoot() / "wolf-voicebank-zh");
         if (!opened) {
@@ -273,9 +273,9 @@ BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
 BOOST_AUTO_TEST_SUITE(test_LinguistSession_HostFlow)
 
-/// Checks the languages declared by the voicebank before any conversion. A host reads this
-/// declaration to determine which languages it may offer, and the declaration must be readable
-/// without loading a model.
+// Checks the languages declared by the voicebank before any conversion. A host reads this
+// declaration to determine which languages it may offer, and the declaration must be readable
+// without loading a model.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_DeclaresItsLanguages) {
     srt::SynthUnit unit;
     configure(unit);
@@ -298,8 +298,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_DeclaresItsLanguages) {
     BOOST_CHECK_EQUAL(host.creations(), 3);
 }
 
-/// Runs the complete path against the real resources in the order used by a host: pronunciation
-/// first, phonemes second, on a mixed-language line that contains project markers.
+// Runs the complete path against the real resources in the order used by a host: pronunciation
+// first, phonemes second, on a mixed-language line that contains project markers.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_ConvertsALineInTwoStages) {
     srt::SynthUnit unit;
     configure(unit);
@@ -353,8 +353,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_ConvertsALineInTwoStages) {
     BOOST_CHECK_EQUAL(notes[3].phonemes.size(), notes[3].onsets.size());
 }
 
-/// Checks the reason for separating the two stages: between the stages the user may rewrite a
-/// reading, and the phoneme layer must follow the edited reading rather than the dictionary.
+// Checks the reason for separating the two stages: between the stages the user may rewrite a
+// reading, and the phoneme layer must follow the edited reading rather than the dictionary.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_FollowsAnEditedPronunciation) {
     srt::SynthUnit unit;
     configure(unit);
@@ -379,10 +379,10 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_FollowsAnEditedPronunciation)
     BOOST_CHECK_EQUAL(notes[0].phonemes[1], "ang");
 }
 
-/// Checks that every syllable produced by the G2P of the language is present in the dictionary of
-/// the voicebank; otherwise an ordinary word converts to a reading and then to no phonemes. The
-/// sample covers the retroflex initials, the compound finals and the ü finals, which are the
-/// syllables most prone to split-rule errors.
+// Checks that every syllable produced by the G2P of the language is present in the dictionary of
+// the voicebank; otherwise an ordinary word converts to a reading and then to no phonemes. The
+// sample covers the retroflex initials, the compound finals and the ü finals, which are the
+// syllables most prone to split-rule errors.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_CoversTheSyllablesTheG2pProduces) {
     srt::SynthUnit unit;
     configure(unit);
@@ -417,9 +417,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_CoversTheSyllablesTheG2pProdu
     }
 }
 
-/// A word with trailing syllable markers is an ordinary word with project notation. The markers
-/// are removed before the word is sent, so the word still converts, whereas a note that consists
-/// only of markers is never sent to a language.
+// A word with trailing syllable markers is an ordinary word with project notation. The markers
+// are removed before the word is sent, so the word still converts, whereas a note that consists
+// only of markers is never sent to a language.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_StripsProjectNotationFromOrdinaryWords) {
     srt::SynthUnit unit;
     configure(unit);
@@ -440,15 +440,15 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_StripsProjectNotationFromOrdi
     BOOST_CHECK(notes[1].phonemes.empty());
 }
 
-/// Converts the same line with the same resources through the session layer instead of the
-/// hand-written host.
-///
-/// This test demonstrates the purpose of the session layer: all work of the Host class above that
-/// is not a project decision is absent. The test has no readiness cache, no failure cache, no
-/// executive pool and no separate handling of SP, and the results are identical.
-///
-/// The remaining responsibilities belong to a host: the slur and the syllable markers, which are
-/// part of the lite project model and have no meaning in any language.
+// Converts the same line with the same resources through the session layer instead of the
+// hand-written host.
+//
+// This test demonstrates the purpose of the session layer: all work of the Host class above that
+// is not a project decision is absent. The test has no readiness cache, no failure cache, no
+// executive pool and no separate handling of SP, and the results are identical.
+//
+// The remaining responsibilities belong to a host: the slur and the syllable markers, which are
+// part of the lite project model and have no meaning in any language.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession) {
     srt::SynthUnit unit;
     configure(unit);

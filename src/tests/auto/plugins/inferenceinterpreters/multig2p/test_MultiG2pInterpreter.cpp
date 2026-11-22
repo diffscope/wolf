@@ -33,8 +33,8 @@ namespace OnnxApi = ds::Api::Onnx;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class MultiG2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -53,13 +53,13 @@ namespace {
     STDC_EXPORT_STATIC_PLUGIN(MultiG2pPlugin, srt::InferenceInterpreterPlugin::IID,
                               wolf::test::readPluginManifest(WOLF_TEST_PLUGIN_MANIFEST))
 
-    /// The directory of the converted packages. The shared backend contains 14 MiB of models and
-    /// is therefore never committed; every test in this file requires it.
+    // The directory of the converted packages. The shared backend contains 14 MiB of models and
+    // is therefore never committed; every test in this file requires it.
     using wolf::test::convertedRoot;
 
-    /// Every test in this file requires the shared model backend package, the ONNX driver plugin
-    /// and an ONNX Runtime to pass to the driver. If any of them is missing, the run is reported to
-    /// ctest as a skip.
+    // Every test in this file requires the shared model backend package, the ONNX driver plugin
+    // and an ONNX Runtime to pass to the driver. If any of them is missing, the run is reported to
+    // ctest as a skip.
     struct DataOrSkip {
         DataOrSkip() {
             if (!fs::is_directory(convertedRoot() / "wolf-g2p-multi")) {
@@ -78,12 +78,12 @@ namespace {
         wolf::test::configure(unit, {wolf::test::fixtureRoot(), convertedRoot()});
     }
 
-    /// Performs the host setup: finds the ONNX driver, initializes it with the runtime in
-    /// \a runtimeDir, and registers it as the backend shared by the whole unit. A module never
-    /// loads its own driver.
-    ///
-    /// \return \c true if the driver was registered; \c false if the driver plugin is missing or
-    ///         the driver could not be created or initialized.
+    // Performs the host setup: finds the ONNX driver, initializes it with the runtime in
+    // \a runtimeDir, and registers it as the backend shared by the whole unit. A module never
+    // loads its own driver.
+    //
+    // \return \c true if the driver was registered; \c false if the driver plugin is missing or
+    //         the driver could not be created or initialized.
     bool registerDriver(ds::InferenceDriverFactory &factory, srt::SynthUnit &unit,
                         const fs::path &runtimeDir = fs::path(WOLF_TEST_ONNXRUNTIME_DIR)) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
@@ -112,13 +112,13 @@ namespace {
         return true;
     }
 
-    /// Deploys ONNX Runtime as an editor does, into a directory chosen by the application and
-    /// unrelated to both the package location and the driver plugin location, and returns that
-    /// directory.
-    ///
-    /// Symbolic links are copied as symbolic links because the payload consists of them:
-    /// libonnxruntime.so points to .so.1, which points to the real file, and dereferencing the
-    /// links would deploy three copies.
+    // Deploys ONNX Runtime as an editor does, into a directory chosen by the application and
+    // unrelated to both the package location and the driver plugin location, and returns that
+    // directory.
+    //
+    // Symbolic links are copied as symbolic links because the payload consists of them:
+    // libonnxruntime.so points to .so.1, which points to the real file, and dereferencing the
+    // links would deploy three copies.
     fs::path deployRuntimeLikeAHost() {
         const auto staged = fs::temp_directory_path() / "wolf-host-deployed-ort";
         std::error_code ec;
@@ -168,41 +168,41 @@ namespace {
         return (*result)->words;
     }
 
-    /// The directory name of the shared backend under the converted root, and the two declarations
-    /// of the model fixture that reach it.
+    // The directory name of the shared backend under the converted root, and the two declarations
+    // of the model fixture that reach it.
     constexpr char BACKEND[] = "wolf-g2p-multi";
     constexpr char CHAIN[] = "chain";
     constexpr char STRICT[] = "strict";
 
-    /// The language pair that the model-step cases bind. The bundle of the shared backend maps
-    /// eng/arpabet and deu/ds, so this pair reaches the branch in which the backend of a model step
-    /// cannot be built. Every pair that a fixture declares is mapped, which is why these cases
-    /// choose a pair of their own instead of reusing one.
+    // The language pair that the model-step cases bind. The bundle of the shared backend maps
+    // eng/arpabet and deu/ds, so this pair reaches the branch in which the backend of a model step
+    // cannot be built. Every pair that a fixture declares is mapped, which is why these cases
+    // choose a pair of their own instead of reusing one.
     constexpr char UNMAPPED_LANGUAGE[] = "eng";
     constexpr char UNMAPPED_SCHEME[] = "unmapped";
 
-    /// One chain executive and the loaded package that owns its declaration.
-    ///
-    /// The handle is held rather than dropped: the executive refers to the declaration of that
-    /// package, and the last handle is what keeps the package alive. The member order destroys the
-    /// executive first.
+    // One chain executive and the loaded package that owns its declaration.
+    //
+    // The handle is held rather than dropped: the executive refers to the declaration of that
+    // package, and the last handle is what keeps the package alive. The member order destroys the
+    // executive first.
     struct BoundChain {
         srt::PackageHandle package;
         std::unique_ptr<srt::InferenceExecutive> executive;
 
-        /// Returns the contract type of the executive, which is what start() and state() need.
+        // Returns the contract type of the executive, which is what start() and state() need.
         G2pApi::Executive *get() const {
             return static_cast<G2pApi::Executive *>(executive.get());
         }
     };
 
-    /// Binds the inference contribution \a id of the package at \a directory to \a language and
-    /// \a scheme, and returns the executive together with its package.
-    ///
-    /// The cases below need a binding that the shared backend does not serve, and the route through
-    /// the singer cannot produce one: a linguist passes its own pair down, and every pair of the
-    /// fixtures is mapped by the bundle. Binding the contribution directly is what a host does, and
-    /// the max-length case binds the backend the same way.
+    // Binds the inference contribution \a id of the package at \a directory to \a language and
+    // \a scheme, and returns the executive together with its package.
+    //
+    // The cases below need a binding that the shared backend does not serve, and the route through
+    // the singer cannot produce one: a linguist passes its own pair down, and every pair of the
+    // fixtures is mapped by the bundle. Binding the contribution directly is what a host does, and
+    // the max-length case binds the backend the same way.
     BoundChain bindChain(srt::SynthUnit &unit, const fs::path &directory, const char *id,
                          const std::string &language, const std::string &scheme) {
         auto handle = unit.openPackage(directory, srt::SynthUnit::Load);
@@ -224,11 +224,11 @@ namespace {
         return BoundChain{handle.take(), executive.take()};
     }
 
-    /// Checks that \a error is the refusal of a model step whose backend could not be built: the
-    /// chain names the step, and the cause names the pair that no language map covers.
-    ///
-    /// Both halves are checked together, because the pair alone could also appear in a per-word
-    /// result if the failure of the backend were still written into the words of the batch.
+    // Checks that \a error is the refusal of a model step whose backend could not be built: the
+    // chain names the step, and the cause names the pair that no language map covers.
+    //
+    // Both halves are checked together, because the pair alone could also appear in a per-word
+    // result if the failure of the backend were still written into the words of the batch.
     void checkRefused(const srt::Error &error) {
         const auto message = error.toString();
         BOOST_CHECK_MESSAGE(message.find(R"(model step "backend" could not be built)") !=
@@ -239,17 +239,17 @@ namespace {
         BOOST_CHECK_MESSAGE(message.find(cause) != std::string::npos, message);
     }
 
-    /// Writes a package whose chain classifies the words, looks them up in a dictionary and then
-    /// reaches the shared backend through a model step, and returns its directory.
-    ///
-    /// The declaration is written rather than taken from a fixture, because no fixture holds a
-    /// dictionary step before a model step, and the cases that use this one vary exactly what that
-    /// dictionary leaves for the model. Its exports are those of the English fixture, while the
-    /// cases bind the pair that no bundle serves: as with the fixture chains, the pair that a
-    /// language asks its backend for is the subject, not the pair the declaration advertises.
-    ///
-    /// \a name selects the temporary directory, so that the cases of this file run in any order and
-    /// repeat without a previous run interfering.
+    // Writes a package whose chain classifies the words, looks them up in a dictionary and then
+    // reaches the shared backend through a model step, and returns its directory.
+    //
+    // The declaration is written rather than taken from a fixture, because no fixture holds a
+    // dictionary step before a model step, and the cases that use this one vary exactly what that
+    // dictionary leaves for the model. Its exports are those of the English fixture, while the
+    // cases bind the pair that no bundle serves: as with the fixture chains, the pair that a
+    // language asks its backend for is the subject, not the pair the declaration advertises.
+    //
+    // \a name selects the temporary directory, so that the cases of this file run in any order and
+    // repeat without a previous run interfering.
     fs::path writeDictChain(const std::string &name) {
         const auto root = fs::temp_directory_path() / ("wolf-chain-dict-" + name);
         std::error_code error;
@@ -304,20 +304,20 @@ namespace {
         return root;
     }
 
-    /// Returns the directory of a private copy of the converted backend package, so that a case can
-    /// remove one of the files that its bundle names without touching the generated tree that other
-    /// tests share.
-    ///
-    /// A copy is required rather than a reference: the models are opened relative to the directory
-    /// of the declaration, so a bundle alone would still name the models of the original package.
-    ///
-    /// The copy is made entry by entry rather than with one recursive copy, whose behavior on an
-    /// existing destination directory differs between implementations. A link is refused instead of
-    /// copied, because copying only the link or only an empty directory of that name would produce
-    /// a package that is not the one the case means to test.
-    ///
-    /// \a name selects the temporary directory, so that the cases of this file run in any order and
-    /// repeat without a previous run interfering.
+    // Returns the directory of a private copy of the converted backend package, so that a case can
+    // remove one of the files that its bundle names without touching the generated tree that other
+    // tests share.
+    //
+    // A copy is required rather than a reference: the models are opened relative to the directory
+    // of the declaration, so a bundle alone would still name the models of the original package.
+    //
+    // The copy is made entry by entry rather than with one recursive copy, whose behavior on an
+    // existing destination directory differs between implementations. A link is refused instead of
+    // copied, because copying only the link or only an empty directory of that name would produce
+    // a package that is not the one the case means to test.
+    //
+    // \a name selects the temporary directory, so that the cases of this file run in any order and
+    // repeat without a previous run interfering.
     fs::path copiedBackend(const std::string &name) {
         const auto source = convertedRoot() / BACKEND;
         const auto root = fs::temp_directory_path() / ("wolf-multig2p-verify-" + name);
@@ -345,10 +345,10 @@ namespace {
         return root;
     }
 
-    /// Removes the temporary tree of a case that reached its end, so that a passing run leaves no
-    /// copy of the models behind. The tree is not the evidence of a failure: every check of a case
-    /// carries the readings it compares, and a case that aborts before its end keeps its tree at
-    /// the path that its helper derived from the name of the case.
+    // Removes the temporary tree of a case that reached its end, so that a passing run leaves no
+    // copy of the models behind. The tree is not the evidence of a failure: every check of a case
+    // carries the readings it compares, and a case that aborts before its end keeps its tree at
+    // the path that its helper derived from the name of the case.
     void discard(const fs::path &root) {
         std::error_code error;
         fs::remove_all(root, error);
@@ -364,9 +364,9 @@ BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
 BOOST_AUTO_TEST_SUITE(test_MultiG2pInterpreter)
 
-/// Runs the shipped model end to end: a singer selects a language, the chain of that language
-/// reaches the shared backend through an import, and the backend runs three ONNX models on a real
-/// word.
+// Runs the shipped model end to end: a singer selects a language, the chain of that language
+// reaches the shared backend through an import, and the backend runs three ONNX models on a real
+// word.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_ConvertsThroughTheSharedModel) {
     // Declared before the unit because the factory holds the plugin code, and every driver created
     // from the factory must be destroyed first.
@@ -399,9 +399,9 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_ConvertsThroughTheSharedModel) {
     BOOST_CHECK_EQUAL(punctuation[0].pronunciation, ",");
 }
 
-/// Serves several languages from one bundle in one process. The language ID derives from the
-/// declaration order in the bundle, so an incorrect mapping would appear as the wrong phoneme set
-/// rather than as an error.
+// Serves several languages from one bundle in one process. The language ID derives from the
+// declaration order in the bundle, so an incorrect mapping would appear as the wrong phoneme set
+// rather than as an error.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_ServesSeveralLanguages) {
     ds::InferenceDriverFactory factory;
     srt::SynthUnit unit;
@@ -425,8 +425,8 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_ServesSeveralLanguages) {
                             ", which indicates that the language ID did not reach the model");
 }
 
-/// Without a driver, the package still loads and the chain still runs. The backend reports the
-/// missing driver per word, which allows the fallback of the chain to take over.
+// Without a driver, the package still loads and the chain still runs. The backend reports the
+// missing driver per word, which allows the fallback of the chain to take over.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_DegradesWithoutADriver) {
     srt::SynthUnit unit;
     configure(unit);
@@ -446,10 +446,10 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_DegradesWithoutADriver) {
     BOOST_CHECK(bare[0].pronunciation.empty());
 }
 
-/// Checks the input ordering that the other two variants also guarantee. This variant must
-/// preserve the ordering under batching: the backend decodes the convertible words as one request,
-/// so a word already decided by a rule must be removed from the batch and its result placed back
-/// in the correct slot.
+// Checks the input ordering that the other two variants also guarantee. This variant must
+// preserve the ordering under batching: the backend decodes the convertible words as one request,
+// so a word already decided by a rule must be removed from the batch and its result placed back
+// in the correct slot.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_HonoursTheInputOrdering) {
     ds::InferenceDriverFactory factory;
     srt::SynthUnit unit;
@@ -475,15 +475,15 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_HonoursTheInputOrdering) {
     BOOST_CHECK(words[3].pronunciation != words[0].pronunciation);
 }
 
-/// Reproduces the deployment performed by an editor, which no other case in this file covers.
-///
-/// synthrt does not deploy its own ONNX Runtime: the driver loads the directory specified by the
-/// host in DriverInitArgs::runtimePath, and the application chooses that directory. An editor
-/// stages the payload into its own tree, which is neither the source vcpkg package nor the driver
-/// plugin directory, and then passes that location to the driver. This case runs the whole chain
-/// in that configuration and verifies that the driver loaded the runtime from the staged
-/// directory, so that an accidental dependency on either of the other two locations fails rather
-/// than passes by coincidence.
+// Reproduces the deployment performed by an editor, which no other case in this file covers.
+//
+// synthrt does not deploy its own ONNX Runtime: the driver loads the directory specified by the
+// host in DriverInitArgs::runtimePath, and the application chooses that directory. An editor
+// stages the payload into its own tree, which is neither the source vcpkg package nor the driver
+// plugin directory, and then passes that location to the driver. This case runs the whole chain
+// in that configuration and verifies that the driver loaded the runtime from the staged
+// directory, so that an accidental dependency on either of the other two locations fails rather
+// than passes by coincidence.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RunsOnARuntimeTheHostDeployed) {
 
     const auto staged = deployRuntimeLikeAHost();
@@ -517,13 +517,13 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RunsOnARuntimeTheHostDeployed) {
     fs::remove_all(staged, ec);
 }
 
-/// A chain with a fallback step must not hide a model step whose backend cannot be built: the batch
-/// fails as a whole, and the caller receives no result at all.
-///
-/// Before this rule the step wrote a per-word failure into the words it could not convert, and the
-/// fallback step below it rewrote those failures into successes: the conversion reported the text
-/// of every word as a pronunciation, so a check on the pronunciation passed while the model had
-/// never run. The call itself must therefore be refused.
+// A chain with a fallback step must not hide a model step whose backend cannot be built: the batch
+// fails as a whole, and the caller receives no result at all.
+//
+// Before this rule the step wrote a per-word failure into the words it could not convert, and the
+// fallback step below it rewrote those failures into successes: the conversion reported the text
+// of every word as a pronunciation, so a check on the pronunciation passed while the model had
+// never run. The call itself must therefore be refused.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchWhenTheBackendCannotBeBuilt) {
     srt::SynthUnit unit;
     configure(unit);
@@ -542,11 +542,11 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchWhenTheBackendCannotB
     BOOST_CHECK(chain.get()->state() == srt::ITask::Failed);
 }
 
-/// The same refusal reaches a chain without a fallback step as an error of the batch rather than as
-/// an error of the words: the words that the backend never saw are not returned at all.
-///
-/// The German fixture chain holds a model step and no fallback step, so before this rule the batch
-/// reported success with every word carrying ModelInferenceFailed and no pronunciation.
+// The same refusal reaches a chain without a fallback step as an error of the batch rather than as
+// an error of the words: the words that the backend never saw are not returned at all.
+//
+// The German fixture chain holds a model step and no fallback step, so before this rule the batch
+// reported success with every word carrying ModelInferenceFailed and no pronunciation.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RefusesTheBatchWithoutAFallbackToo) {
     srt::SynthUnit unit;
     configure(unit);
@@ -563,12 +563,12 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RefusesTheBatchWithoutAFallbackToo
     BOOST_CHECK(chain.get()->state() == srt::ITask::Failed);
 }
 
-/// A batch whose words the input ordering already settled leaves the model step nothing to convert,
-/// so a backend that cannot be built is no failure at all: the task succeeds and every word keeps
-/// the verdict of the ordering.
-///
-/// This case uses the chain and the pair of the first case above; only the words differ, which
-/// isolates the work of the step from the state of its backend.
+// A batch whose words the input ordering already settled leaves the model step nothing to convert,
+// so a backend that cannot be built is no failure at all: the task succeeds and every word keeps
+// the verdict of the ordering.
+//
+// This case uses the chain and the pair of the first case above; only the words differ, which
+// isolates the work of the step from the state of its backend.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenNoWordNeedsTheBackend) {
     srt::SynthUnit unit;
     configure(unit);
@@ -595,12 +595,12 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenNoWordNeedsTheBackend)
     BOOST_CHECK_EQUAL((*result)->words[2].pronunciation, "two words");
 }
 
-/// A dictionary step that covered every word leaves the model step no work, so the step reports no
-/// failure and the words keep the reading the dictionary gave them.
-///
-/// This case pins one side of the boundary: the step asks for its backend before it looks at its
-/// words, so the decision to report a failure must be taken from the words and not from the
-/// backend.
+// A dictionary step that covered every word leaves the model step no work, so the step reports no
+// failure and the words keep the reading the dictionary gave them.
+//
+// This case pins one side of the boundary: the step asks for its backend before it looks at its
+// words, so the decision to report a failure must be taken from the words and not from the
+// backend.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenTheDictionaryCoveredEveryWord) {
     const auto root = writeDictChain("covered");
     srt::SynthUnit unit;
@@ -621,13 +621,13 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenTheDictionaryCoveredEv
     discard(root);
 }
 
-/// One word that the dictionary missed is enough to refuse the whole batch: the model step has work
-/// to do, its backend cannot be built, and the caller receives no result at all, not even the
-/// dictionary reading of the word that was covered.
-///
-/// This case pins the other side of the boundary of the case above. Before this rule the batch
-/// succeeded with "a" read by the dictionary and "b" filled in by the fallback, so no single word
-/// of the result would have distinguished the two behaviors.
+// One word that the dictionary missed is enough to refuse the whole batch: the model step has work
+// to do, its backend cannot be built, and the caller receives no result at all, not even the
+// dictionary reading of the word that was covered.
+//
+// This case pins the other side of the boundary of the case above. Before this rule the batch
+// succeeded with "a" read by the dictionary and "b" filled in by the fallback, so no single word
+// of the result would have distinguished the two behaviors.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchForOneWordTheDictionaryMissed) {
     const auto root = writeDictChain("missed");
     srt::SynthUnit unit;
@@ -646,12 +646,12 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_FailsTheBatchForOneWordTheDictiona
     discard(root);
 }
 
-/// A bundle whose models are missing is refused when the package is loaded, rather than accepted
-/// and then failing word by word for every language that the bundle serves.
-///
-/// The check reads the files that the bundle names and creates no session, so it holds in a process
-/// without a driver. Every model of the bundle is walked, because the refusal has to name the model
-/// that is missing: what a user restores is that file, not a set of them.
+// A bundle whose models are missing is refused when the package is loaded, rather than accepted
+// and then failing word by word for every language that the bundle serves.
+//
+// The check reads the files that the bundle names and creates no session, so it holds in a process
+// without a driver. Every model of the bundle is walked, because the refusal has to name the model
+// that is missing: what a user restores is that file, not a set of them.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RejectsAPackageWhoseModelIsMissing) {
     const auto root = copiedBackend("model-missing");
     const auto directory = root / "inferences" / "multig2p";

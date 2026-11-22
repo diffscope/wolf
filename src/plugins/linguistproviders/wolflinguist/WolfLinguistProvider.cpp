@@ -75,10 +75,10 @@ namespace wolf {
             return spec.locator().category() == LINGUIST_CATEGORY;
         }
 
-        /// Returns whether an import is bound to a linguist of the contract that this provider
-        /// serves. The extension reads the exports of the target as linguist exports without a
-        /// further check, so this function compares the whole contract triple and not only the
-        /// category.
+        // Returns whether an import is bound to a linguist of the contract that this provider
+        // serves. The extension reads the exports of the target as linguist exports without a
+        // further check, so this function compares the whole contract triple and not only the
+        // category.
         bool isLinguistTarget(const srt::ContribImport &item) {
             if (!item.binding()) {
                 return false;
@@ -88,15 +88,15 @@ namespace wolf {
                    target.triplet() == LinguistApi::Wolf::Triplet;
         }
 
-        /// Validates one entry of the language map of a singer against the contribution that the
-        /// entry names.
-        ///
-        /// The shape of the map key is not checked here. The key must equal the \c language of the
-        /// target, which the linguist category has already validated, so a malformed key cannot
-        /// match, and a separate rule could only conflict with this one.
-        ///
-        /// \return Success if the entry is valid; otherwise an error that describes the first
-        /// violation.
+        // Validates one entry of the language map of a singer against the contribution that the
+        // entry names.
+        //
+        // The shape of the map key is not checked here. The key must equal the \c language of the
+        // target, which the linguist category has already validated, so a malformed key cannot
+        // match, and a separate rule could only conflict with this one.
+        //
+        // \return Success if the entry is valid; otherwise an error that describes the first
+        // violation.
         srt::Expected<void> validateSingerLanguage(const srt::ContribSpec &singer,
                                                    const SingerLanguage &entry) {
             const auto import = singer.findImport(entry.role);
@@ -127,21 +127,21 @@ namespace wolf {
             return {};
         }
 
-        /// Checks that the language/scheme pair of a linguist is among the pairs that its chain
-        /// member declares.
-        ///
-        /// The two declarations are duals: a G2P module declares the pairs that it produces, an
-        /// S2P module declares the pairs that it consumes, and both use the same key. A module that
-        /// declares no pairs skips the static check rather than failing, because an empty list is
-        /// the only accurate declaration for variants with an open or script-defined output set.
-        /// The host issues a warning in that case instead.
-        ///
-        /// The downcast is a static cast. A debug build with RTTI asserts the dynamic type, and the
-        /// provider ABI contract requires the concrete type to match the triple that the loader has
-        /// already compared.
-        ///
-        /// \return Success if the target declares \a pair or declares no pairs. An InvalidFormat
-        /// error if the target has no interpreted exports or does not declare \a pair.
+        // Checks that the language/scheme pair of a linguist is among the pairs that its chain
+        // member declares.
+        //
+        // The two declarations are duals: a G2P module declares the pairs that it produces, an
+        // S2P module declares the pairs that it consumes, and both use the same key. A module that
+        // declares no pairs skips the static check rather than failing, because an empty list is
+        // the only accurate declaration for variants with an open or script-defined output set.
+        // The host issues a warning in that case instead.
+        //
+        // The downcast is a static cast. A debug build with RTTI asserts the dynamic type, and the
+        // provider ABI contract requires the concrete type to match the triple that the loader has
+        // already compared.
+        //
+        // \return Success if the target declares \a pair or declares no pairs. An InvalidFormat
+        // error if the target has no interpreted exports or does not declare \a pair.
         template <class Exports>
         srt::Expected<void> validateLanguageMatch(const srt::ContribSpec &target,
                                                   const Api::Common::L1::LanguageScheme &pair,
@@ -376,13 +376,13 @@ namespace wolf {
             std::vector<std::string> m_handles;
             std::map<std::string, Api::Common::L1::LanguageScheme> m_bindings;
             std::map<std::string, LinguistApi::Depth> m_depths;
-            /// Whether the pronunciation layer of a language is a layer of its own. See
-            /// hasSeparatePronunciationLayer().
+            // Whether the pronunciation layer of a language is a layer of its own. See
+            // hasSeparatePronunciationLayer().
             std::map<std::string, bool> m_layers;
-            /// Non-owning pointers into the linguist specs, which may belong to other packages. The
-            /// package of the singer keeps its resolved dependencies loaded, and this extension is
-            /// owned by the spec of the singer, so every referenced object outlives this
-            /// extension.
+            // Non-owning pointers into the linguist specs, which may belong to other packages. The
+            // package of the singer keeps its resolved dependencies loaded, and this extension is
+            // owned by the spec of the singer, so every referenced object outlives this
+            // extension.
             std::map<std::string, const LinguistApi::Exports *> m_exports;
         };
 

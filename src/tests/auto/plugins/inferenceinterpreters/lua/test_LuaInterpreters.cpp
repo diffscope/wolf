@@ -27,8 +27,8 @@ namespace OnsetApi = wolf::Api::Onset::L1;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreters
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreters
+    // that this test links.
     class LuaPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -52,8 +52,8 @@ namespace {
     STDC_EXPORT_STATIC_PLUGIN(LuaPlugin, srt::InferenceInterpreterPlugin::IID,
                               wolf::test::readPluginManifest(WOLF_TEST_PLUGIN_MANIFEST))
 
-    /// Writes a single-module package around \a script and returns its directory, so that the
-    /// variant is exercised through the loader rather than through the sandbox directly.
+    // Writes a single-module package around \a script and returns its directory, so that the
+    // variant is exercised through the loader rather than through the sandbox directly.
     fs::path writePackage(const std::string &name, const std::string &contract,
                           const std::string &script) {
         const auto root = fs::temp_directory_path() / ("wolf-lua-" + name);
@@ -118,7 +118,7 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_LuaInterpreters)
 
-/// Checks that the S2P script converts a pronunciation into a list of phonemes.
+// Checks that the S2P script converts a pronunciation into a list of phonemes.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_ScriptedS2p) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("s2p", "S2P", R"(
@@ -139,7 +139,7 @@ end
     BOOST_CHECK_EQUAL(phonemes[1], "ong");
 }
 
-/// Checks that the Onset script marks positions and returns one flag per input phoneme.
+// Checks that the Onset script marks positions and returns one flag per input phoneme.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_ScriptedOnset) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("onset", "Onset", R"(
@@ -162,8 +162,8 @@ end
     BOOST_CHECK(onsets[2]);
 }
 
-/// LuaJIT implements Lua 5.1, which has no utf8 library, so the sandbox supplies the library.
-/// Without it, a script could not iterate over non-ASCII input.
+// LuaJIT implements Lua 5.1, which has no utf8 library, so the sandbox supplies the library.
+// Without it, a script could not iterate over non-ASCII input.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_SuppliesUtf8) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("utf8", "S2P", R"(
@@ -188,10 +188,10 @@ end
     BOOST_CHECK_EQUAL(phonemes[3], "3");
 }
 
-/// The iterator of the utf8 library stands in for the standard one, so a position the script hands
-/// it must be handled the way the standard library handles it: a position at or before the start
-/// restarts the iteration, and a position past the text ends it. Such a position used to reach the
-/// decoder unchecked, where a negative one became a huge offset.
+// The iterator of the utf8 library stands in for the standard one, so a position the script hands
+// it must be handled the way the standard library handles it: a position at or before the start
+// restarts the iteration, and a position past the text ends it. Such a position used to reach the
+// decoder unchecked, where a negative one became a huge offset.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_ClampsTheUtf8IteratorPosition) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("utf8-position", "S2P", R"(
@@ -218,8 +218,8 @@ end
     BOOST_CHECK_EQUAL(phonemes[2], "0");
 }
 
-/// A language package is data. The sandbox removes every facility for accessing resources outside
-/// the process, so none of those globals is visible to a script.
+// A language package is data. The sandbox removes every facility for accessing resources outside
+// the process, so none of those globals is visible to a script.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_RemovesTheWayOut) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("sandbox", "S2P", R"(
@@ -245,8 +245,8 @@ end
     BOOST_CHECK_MESSAGE(reachable.empty(), "still reachable: " + leaked);
 }
 
-/// A script that does not compile, or that does not define the function required by the contract,
-/// fails the package load rather than the first conversion that uses the script.
+// A script that does not compile, or that does not define the function required by the contract,
+// fails the package load rather than the first conversion that uses the script.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_RejectsBrokenScripts) {
     {
         srt::SynthUnit unit;
@@ -269,8 +269,8 @@ BOOST_AUTO_TEST_CASE(test_LuaInterpreters_RejectsBrokenScripts) {
     }
 }
 
-/// A script result of the wrong shape is a failure and is not corrected silently, because an onset
-/// table shorter than its input would leave the tail unmarked.
+// A script result of the wrong shape is a failure and is not corrected silently, because an onset
+// table shorter than its input would leave the tail unmarked.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_RejectsWrongShapedResults) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("shape", "Onset", R"(
@@ -294,10 +294,10 @@ end
     executive->reset();
 }
 
-/// A script can loop within a single word, so a word boundary is not a reliable cancellation
-/// point. The interpreter checks for cancellation between instruction batches, which prevents a
-/// defective package from blocking a host indefinitely. Without this check, the test would hang
-/// rather than fail.
+// A script can loop within a single word, so a word boundary is not a reliable cancellation
+// point. The interpreter checks for cancellation between instruction batches, which prevents a
+// defective package from blocking a host indefinitely. Without this check, the test would hang
+// rather than fail.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_StopsARunawayScript) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("runaway", "S2P", R"(
@@ -338,8 +338,8 @@ end
     executive->reset();
 }
 
-/// A stopped conversion retains its completed results. The first word converts, the second word
-/// never returns, and the batch contains one entry rather than none or an incorrect entry.
+// A stopped conversion retains its completed results. The first word converts, the second word
+// never returns, and the batch contains one entry rather than none or an incorrect entry.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_KeepsWhatItFinished) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("partial", "S2P", R"(
@@ -383,7 +383,7 @@ end
     executive->reset();
 }
 
-/// A stop with no conversion running is a no-op. It must not poison the next conversion.
+// A stop with no conversion running is a no-op. It must not poison the next conversion.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_AStopWithNothingRunningIsIgnored) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("carry", "S2P", R"(

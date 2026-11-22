@@ -16,11 +16,11 @@ namespace wolf {
 
     namespace {
 
-        /// Writes the language binding into runtime options that have a binding field.
-        ///
-        /// Overloads are used instead of a compile-time probe because whether a contract is
-        /// language-bound is a property of the contract and is stated explicitly here. The Onset
-        /// contract is not language-bound, so its runtime options have no binding field.
+        // Writes the language binding into runtime options that have a binding field.
+        //
+        // Overloads are used instead of a compile-time probe because whether a contract is
+        // language-bound is a property of the contract and is stated explicitly here. The Onset
+        // contract is not language-bound, so its runtime options have no binding field.
         void bind(G2pApi::RuntimeOptions &options, const Api::Common::L1::LanguageScheme &binding) {
             options.binding = binding;
         }
@@ -40,18 +40,18 @@ namespace wolf {
 
     namespace {
 
-        /// Rejects a stage result whose entry count differs from the input count.
-        ///
-        /// Such a stage violates its contract, and every later entry would be assigned to the
-        /// wrong word. The result is rejected rather than truncated. Truncation left the words
-        /// after the cut with an empty pronunciation and no error, which is indistinguishable from
-        /// a conversion to an empty result, and those words were then passed to the later stages.
-        /// The chain variant rejects a short batch from its backend and the session rejects a
-        /// short batch from this executive; this check applies the same rule at the third point at
-        /// which the mismatch can occur. A stop request is the only exception: a canceled stage
-        /// returns the entries it completed, and the caller expects a partial result in that case.
-        ///
-        /// \return Success if \a produced equals \a requested; otherwise an InvalidFormat error.
+        // Rejects a stage result whose entry count differs from the input count.
+        //
+        // Such a stage violates its contract, and every later entry would be assigned to the
+        // wrong word. The result is rejected rather than truncated. Truncation left the words
+        // after the cut with an empty pronunciation and no error, which is indistinguishable from
+        // a conversion to an empty result, and those words were then passed to the later stages.
+        // The chain variant rejects a short batch from its backend and the session rejects a
+        // short batch from this executive; this check applies the same rule at the third point at
+        // which the mismatch can occur. A stop request is the only exception: a canceled stage
+        // returns the entries it completed, and the caller expects a partial result in that case.
+        //
+        // \return Success if \a produced equals \a requested; otherwise an InvalidFormat error.
         srt::Expected<void> checkBatchSize(std::size_t produced, std::size_t requested,
                                            const char *stage) {
             if (produced == requested) {

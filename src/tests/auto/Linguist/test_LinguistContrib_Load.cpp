@@ -22,12 +22,12 @@ namespace fs = std::filesystem;
 
 namespace {
 
-    /// Sets the plugin search paths of \a unit for both plugin categories.
-    ///
-    /// The linguist category belongs to wolf and the inference category to synthrt, so the two
-    /// categories have separate search paths even though both plugins are built in this repository.
-    /// A search path contains one subdirectory per plugin; these paths are therefore the parent
-    /// directories of the plugin directories.
+    // Sets the plugin search paths of \a unit for both plugin categories.
+    //
+    // The linguist category belongs to wolf and the inference category to synthrt, so the two
+    // categories have separate search paths even though both plugins are built in this repository.
+    // A search path contains one subdirectory per plugin; these paths are therefore the parent
+    // directories of the plugin directories.
     void configurePlugins(srt::SynthUnit &unit) {
         std::vector<fs::path> linguist = {fs::path(WOLF_TEST_LINGUIST_PLUGIN_DIR)};
         std::vector<fs::path> inference = {fs::path(WOLF_TEST_INFERENCE_PLUGIN_DIR)};
@@ -47,9 +47,9 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_LinguistContrib_Load)
 
-/// Loading wolf/lang-zxx end to end verifies that the contract family belongs to the built-in
-/// inference category of synthrt: the loader must discover the stub plugin through the IID and the
-/// search path of that category, select all three triples, and return the results as typed exports.
+// Loading wolf/lang-zxx end to end verifies that the contract family belongs to the built-in
+// inference category of synthrt: the loader must discover the stub plugin through the IID and the
+// search path of that category, select all three triples, and return the results as typed exports.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_LoadsPassthroughPackage) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_LoadsPassthroughPackage) {
     }
 }
 
-/// The pair check prevents a chain from being assembled from members that disagree on the notation.
-/// Matching on contribution IDs, as in the earlier design, could not detect this mismatch.
+// The pair check prevents a chain from being assembled from members that disagree on the notation.
+// Matching on contribution IDs, as in the earlier design, could not detect this mismatch.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RejectsMismatchedLanguagePair) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -99,8 +99,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RejectsMismatchedLanguagePair) {
     BOOST_CHECK_MESSAGE(message.find("cmn/pinyin") != std::string::npos, message);
 }
 
-/// Declaring no pairs forgoes the static match instead of failing. Omission is the only accurate
-/// declaration for a variant whose output set is open or produced by a script.
+// Declaring no pairs forgoes the static match instead of failing. Omission is the only accurate
+// declaration for a variant whose output set is open or produced by a script.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_AcceptsOmittedLanguages) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -111,8 +111,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_AcceptsOmittedLanguages) {
     }
 }
 
-/// The flag defaults to false, so every declaration written before the flag existed retains its
-/// meaning: the phoneme list is complete.
+// The flag defaults to false, so every declaration written before the flag existed retains its
+// meaning: the phoneme list is complete.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_OpenSetDefaultsToClosed) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -129,9 +129,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_OpenSetDefaultsToClosed) {
     BOOST_CHECK(!exports->openSet);
 }
 
-/// The contract publishes a schema for exports, and the loader rejects every key that the schema
-/// rejects. A key that the contract does not define is a misspelling, and a declaration with a
-/// misspelt field states less than its author intended.
+// The contract publishes a schema for exports, and the loader rejects every key that the schema
+// rejects. A key that the contract does not define is a misspelling, and a declaration with a
+// misspelt field states less than its author intended.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAnUnknownExportsKey) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -142,8 +142,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAnUnknownExportsKey) {
     BOOST_CHECK_MESSAGE(message.find("phoneme") != std::string::npos, message);
 }
 
-/// Level 1 defines no import options, so a non-empty options object is rejected rather than
-/// ignored, because the author intended its content to take effect.
+// Level 1 defines no import options, so a non-empty options object is rejected rather than
+// ignored, because the author intended its content to take effect.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesImportOptionsTheContractDoesNotDefine) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -154,17 +154,17 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesImportOptionsTheContractDo
     BOOST_CHECK_MESSAGE(message.find("depth") != std::string::npos, message);
 }
 
-/// Checks that a consumer pinned to an older packaging revision still resolves against a newer
-/// revision.
-///
-/// This behavior is the purpose of giving every package a compatibility floor instead of setting
-/// compatVersion equal to version. With the floor at revision 0, a voicebank published against
-/// revision 2 and never rebuilt keeps working when the pipeline emits revision 3. With
-/// compatVersion equal to version, that voicebank stops resolving as soon as the packages are
-/// repackaged, and the only symptom is "no installed Package satisfies dependency".
-///
-/// The case deliberately uses contribution-free fixtures because the subject is version
-/// resolution, and the real language packages are not present in every build.
+// Checks that a consumer pinned to an older packaging revision still resolves against a newer
+// revision.
+//
+// This behavior is the purpose of giving every package a compatibility floor instead of setting
+// compatVersion equal to version. With the floor at revision 0, a voicebank published against
+// revision 2 and never rebuilt keeps working when the pipeline emits revision 3. With
+// compatVersion equal to version, that voicebank stops resolving as soon as the packages are
+// repackaged, and the only symptom is "no installed Package satisfies dependency".
+//
+// The case deliberately uses contribution-free fixtures because the subject is version
+// resolution, and the real language packages are not present in every build.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_ServesAConsumerPinnedToAnOlderRevision) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -183,8 +183,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_ServesAConsumerPinnedToAnOlderRev
     BOOST_CHECK_EQUAL(provider.front().version().toString(), "1.0.0.3");
 }
 
-/// Checks the converse case, so that the case above cannot pass because the loader ignores the
-/// requested version.
+// Checks the converse case, so that the case above cannot pass because the loader ignores the
+// requested version.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAConsumerPinnedAboveWhatIsInstalled) {
     srt::SynthUnit unit;
     configurePlugins(unit);
@@ -195,13 +195,13 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAConsumerPinnedAboveWhatIs
     BOOST_CHECK_MESSAGE(!handle, "revision 4 is not installed and must not resolve");
 }
 
-/// Checks that every test package receives the verdict recorded for it in loader-verdicts.json and
-/// that every test package is recorded there.
-///
-/// The lint self-test reads the same file and requires the lint to reject every package that the
-/// loader rejects, except the packages listed with a reason. Checking the file against the loader
-/// keeps that comparison valid, because a verdict that diverged from the loader would render the
-/// lint test meaningless.
+// Checks that every test package receives the verdict recorded for it in loader-verdicts.json and
+// that every test package is recorded there.
+//
+// The lint self-test reads the same file and requires the lint to reject every package that the
+// loader rejects, except the packages listed with a reason. Checking the file against the loader
+// keeps that comparison valid, because a verdict that diverged from the loader would render the
+// lint test meaningless.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_VerdictsMatchTheRecord) {
     // The record is tracked next to the sources rather than shipped with the generated packages.
     const auto recordPath = std::filesystem::path(WOLF_TEST_VERDICTS_FILE);

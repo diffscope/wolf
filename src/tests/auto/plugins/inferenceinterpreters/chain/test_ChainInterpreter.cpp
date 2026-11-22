@@ -28,8 +28,8 @@ namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class ChainPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -85,9 +85,9 @@ namespace {
         return (*result)->words;
     }
 
-    /// Loads a package at \a root whose only dictionary is \a dictionary, and returns the load
-    /// error text, or an empty string if the package loaded, which indicates that the format under
-    /// test was accepted.
+    // Loads a package at \a root whose only dictionary is \a dictionary, and returns the load
+    // error text, or an empty string if the package loaded, which indicates that the format under
+    // test was accepted.
     std::string dictRefusal(const fs::path &root, const std::string &dictionary) {
         fs::remove_all(root);
         fs::create_directories(root / "inferences" / "g2p");
@@ -124,14 +124,14 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_ChainInterpreter)
 
-/// A stop request reaches the backends of the chain, so a step that is inside one of them ends
-/// instead of waiting for the batch to come back. This is the property A51 measures for the stages
-/// of the linguist executive, where a table answers at once but a model or a script is the wait a
-/// caller means to interrupt.
-///
-/// The backend is the stub, whose batch holds for a configured number of milliseconds and ends that
-/// hold when it is stopped. Both packages are written into the temporary directory and no ONNX
-/// driver is involved, so the case runs wherever the stub plugin does.
+// A stop request reaches the backends of the chain, so a step that is inside one of them ends
+// instead of waiting for the batch to come back. This is the property A51 measures for the stages
+// of the linguist executive, where a table answers at once but a model or a script is the wait a
+// caller means to interrupt.
+//
+// The backend is the stub, whose batch holds for a configured number of milliseconds and ends that
+// hold when it is stopped. Both packages are written into the temporary directory and no ONNX
+// driver is involved, so the case runs wherever the stub plugin does.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ForwardsAStopToItsBackend) {
     constexpr int HOLD_MS = 1200;
 
@@ -218,9 +218,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ForwardsAStopToItsBackend) {
     fs::remove_all(root);
 }
 
-/// The chain in the fixture consists of dictionary, cleanup and dictionary steps, the structure
-/// used by the shipped English package. A word that only the second lookup can find proves that
-/// the later step reads the cleanup result and that the two lookups do not conflict on one word.
+// The chain in the fixture consists of dictionary, cleanup and dictionary steps, the structure
+// used by the shipped English package. A word that only the second lookup can find proves that
+// the later step reads the cleanup result and that the two lookups do not conflict on one word.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_LooksUpAgainAfterCleaning) {
     srt::SynthUnit unit;
     configure(unit);
@@ -234,9 +234,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_LooksUpAgainAfterCleaning) {
     BOOST_CHECK_EQUAL(words[2].pronunciation, "r iy d");
 }
 
-/// A word listed more than once in a dictionary is one word with several readings, and an entry
-/// numbered by the CMU convention for additional readings belongs to the same word rather than
-/// forming a separate key.
+// A word listed more than once in a dictionary is one word with several readings, and an entry
+// numbered by the CMU convention for additional readings belongs to the same word rather than
+// forming a separate key.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_MergesRepeatedDictionaryEntries) {
     srt::SynthUnit unit;
     configure(unit);
@@ -250,14 +250,14 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_MergesRepeatedDictionaryEntries) {
     BOOST_CHECK_EQUAL(words[0].candidates[1], "hh eh l ow");
 }
 
-/// A word for which no step produced a pronunciation is returned with an error, not as an empty
-/// success.
-///
-/// This case covers one of two routes to that result: the eng chain ends in a fallback that
-/// produces nothing (useOriginal false, empty defaultPronunciation). The other route, a chain
-/// without a fallback step, is covered by ReportsUnproducedWordsWithoutAFallback below. Both
-/// routes must report the same result, because reporting success with an empty pronunciation
-/// would violate the rule that the pronunciation of a converted word is its first candidate.
+// A word for which no step produced a pronunciation is returned with an error, not as an empty
+// success.
+//
+// This case covers one of two routes to that result: the eng chain ends in a fallback that
+// produces nothing (useOriginal false, empty defaultPronunciation). The other route, a chain
+// without a fallback step, is covered by ReportsUnproducedWordsWithoutAFallback below. Both
+// routes must report the same result, because reporting success with an empty pronunciation
+// would violate the rule that the pronunciation of a converted word is its first candidate.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ReportsWhenTheFallbackHasNothingToGive) {
     srt::SynthUnit unit;
     configure(unit);
@@ -276,9 +276,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ReportsWhenTheFallbackHasNothingToGiv
     BOOST_CHECK_EQUAL(words[1].pronunciation, "-");
 }
 
-/// A converted word carries its pronunciation as its first candidate. The dictionary step already
-/// satisfies this rule; the case pins it because the candidate list depends on the rule: a caller
-/// that offers alternatives shows the current pronunciation first.
+// A converted word carries its pronunciation as its first candidate. The dictionary step already
+// satisfies this rule; the case pins it because the candidate list depends on the rule: a caller
+// that offers alternatives shows the current pronunciation first.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_LeadsCandidatesWithThePronunciation) {
     srt::SynthUnit unit;
     configure(unit);
@@ -289,9 +289,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_LeadsCandidatesWithThePronunciation) 
     BOOST_CHECK_EQUAL(words[0].candidates.front(), words[0].pronunciation);
 }
 
-/// Covers the other route to the same result: the deu chain has no fallback step, so the words
-/// missing from its dictionaries reach the end of the chain unchanged. The corresponding case
-/// above covers the first route.
+// Covers the other route to the same result: the deu chain has no fallback step, so the words
+// missing from its dictionaries reach the end of the chain unchanged. The corresponding case
+// above covers the first route.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ReportsUnproducedWordsWithoutAFallback) {
     srt::SynthUnit unit;
     configure(unit);
@@ -310,9 +310,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ReportsUnproducedWordsWithoutAFallbac
     BOOST_CHECK(words[1].candidates.empty());
 }
 
-/// Classification must precede the steps that it governs. A verify step after a producing step
-/// would reclassify words that already have a pronunciation, and a Copy mark at that point would
-/// silently discard a dictionary hit.
+// Classification must precede the steps that it governs. A verify step after a producing step
+// would reclassify words that already have a pronunciation, and a Copy mark at that point would
+// silently discard a dictionary hit.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_RefusesClassifyingAfterProducing) {
     const auto root = fs::temp_directory_path() / "wolf-chain-lateverify";
     fs::remove_all(root);
@@ -348,9 +348,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_RefusesClassifyingAfterProducing) {
     fs::remove_all(root);
 }
 
-/// A dictionary line contains one word and one pronunciation. A second tab is a format that this
-/// generation does not define, and including it in the pronunciation would pass a tab to the
-/// phoneme splitter, producing a corrupted reading that no downstream step would report.
+// A dictionary line contains one word and one pronunciation. A second tab is a format that this
+// generation does not define, and including it in the pronunciation would pass a tab to the
+// phoneme splitter, producing a corrupted reading that no downstream step would report.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_RefusesDictionaryLinesItCannotRead) {
     const auto multi =
         dictRefusal(fs::temp_directory_path() / "wolf-chain-dict-multicol", "a\tp q\nb\tx y\tz\n");
@@ -365,14 +365,14 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_RefusesDictionaryLinesItCannotRead) {
     BOOST_CHECK_MESSAGE(missing.find("missing tab separator") != std::string::npos, missing);
 }
 
-/// A stop request to the linguist must reach the running stage. A stage receives the whole batch
-/// in one call, so a request handled only at the linguist level would wait until that call
-/// returns, and for a script or a model that wait is the one that requires interruption.
-///
-/// The language used by this case resides in a separate package because its phoneme stage is a
-/// script, and a package containing a script cannot load in a build without LuaJIT. Keeping the
-/// language in the main chain fixture caused every other case in this file to fail in such a
-/// build.
+// A stop request to the linguist must reach the running stage. A stage receives the whole batch
+// in one call, so a request handled only at the linguist level would wait until that call
+// returns, and for a script or a model that wait is the one that requires interruption.
+//
+// The language used by this case resides in a separate package because its phoneme stage is a
+// script, and a package containing a script cannot load in a build without LuaJIT. Keeping the
+// language in the main chain fixture caused every other case in this file to fail in such a
+// build.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_StopReachesTheRunningStage) {
 #ifndef WOLF_TEST_HAS_LUAJIT
     return;
@@ -434,9 +434,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_StopReachesTheRunningStage) {
 #endif
 }
 
-/// A cancel token set during a session conversion reaches the running stage without blocking any
-/// other operation: cancel() calls stop() outside its lock, and the executive being stopped is not
-/// returned to the pool until stop() has returned.
+// A cancel token set during a session conversion reaches the running stage without blocking any
+// other operation: cancel() calls stop() outside its lock, and the executive being stopped is not
+// returned to the pool until stop() has returned.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
 #ifndef WOLF_TEST_HAS_LUAJIT
     return;
@@ -483,9 +483,9 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
 #endif
 }
 
-/// The inference contract specifies an input ordering that every G2P module must follow: an empty
-/// lyric is skipped, and a lyric containing whitespace around or inside a word is invalid input.
-/// Regression: both cases must be reported as mode=skip, not as a conversion failure.
+// The inference contract specifies an input ordering that every G2P module must follow: an empty
+// lyric is skipped, and a lyric containing whitespace around or inside a word is invalid input.
+// Regression: both cases must be reported as mode=skip, not as a conversion failure.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_HonoursTheInputOrdering) {
     srt::SynthUnit unit;
     configure(unit);

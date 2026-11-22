@@ -21,8 +21,8 @@ namespace OnsetApi = wolf::Api::Onset::L1;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class OnsetPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -95,7 +95,7 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_OnsetInterpreter)
 
-/// The longer rule takes precedence, and the scan resumes after the matched segment.
+// The longer rule takes precedence, and the scan resumes after the matched segment.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_PrefersTheLongerMatch) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("typed", TYPED_RULES));
@@ -109,9 +109,9 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_PrefersTheLongerMatch) {
     BOOST_CHECK(onsets[2]); // the single-vowel rule then matched the remaining phoneme
 }
 
-/// A literal segment takes precedence over the type of its phoneme, which allows a single phoneme
-/// to override the rule written for its whole class. The ported implementation handled this case
-/// incorrectly: every segment entered the match tree as a wildcard, so a literal never matched.
+// A literal segment takes precedence over the type of its phoneme, which allows a single phoneme
+// to override the rule written for its whole class. The ported implementation handled this case
+// incorrectly: every segment entered the match tree as a wildcard, so a literal never matched.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_LiteralBeatsItsType) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("literal", R"({
@@ -128,8 +128,8 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_LiteralBeatsItsType) {
     BOOST_CHECK(onsets[1]);
 }
 
-/// A phoneme with no registered type matches only a literal segment or the wildcard, and a
-/// position that no rule covers remains false rather than causing a failure.
+// A phoneme with no registered type matches only a literal segment or the wildcard, and a
+// position that no rule covers remains false rather than causing a failure.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_LeavesUncoveredPositionsFalse) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("uncovered", TYPED_RULES));
@@ -140,8 +140,8 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_LeavesUncoveredPositionsFalse) {
     BOOST_CHECK(onsets[1]);
 }
 
-/// The wildcard matches any phoneme, including phonemes absent from the type table; a derived
-/// recognition set is therefore a lower bound rather than the complete coverage.
+// The wildcard matches any phoneme, including phonemes absent from the type table; a derived
+// recognition set is therefore a lower bound rather than the complete coverage.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_WildcardCoversUnregistered) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("wildcard", R"({
@@ -154,8 +154,8 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_WildcardCoversUnregistered) {
     BOOST_CHECK(onsets[0]);
 }
 
-/// The version field is optional because no rule file shipped so far contains it, and a file that
-/// specifies the current version must be read identically to a file without the field.
+// The version field is optional because no rule file shipped so far contains it, and a file that
+// specifies the current version must be read identically to a file without the field.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_AcceptsDeclaredVersion) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("versioned", R"({
@@ -204,14 +204,14 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_RejectsMalformedRules) {
     }
 }
 
-/// A missing rule file and an unreadable rule file are different faults. Callers branch on the
-/// error code, so the two faults must keep different codes.
-///
-/// Both cases fail in the loader that measures and hashes the files declared by a package. That
-/// loader reports the error before any plugin reads the file, and its message does not name the
-/// file. The loader in this plugin is reached through the other route, in which a voicebank
-/// specifies its own rule file; the messages of these two faults are therefore checked in that
-/// route rather than here.
+// A missing rule file and an unreadable rule file are different faults. Callers branch on the
+// error code, so the two faults must keep different codes.
+//
+// Both cases fail in the loader that measures and hashes the files declared by a package. That
+// loader reports the error before any plugin reads the file, and its message does not name the
+// file. The loader in this plugin is reached through the other route, in which a voicebank
+// specifies its own rule file; the messages of these two faults are therefore checked in that
+// route rather than here.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_SeparatesAMissingFileFromAnUnreadableOne) {
     {
         srt::SynthUnit unit;

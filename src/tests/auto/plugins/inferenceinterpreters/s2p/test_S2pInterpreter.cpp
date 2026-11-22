@@ -23,8 +23,8 @@ namespace S2pApi = wolf::Api::S2p::L1;
 
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class S2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -48,8 +48,8 @@ namespace {
     STDC_EXPORT_STATIC_PLUGIN(S2pPlugin, srt::InferenceInterpreterPlugin::IID,
                               wolf::test::readPluginManifest(WOLF_TEST_PLUGIN_MANIFEST))
 
-    /// Writes a single-module package around an S2P declaration and returns its directory, so that
-    /// the variant is exercised through the loader rather than through its tables directly.
+    // Writes a single-module package around an S2P declaration and returns its directory, so that
+    // the variant is exercised through the loader rather than through its tables directly.
     fs::path writePackage(const std::string &name, const std::string &variant,
                           const std::string &configuration, const std::string &resource = {}) {
         const auto root = fs::temp_directory_path() / ("wolf-s2p-" + name);
@@ -102,8 +102,8 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_S2pInterpreter)
 
-/// The direct variant requires no resource and drops the empty pieces produced by consecutive
-/// spaces, so no empty phoneme reaches the output.
+// The direct variant requires no resource and drops the empty pieces produced by consecutive
+// spaces, so no empty phoneme reaches the output.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_DirectSplitsOnSpaces) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("direct", "direct", "{}"));
@@ -116,8 +116,8 @@ BOOST_AUTO_TEST_CASE(test_S2pInterpreter_DirectSplitsOnSpaces) {
     BOOST_CHECK_EQUAL(phonemes[1], "i");
 }
 
-/// The dict variant looks up the whole pronunciation. A miss yields no phonemes and is not a
-/// failure, because Level 1 provides S2P with no per-unit error channel.
+// The dict variant looks up the whole pronunciation. A miss yields no phonemes and is not a
+// failure, because Level 1 provides S2P with no per-unit error channel.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_DictLooksUpWholePronunciation) {
     srt::SynthUnit unit;
     auto handle = load(
@@ -131,8 +131,8 @@ BOOST_AUTO_TEST_CASE(test_S2pInterpreter_DictLooksUpWholePronunciation) {
     BOOST_CHECK(convert(*handle, "absent").empty());
 }
 
-/// The mapping variant substitutes each phoneme individually and passes through unlisted phonemes;
-/// its output set is therefore the target column together with every unlisted input phoneme.
+// The mapping variant substitutes each phoneme individually and passes through unlisted phonemes;
+// its output set is therefore the target column together with every unlisted input phoneme.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_MappingPassesThroughUnlisted) {
     srt::SynthUnit unit;
     auto handle =
@@ -144,9 +144,9 @@ BOOST_AUTO_TEST_CASE(test_S2pInterpreter_MappingPassesThroughUnlisted) {
     BOOST_CHECK_EQUAL(phonemes[1], "b");
 }
 
-/// Parsing is deliberately strict. A dictionary that silently skipped an unparsable line would
-/// produce incorrect conversions without any error, so any malformed line rejects the whole file
-/// at load time.
+// Parsing is deliberately strict. A dictionary that silently skipped an unparsable line would
+// produce incorrect conversions without any error, so any malformed line rejects the whole file
+// at load time.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_RejectsMalformedTables) {
     const struct {
         const char *name;
@@ -170,8 +170,8 @@ BOOST_AUTO_TEST_CASE(test_S2pInterpreter_RejectsMalformedTables) {
     }
 }
 
-/// A misspelled key is rejected rather than ignored, so it cannot silently leave a default in
-/// place.
+// A misspelled key is rejected rather than ignored, so it cannot silently leave a default in
+// place.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_RejectsUnknownConfigurationKey) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("unknown-key", "direct", R"({ "flie": "table.tsv" })"));

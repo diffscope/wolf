@@ -26,11 +26,11 @@ namespace wolf::onset {
 
     namespace {
 
-        /// Cache generation of the rule file parser. Raising it after a syntax change prevents old
-        /// cache entries from matching without explicit invalidation.
+        // Cache generation of the rule file parser. Raising it after a syntax change prevents old
+        // cache entries from matching without explicit invalidation.
         constexpr char RULE_KIND[] = "onset-rule-json@1";
 
-        /// Exports of the Onset contract: the phonemes that the rules cover, as a lower bound.
+        // Exports of the Onset contract: the phonemes that the rules cover, as a lower bound.
         constexpr ExportsShape ONSET_EXPORTS{false, "knownPhonemes", false, false};
 
         class Configuration : public srt::ContribConfiguration {

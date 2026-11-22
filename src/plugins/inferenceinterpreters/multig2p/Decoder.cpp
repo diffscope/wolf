@@ -18,9 +18,9 @@ namespace wolf::multig2p {
 
     namespace {
 
-        /// Tensor names of the exported models. The names belong to the resource format version
-        /// of the bundle rather than to any declaration, so they are defined beside the code that
-        /// reads them.
+        // Tensor names of the exported models. The names belong to the resource format version
+        // of the bundle rather than to any declaration, so they are defined beside the code that
+        // reads them.
         constexpr char SRC[] = "src";
         constexpr char LANG_IDS[] = "lang_ids";
         constexpr char SRC_PAD_MASK[] = "src_pad_mask";
@@ -28,7 +28,7 @@ namespace wolf::multig2p {
         constexpr char DEC_INPUT[] = "dec_input";
         constexpr char LOGITS[] = "logits";
 
-        /// Input and output names of the four cache tensors.
+        // Input and output names of the four cache tensors.
         struct CacheNames {
             const char *input;
             const char *output;
@@ -40,9 +40,9 @@ namespace wolf::multig2p {
             {"kv_cache_cross_v", "new_kv_cache_cross_v"},
         };
 
-        /// Logical names of the three models of a bundle, in the order that open() loads them. The
-        /// names belong to the resource format version of the bundle rather than to any
-        /// declaration, so they are defined beside the code that reads the models.
+        // Logical names of the three models of a bundle, in the order that open() loads them. The
+        // names belong to the resource format version of the bundle rather than to any
+        // declaration, so they are defined beside the code that reads the models.
         constexpr const char *LOGICAL[] = {
             "encoder",
             "decoder_step_init",
@@ -61,8 +61,8 @@ namespace wolf::multig2p {
             return TensorPtr(tensor.take());
         }
 
-        /// Runs \a session and returns its outputs, or an error if the run fails, returns no
-        /// result, or omits an output listed in \a wanted.
+        // Runs \a session and returns its outputs, or an error if the run fails, returns no
+        // result, or omits an output listed in \a wanted.
         srt::Expected<std::map<std::string, TensorPtr>>
             invoke(ds::InferenceSession &session, std::map<std::string, TensorPtr> inputs,
                    const std::set<std::string> &wanted, const char *what) {
@@ -91,9 +91,9 @@ namespace wolf::multig2p {
             return outputs->outputs;
         }
 
-        /// Returns the index of the highest logit in every row of a [batch, 1, vocabulary] logit
-        /// tensor, or an InvalidFormat error if the tensor is not floating point, is empty, or
-        /// has a size that is not a multiple of \a batch.
+        // Returns the index of the highest logit in every row of a [batch, 1, vocabulary] logit
+        // tensor, or an InvalidFormat error if the tensor is not floating point, is empty, or
+        // has a size that is not a multiple of \a batch.
         srt::Expected<std::vector<std::int64_t>> argmax(const TensorPtr &logits,
                                                         std::size_t batch) {
             if (!logits || logits->dataType() != ds::ITensor::Float) {
@@ -114,8 +114,8 @@ namespace wolf::multig2p {
             return tokens;
         }
 
-        /// Splits a bundle language reference into the language and the variant of a symbol
-        /// prefix. A reference without a slash has the variant "default".
+        // Splits a bundle language reference into the language and the variant of a symbol
+        // prefix. A reference without a slash has the variant "default".
         std::pair<std::string, std::string> splitRef(const std::string &ref) {
             const auto slash = ref.find('/');
             if (slash == std::string::npos) {
@@ -124,10 +124,10 @@ namespace wolf::multig2p {
             return {ref.substr(0, slash), ref.substr(slash + 1)};
         }
 
-        /// Encodes one word as the begin marker, one id per byte of the word, and the end marker.
-        ///
-        /// A byte without a symbol, either prefixed with the language or unprefixed, is encoded as
-        /// the unknown marker, which matches the encoding used in training.
+        // Encodes one word as the begin marker, one id per byte of the word, and the end marker.
+        //
+        // A byte without a symbol, either prefixed with the language or unprefixed, is encoded as
+        // the unknown marker, which matches the encoding used in training.
         std::vector<std::int64_t> encode(const std::string &word, const std::string &prefix,
                                          const Vocabulary &vocabulary) {
             const auto &specials = vocabulary.specials();

@@ -25,8 +25,8 @@ namespace LinguistApi = wolf::Api::Linguist::L1;
 
 namespace {
 
-    /// Configures \a unit so that it can load the singer package and all packages that it
-    /// depends on.
+    // Configures \a unit so that it can load the singer package and all packages that it
+    // depends on.
     void configure(srt::SynthUnit &unit) {
         wolf::test::configure(unit, {wolf::test::fixtureRoot()});
     }
@@ -41,10 +41,10 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_LinguistContrib_Runtime)
 
-/// Traverses the whole tree from the singer through the pipeline and the linguist to the three
-/// inference executives, with every step made through createChild on an import that the
-/// declaration contains. All of L4 depends on this structure, so the structure is checked before
-/// anything is built on top of it.
+// Traverses the whole tree from the singer through the pipeline and the linguist to the three
+// inference executives, with every step made through createChild on an import that the
+// declaration contains. All of L4 depends on this structure, so the structure is checked before
+// anything is built on top of it.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_WalksTheExecutiveTree) {
     srt::SynthUnit unit;
     configure(unit);
@@ -97,8 +97,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_WalksTheExecutiveTree) {
     BOOST_CHECK(!missing);
 }
 
-/// The passthrough language converts digits and punctuation to themselves, as the three merged
-/// legacy suites did. Running it end to end also exercises all three chain stages.
+// The passthrough language converts digits and punctuation to themselves, as the three merged
+// legacy suites did. Running it end to end also exercises all three chain stages.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_ConvertsThroughTheChain) {
     srt::SynthUnit unit;
     configure(unit);
@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_ConvertsThroughTheChain) {
     BOOST_CHECK((*linguist)->state() == srt::ITask::Succeeded);
 }
 
-/// A pinned phoneme layer is granted at the depth that asks for it, so one locked word of a batch
-/// does not carry fields that the depth it was converted at does not grant.
+// A pinned phoneme layer is granted at the depth that asks for it, so one locked word of a batch
+// does not carry fields that the depth it was converted at does not grant.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresThePhonemeDepthForAPinnedLayer) {
     srt::SynthUnit unit;
     configure(unit);
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresThePhonemeDepthForAPin
     BOOST_CHECK(locked.onsets.empty());
 }
 
-/// At Phonemes the pinned layer grants the phonemes and still withholds the onsets.
+// At Phonemes the pinned layer grants the phonemes and still withholds the onsets.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresTheOnsetDepthForAPinnedLayer) {
     srt::SynthUnit unit;
     configure(unit);
@@ -244,8 +244,8 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RequiresTheOnsetDepthForAPinne
     BOOST_CHECK(locked.onsets.empty());
 }
 
-/// A conversion that stops at the pronunciation layer does not build the downstream executives,
-/// so a caller that requires only pronunciations does not incur the cost of phoneme conversion.
+// A conversion that stops at the pronunciation layer does not build the downstream executives,
+// so a caller that requires only pronunciations does not incur the cost of phoneme conversion.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_StopsAtRequestedDepth) {
     srt::SynthUnit unit;
     configure(unit);
@@ -273,14 +273,14 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_StopsAtRequestedDepth) {
     BOOST_CHECK((*result)->words[0].phonemes.empty());
 }
 
-/// The asynchronous interface must be the framework implementation, not a hand-written copy of it.
-///
-/// The case checks three properties that the earlier implementation violated: waitForFinished()
-/// returned immediately while the conversion was still running, a second concurrent execution was
-/// accepted although the contract allows one execution per executive at a time, and the worker was
-/// a detached thread that no caller could wait for, which allowed a Package to be unloaded during
-/// a running conversion. The properties now hold because the executive holds an srt::ITask and
-/// forwards to it.
+// The asynchronous interface must be the framework implementation, not a hand-written copy of it.
+//
+// The case checks three properties that the earlier implementation violated: waitForFinished()
+// returned immediately while the conversion was still running, a second concurrent execution was
+// accepted although the contract allows one execution per executive at a time, and the worker was
+// a detached thread that no caller could wait for, which allowed a Package to be unloaded during
+// a running conversion. The properties now hold because the executive holds an srt::ITask and
+// forwards to it.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
     srt::SynthUnit unit;
     configure(unit);
@@ -332,15 +332,15 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
     delete *linguist;
 }
 
-/// A stage that returns fewer words than it received fails the conversion instead of truncating
-/// it.
-///
-/// Truncation left every word after the cut with an empty pronunciation and no error, which is
-/// indistinguishable from a conversion to an empty result, and those words then continued down the
-/// chain. The chain variant already rejects a short batch from its backend, and the session
-/// rejects a short batch from the executive; this case covers the same rule at the third location
-/// where a short batch can occur. No shipped module miscounts, so the test stub miscounts on
-/// request, which verifies that the guard is triggered.
+// A stage that returns fewer words than it received fails the conversion instead of truncating
+// it.
+//
+// Truncation left every word after the cut with an empty pronunciation and no error, which is
+// indistinguishable from a conversion to an empty result, and those words then continued down the
+// chain. The chain variant already rejects a short batch from its backend, and the session
+// rejects a short batch from the executive; this case covers the same rule at the third location
+// where a short batch can occur. No shipped module miscounts, so the test stub miscounts on
+// request, which verifies that the guard is triggered.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RefusesAShortBatch) {
     srt::SynthUnit unit;
     configure(unit);
@@ -377,9 +377,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RefusesAShortBatch) {
     delete *linguist;
 }
 
-/// Checks the singer side of the validator on the load path: a language routed to an import that
-/// is not a linguist, and a language handle that differs from the language of its target linguist,
-/// are both rejected before Commit rather than detected by a failing conversion.
+// Checks the singer side of the validator on the load path: a language routed to an import that
+// is not a linguist, and a language handle that differs from the language of its target linguist,
+// are both rejected before Commit rather than detected by a failing conversion.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RefusesALanguageRoutedToANonLinguist) {
     srt::SynthUnit unit;
     configure(unit);

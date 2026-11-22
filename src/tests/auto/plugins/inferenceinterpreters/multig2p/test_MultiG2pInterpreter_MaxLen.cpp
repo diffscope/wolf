@@ -30,16 +30,16 @@ namespace fs = std::filesystem;
 namespace G2pApi = wolf::Api::G2p::L1;
 namespace OnnxApi = ds::Api::Onnx;
 
-/// Exercises the decode limit of the shared backend, which no other test covers: every other case
-/// runs the declaration as converted, so a limit that was ignored, narrowed or applied to the wrong
-/// loop would go unnoticed.
-///
-/// The backend is bound directly instead of through a chain, as a host may do, because the limit
-/// belongs to the backend declaration rather than to any language that imports it.
+// Exercises the decode limit of the shared backend, which no other test covers: every other case
+// runs the declaration as converted, so a limit that was ignored, narrowed or applied to the wrong
+// loop would go unnoticed.
+//
+// The backend is bound directly instead of through a chain, as a host may do, because the limit
+// belongs to the backend declaration rather than to any language that imports it.
 namespace {
 
-    /// The plugin of the library, registered statically so that the package loads the interpreter
-    /// that this test links.
+    // The plugin of the library, registered statically so that the package loads the interpreter
+    // that this test links.
     class MultiG2pPlugin final : public srt::InferenceInterpreterPlugin {
     public:
         srt::Expected<std::unique_ptr<srt::ContribInterpreter>>
@@ -58,24 +58,24 @@ namespace {
     STDC_EXPORT_STATIC_PLUGIN(MultiG2pPlugin, srt::InferenceInterpreterPlugin::IID,
                               wolf::test::readPluginManifest(WOLF_TEST_PLUGIN_MANIFEST))
 
-    /// The directory name of the shared backend under the converted root.
+    // The directory name of the shared backend under the converted root.
     constexpr char BACKEND[] = "wolf-g2p-multi";
 
-    /// The declaration of the backend. Every case reads or rewrites this file inside its own copy.
+    // The declaration of the backend. Every case reads or rewrites this file inside its own copy.
     constexpr char DECLARATION[] = "inferences/multig2p/inference.json";
 
-    /// The language pair that the cases bind: the bundle maps it to the English model, whose
-    /// reading of the probe word is long enough for a limit of two symbols to truncate.
+    // The language pair that the cases bind: the bundle maps it to the English model, whose
+    // reading of the probe word is long enough for a limit of two symbols to truncate.
     constexpr char LANGUAGE[] = "eng";
     constexpr char SCHEME[] = "arpabet";
 
-    /// The probe word and the limit that the cases apply to it.
+    // The probe word and the limit that the cases apply to it.
     constexpr char WORD[] = "hello";
     constexpr int LIMIT = 2;
 
-    /// Every case in this file needs the converted backend package, the ONNX driver plugin and an
-    /// ONNX Runtime to pass to the driver. If any of them is missing, the run is reported to ctest
-    /// as a skip rather than as a pass.
+    // Every case in this file needs the converted backend package, the ONNX driver plugin and an
+    // ONNX Runtime to pass to the driver. If any of them is missing, the run is reported to ctest
+    // as a skip rather than as a pass.
     struct DataOrSkip {
         DataOrSkip() {
             if (!fs::is_directory(wolf::test::convertedRoot() / BACKEND)) {
@@ -90,12 +90,12 @@ namespace {
         }
     };
 
-    /// Creates the driver of the ONNX Runtime of this tree and registers it on \a unit as a host
-    /// does, because the backend looks the service up instead of loading a driver itself.
-    ///
-    /// The registration is repeated here rather than shared with the chain test: the two files
-    /// assemble the host differently, and a case that cannot be read on its own is worse than the
-    /// thirty lines it would save.
+    // Creates the driver of the ONNX Runtime of this tree and registers it on \a unit as a host
+    // does, because the backend looks the service up instead of loading a driver itself.
+    //
+    // The registration is repeated here rather than shared with the chain test: the two files
+    // assemble the host differently, and a case that cannot be read on its own is worse than the
+    // thirty lines it would save.
     void registerDriver(ds::InferenceDriverFactory &factory, srt::SynthUnit &unit) {
         std::vector<fs::path> paths = {fs::path(WOLF_TEST_DRIVER_PLUGIN_DIR)};
         factory.setPluginPaths(paths);
@@ -120,21 +120,21 @@ namespace {
                               "the driver should have been registered: " + wolf::test::why(added));
     }
 
-    /// Returns the directory of a private copy of the converted backend package, so that a case can
-    /// rewrite its declaration without touching the generated tree that other tests share.
-    ///
-    /// A copy is required rather than a reference: the loader opens the models of the bundle
-    /// relative to the directory of the declaration, so a patched declaration alone would still
-    /// name the models of the original package.
-    ///
-    /// The copy is made entry by entry rather than with one recursive copy, whose behavior on an
-    /// existing destination directory differs between implementations. A link is refused instead of
-    /// copied: the iterator does not descend into a link to a directory, so copying only the link
-    /// or only an empty directory of that name would produce a package that is not the one the
-    /// case means to test.
-    ///
-    /// \a name selects the temporary directory, which lets the cases of this file run in any order
-    /// and repeat without a previous run interfering.
+    // Returns the directory of a private copy of the converted backend package, so that a case can
+    // rewrite its declaration without touching the generated tree that other tests share.
+    //
+    // A copy is required rather than a reference: the loader opens the models of the bundle
+    // relative to the directory of the declaration, so a patched declaration alone would still
+    // name the models of the original package.
+    //
+    // The copy is made entry by entry rather than with one recursive copy, whose behavior on an
+    // existing destination directory differs between implementations. A link is refused instead of
+    // copied: the iterator does not descend into a link to a directory, so copying only the link
+    // or only an empty directory of that name would produce a package that is not the one the
+    // case means to test.
+    //
+    // \a name selects the temporary directory, which lets the cases of this file run in any order
+    // and repeat without a previous run interfering.
     fs::path copiedBackend(const std::string &name) {
         const auto source = wolf::test::convertedRoot() / BACKEND;
         const auto root = fs::temp_directory_path() / ("wolf-multig2p-maxlen-" + name);
@@ -162,12 +162,12 @@ namespace {
         return root;
     }
 
-    /// Rewrites the maxLen value of the declaration of the package at \a root.
-    ///
-    /// \a maxLenText is written as raw JSON text, so a case can write a valid limit, a zero and a
-    /// string without this helper having to know which of them the declaration accepts. Only the
-    /// value is replaced: the rest of the declaration, including the language map, stays as the
-    /// converter wrote it.
+    // Rewrites the maxLen value of the declaration of the package at \a root.
+    //
+    // \a maxLenText is written as raw JSON text, so a case can write a valid limit, a zero and a
+    // string without this helper having to know which of them the declaration accepts. Only the
+    // value is replaced: the rest of the declaration, including the language map, stays as the
+    // converter wrote it.
     void setMaxLen(const fs::path &root, std::string_view maxLenText) {
         const auto declaration = root / DECLARATION;
         std::ifstream input(declaration, std::ios::binary);
@@ -199,10 +199,10 @@ namespace {
         BOOST_REQUIRE_MESSAGE(output, "the declaration should have been written");
     }
 
-    /// Removes the temporary copy of a case that reached its end, so that a passing run leaves no
-    /// 19 MiB of models behind. The copy is not the evidence of a failure: every check of a case
-    /// carries the readings it compares, and a case that aborts before its end leaves its copy at
-    /// the path that copiedBackend() derives from the name of the case.
+    // Removes the temporary copy of a case that reached its end, so that a passing run leaves no
+    // 19 MiB of models behind. The copy is not the evidence of a failure: every check of a case
+    // carries the readings it compares, and a case that aborts before its end leaves its copy at
+    // the path that copiedBackend() derives from the name of the case.
     void discard(const fs::path &root) {
         std::error_code error;
         fs::remove_all(root, error);
@@ -212,11 +212,11 @@ namespace {
         }
     }
 
-    /// Runs the backend of \a backend on \a lyric and returns its reading.
-    ///
-    /// Every call builds its own unit, because a unit resolves one package per identity: a second
-    /// load of the same identity would return the copy that was loaded first, and a case that
-    /// compares two copies would then compare one of them with itself.
+    // Runs the backend of \a backend on \a lyric and returns its reading.
+    //
+    // Every call builds its own unit, because a unit resolves one package per identity: a second
+    // load of the same identity would return the copy that was loaded first, and a case that
+    // compares two copies would then compare one of them with itself.
     std::string pronounce(const fs::path &backend, const std::string &lyric) {
         ds::InferenceDriverFactory factory;
         srt::SynthUnit unit;
@@ -254,8 +254,8 @@ namespace {
         return word.pronunciation;
     }
 
-    /// Returns the number of symbols of \a pronunciation, which the contract defines as
-    /// space-delimited.
+    // Returns the number of symbols of \a pronunciation, which the contract defines as
+    // space-delimited.
     std::size_t symbolCount(const std::string &pronunciation) {
         return pronunciation.empty()
                    ? 0
@@ -268,7 +268,7 @@ BOOST_TEST_GLOBAL_FIXTURE(DataOrSkip);
 
 BOOST_AUTO_TEST_SUITE(test_MultiG2pInterpreter_MaxLen)
 
-/// A declaration may lower the number of decode steps, and the reading of a word must follow it.
+// A declaration may lower the number of decode steps, and the reading of a word must follow it.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_MaxLen_CapsTheDecodedSymbolCount) {
     const auto capped = copiedBackend("capped");
     setMaxLen(capped, std::to_string(LIMIT));
@@ -297,9 +297,9 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_MaxLen_CapsTheDecodedSymbolCount) 
     discard(capped);
 }
 
-/// The limit is checked where the declaration is interpreted, so a value that is not a positive
-/// integer that fits an int makes the load fail instead of being narrowed to a limit that no
-/// declaration asked for.
+// The limit is checked where the declaration is interpreted, so a value that is not a positive
+// integer that fits an int makes the load fail instead of being narrowed to a limit that no
+// declaration asked for.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_MaxLen_RejectsAValueOutsideAPositiveInt) {
     const auto patched = copiedBackend("rejected");
     constexpr char EXPECTED[] = "maxLen must be a positive integer that fits an int";

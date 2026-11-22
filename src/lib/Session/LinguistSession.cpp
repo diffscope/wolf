@@ -26,8 +26,8 @@ namespace wolf {
 
     namespace {
 
-        /// Key of the pool and the caches. A locator carries no version, and the version is
-        /// therefore part of the key instead of being resolved at every lookup.
+        // Key of the pool and the caches. A locator carries no version, and the version is
+        // therefore part of the key instead of being resolved at every lookup.
         struct SingerKey {
             std::string packageId;
             std::string contributionId;
@@ -47,11 +47,11 @@ namespace wolf {
             return keyOf(entry.ref);
         }
 
-        /// Finds the entry that \a singer names in a sequence of entries that each carry a
-        /// \c ref.
-        ///
-        /// The catalog and the list of unmounted singers share this function, because both must
-        /// resolve the same reference identically.
+        // Finds the entry that \a singer names in a sequence of entries that each carry a
+        // \c ref.
+        //
+        // The catalog and the list of unmounted singers share this function, because both must
+        // resolve the same reference identically.
         template <class Entries>
         auto findByRef(const Entries &entries, const SingerRef &singer, bool &ambiguous)
             -> decltype(&*std::begin(entries)) {
@@ -80,26 +80,26 @@ namespace wolf {
             return found;
         }
 
-        /// A singer that declares languages but carries no linguist pipeline, with the reason for
-        /// each declared language.
+        // A singer that declares languages but carries no linguist pipeline, with the reason for
+        // each declared language.
         struct UnmountedSinger {
             SingerRef ref;
             std::map<std::string, std::string> reasons;
         };
 
-        /// Result of one scan of the unit.
+        // Result of one scan of the unit.
         struct ScanResult {
             std::shared_ptr<const LinguistCatalog> catalog;
             std::vector<UnmountedSinger> unmounted;
         };
 
-        /// Returns the reason why a language of a singer without a linguist pipeline was not
-        /// mounted.
-        ///
-        /// The loader calls only the validators of existing providers. A singer loaded in a
-        /// transaction that creates no wolf provider therefore loads with an unvalidated language
-        /// map and carries no pipeline. The session cannot reject the package, and it reports the
-        /// defect of the route instead of reporting that the singer does not exist.
+        // Returns the reason why a language of a singer without a linguist pipeline was not
+        // mounted.
+        //
+        // The loader calls only the validators of existing providers. A singer loaded in a
+        // transaction that creates no wolf provider therefore loads with an unvalidated language
+        // map and carries no pipeline. The session cannot reject the package, and it reports the
+        // defect of the route instead of reporting that the singer does not exist.
         std::string unmountedReason(const srt::SingerSpec &singer, const std::string &language,
                                     const std::string &role) {
             const auto import = singer.findImport(role);
@@ -136,17 +136,17 @@ namespace wolf {
         bool cancelled = false;
         std::set<LinguistApi::Executive *> running;
 
-        /// Executives on which a cancel() is currently calling stop(), one entry per call in
-        /// progress. retire() waits until an executive leaves this set, because the session may
-        /// destroy an executive as soon as it is retired, and stop() is called outside the lock.
+        // Executives on which a cancel() is currently calling stop(), one entry per call in
+        // progress. retire() waits until an executive leaves this set, because the session may
+        // destroy an executive as soon as it is retired, and stop() is called outside the lock.
         std::multiset<LinguistApi::Executive *> stopping;
 
-        /// Enrols one executive for the duration of a conversion.
-        ///
-        /// Returns false if the token was already cancelled, in which case the conversion must not
-        /// start. Returning false here, instead of calling stop() and starting, ensures that a
-        /// cancellation before the batch takes effect. Otherwise the executive would consume the
-        /// request and run the whole chain.
+        // Enrols one executive for the duration of a conversion.
+        //
+        // Returns false if the token was already cancelled, in which case the conversion must not
+        // start. Returning false here, instead of calling stop() and starting, ensures that a
+        // cancellation before the batch takes effect. Otherwise the executive would consume the
+        // request and run the whole chain.
         bool enrol(LinguistApi::Executive *executive) {
             std::lock_guard<std::mutex> guard(mutex);
             if (cancelled) {
@@ -156,9 +156,9 @@ namespace wolf {
             return true;
         }
 
-        /// Withdraws one executive and waits while a cancel() is still stopping it. Only the
-        /// conversion that holds that executive waits. enrol(), cancelled() and retire() for every
-        /// other executive proceed.
+        // Withdraws one executive and waits while a cancel() is still stopping it. Only the
+        // conversion that holds that executive waits. enrol(), cancelled() and retire() for every
+        // other executive proceed.
         void retire(LinguistApi::Executive *executive) {
             std::unique_lock<std::mutex> lock(mutex);
             running.erase(executive);
@@ -206,20 +206,20 @@ namespace wolf {
 
     namespace {
 
-        /// Runtime resources of one singer, declared in the teardown order that the framework
-        /// requires.
-        ///
-        /// The package handle is held because the pipeline was created from a spec inside the
-        /// loaded package, and an executive must be destroyed before its package is released.
-        /// Holding the handle does not imply lifetime management: release() and refresh() are the
-        /// release points of the host.
+        // Runtime resources of one singer, declared in the teardown order that the framework
+        // requires.
+        //
+        // The package handle is held because the pipeline was created from a spec inside the
+        // loaded package, and an executive must be destroyed before its package is released.
+        // Holding the handle does not imply lifetime management: release() and refresh() are the
+        // release points of the host.
         struct Slot {
             srt::PackageHandle package;
             std::unique_ptr<srt::SingerPipelineExecutive> pipeline;
             std::map<std::string, std::vector<std::unique_ptr<LinguistApi::Executive>>> idle;
 
-            /// Number of conversions that currently hold an executive from this slot. A retired
-            /// slot with outstanding conversions remains alive until they return.
+            // Number of conversions that currently hold an executive from this slot. A retired
+            // slot with outstanding conversions remains alive until they return.
             int outstanding = 0;
 
             ~Slot() {
@@ -234,14 +234,14 @@ namespace wolf {
 
         using SlotPtr = std::shared_ptr<Slot>;
 
-        /// Renders a cached failure for a host.
-        ///
-        /// The cache keeps the error object rather than its text, because the code and the cause
-        /// chain identify the layer that failed. A host receives no access to that object, so the
-        /// replay keeps what the code and the chain carry: the kind of the code, and the message of
-        /// every level of the chain. The kind is left out when the message already is the canned
-        /// text of the code, so that a failure recorded without text does not read as
-        /// "file not found: file not found".
+        // Renders a cached failure for a host.
+        //
+        // The cache keeps the error object rather than its text, because the code and the cause
+        // chain identify the layer that failed. A host receives no access to that object, so the
+        // replay keeps what the code and the chain carry: the kind of the code, and the message of
+        // every level of the chain. The kind is left out when the message already is the canned
+        // text of the code, so that a failure recorded without text does not read as
+        // "file not found: file not found".
         std::string describeFailure(const srt::Error &error) {
             std::string reason;
             const auto kind = error.code().message();
@@ -264,38 +264,38 @@ namespace wolf {
         mutable std::mutex mutex;
         std::shared_ptr<const LinguistCatalog> catalog = std::make_shared<LinguistCatalog>();
 
-        /// Singers that the last scan excluded from the catalog although they declare languages.
+        // Singers that the last scan excluded from the catalog although they declare languages.
         std::vector<UnmountedSinger> unmounted;
 
         std::map<SingerKey, SlotPtr> slots;
 
-        /// Slots that a refresh replaced while conversions were still using them. Each slot
-        /// remains until its last lease returns, and no new lease is taken from it.
+        // Slots that a refresh replaced while conversions were still using them. Each slot
+        // remains until its last lease returns, and no new lease is taken from it.
         std::vector<SlotPtr> retiring;
 
-        /// Both caches, discarded together on refresh. Success is cached because it represents the
-        /// pool. Failure is cached because a phrase of five hundred notes would otherwise retry
-        /// five hundred times.
-        ///
-        /// A failure is stored as the error object instead of its text. The plugins distinguish a
-        /// missing resource from an unreadable resource and an unsupported feature from a
-        /// malformed declaration by the error code, and the cause chain identifies the failing
-        /// layer. A replay of the text alone would return a different fault to every later caller
-        /// than the fault that the first caller received.
+        // Both caches, discarded together on refresh. Success is cached because it represents the
+        // pool. Failure is cached because a phrase of five hundred notes would otherwise retry
+        // five hundred times.
+        //
+        // A failure is stored as the error object instead of its text. The plugins distinguish a
+        // missing resource from an unreadable resource and an unsupported feature from a
+        // malformed declaration by the error code, and the cause chain identifies the failing
+        // layer. A replay of the text alone would return a different fault to every later caller
+        // than the fault that the first caller received.
         std::set<std::pair<SingerKey, std::string>> warmed;
         std::map<std::pair<SingerKey, std::string>, srt::Error> failed;
 
         std::vector<std::string> reserved = {"SP", "AP"};
 
-        /// Phonemes that each singer can sing, as supplied by the host. An absent entry indicates
-        /// that no table was supplied, which probe() reports as Unknown instead of zero.
+        // Phonemes that each singer can sing, as supplied by the host. An absent entry indicates
+        // that no table was supplied, which probe() reports as Unknown instead of zero.
         std::map<SingerKey, std::set<std::string>> singerPhonemes;
 
-        /// Maximum number of missing phonemes that probe() returns. The list serves as examples
-        /// for display, not as an inventory.
+        // Maximum number of missing phonemes that probe() returns. The list serves as examples
+        // for display, not as an inventory.
         static constexpr std::size_t MISSING_SHOWN = 16;
 
-        /// Fills in the coverage part of a status. Caller holds the lock.
+        // Fills in the coverage part of a status. Caller holds the lock.
         void describeCoverage(const SingerKey &key, const LanguageEntry &language,
                               LanguageStatus &status) const {
             status.maxDepth = language.maxDepth;
@@ -323,12 +323,12 @@ namespace wolf {
                                                    : LanguageStatus::CoverageKind::Exact;
         }
 
-        /// Builds a catalog from the packages committed in the unit. The function cannot fail,
-        /// because a committed package has already passed load validation.
-        ///
-        /// A singer that declares languages and carries no linguist pipeline is excluded from the
-        /// catalog, like every singer without linguist contributions, and recorded with the
-        /// reason so that probe(), warm() and convert() can report it.
+        // Builds a catalog from the packages committed in the unit. The function cannot fail,
+        // because a committed package has already passed load validation.
+        //
+        // A singer that declares languages and carries no linguist pipeline is excluded from the
+        // catalog, like every singer without linguist contributions, and recorded with the
+        // reason so that probe(), warm() and convert() can report it.
         ScanResult scan() const {
             auto built = std::make_shared<LinguistCatalog>();
             std::vector<UnmountedSinger> unmounted;
@@ -397,11 +397,11 @@ namespace wolf {
             return {built, std::move(unmounted)};
         }
 
-        /// Returns the recorded reason why a singer is absent from the catalog. The caller holds
-        /// the lock.
-        ///
-        /// Returns an empty string if the singer is not loaded. Otherwise returns the reason
-        /// recorded for \a language, or a statement that the singer does not declare it.
+        // Returns the recorded reason why a singer is absent from the catalog. The caller holds
+        // the lock.
+        //
+        // Returns an empty string if the singer is not loaded. Otherwise returns the reason
+        // recorded for \a language, or a statement that the singer does not declare it.
         std::string unmountedReasonFor(const SingerRef &singer, std::string_view language) const {
             bool ambiguous = false;
             const auto record = findByRef(unmounted, singer, ambiguous);
@@ -415,7 +415,7 @@ namespace wolf {
             return it->second;
         }
 
-        /// Finds or creates the current slot for a singer. The caller holds the lock.
+        // Finds or creates the current slot for a singer. The caller holds the lock.
         srt::Expected<SlotPtr> slotFor(const SingerEntry &entry) {
             const auto key = keyOf(entry);
             const auto it = slots.find(key);
@@ -455,10 +455,10 @@ namespace wolf {
             return slot;
         }
 
-        /// Takes an idle executive from a slot. Returns nullptr if the slot has no idle executive.
-        ///
-        /// The caller holds the lock. The lease is reserved before the function returns, which
-        /// prevents a concurrent refresh from destroying the slot while the caller uses it.
+        // Takes an idle executive from a slot. Returns nullptr if the slot has no idle executive.
+        //
+        // The caller holds the lock. The lease is reserved before the function returns, which
+        // prevents a concurrent refresh from destroying the slot while the caller uses it.
         std::unique_ptr<LinguistApi::Executive> takeIdle(const SlotPtr &slot,
                                                          std::string_view language) {
             auto &pooled = slot->idle[std::string(language)];
@@ -472,10 +472,10 @@ namespace wolf {
             return executive;
         }
 
-        /// Creates one executive. The caller \b must \b not hold the lock, because this function
-        /// loads dictionaries and opens models, and holding the session lock would make every
-        /// probe() on any singer wait for a model to open, which defeats the purpose of the pool.
-        /// The lease is already reserved, so the slot cannot be destroyed during the call.
+        // Creates one executive. The caller \b must \b not hold the lock, because this function
+        // loads dictionaries and opens models, and holding the session lock would make every
+        // probe() on any singer wait for a model to open, which defeats the purpose of the pool.
+        // The lease is already reserved, so the slot cannot be destroyed during the call.
         srt::Expected<std::unique_ptr<LinguistApi::Executive>> build(const SlotPtr &slot,
                                                                      std::string_view language) {
             LinguistApi::RuntimeOptions options;
@@ -483,11 +483,11 @@ namespace wolf {
                 language, options);
         }
 
-        /// Records a failure and returns the lease. The caller \b must \b not hold the lock.
-        ///
-        /// \a executive is passed on to giveBack() rather than destroyed by the caller: an
-        /// executive must be released before the slot that owns its pipeline, and only a caller
-        /// that holds one has to hand it in.
+        // Records a failure and returns the lease. The caller \b must \b not hold the lock.
+        //
+        // \a executive is passed on to giveBack() rather than destroyed by the caller: an
+        // executive must be released before the slot that owns its pipeline, and only a caller
+        // that holds one has to hand it in.
         void recordFailure(const SlotPtr &slot, const std::string &language,
                            const std::pair<SingerKey, std::string> &cacheKey,
                            const srt::Error &error,
@@ -499,9 +499,9 @@ namespace wolf {
             giveBack(slot, language, std::move(executive), false);
         }
 
-        /// Returns an executive to its slot. A slot retired by a refresh accepts no executive. The
-        /// executive is deleted instead, and the slot is destroyed after the last executive has
-        /// returned.
+        // Returns an executive to its slot. A slot retired by a refresh accepts no executive. The
+        // executive is deleted instead, and the slot is destroyed after the last executive has
+        // returned.
         void giveBack(const SlotPtr &slot, const std::string &language,
                       std::unique_ptr<LinguistApi::Executive> executive, bool reusable) {
             std::unique_ptr<LinguistApi::Executive> doomed;
@@ -536,25 +536,25 @@ namespace wolf {
             released.reset();
         }
 
-        /// One lent executive, with the slot from which it was taken and the key under which its
-        /// result is recorded.
-        ///
-        /// The key travels with the lease because a failure found during the conversion must be
-        /// cached exactly as one found while acquiring the lease. Recomputing the key at that point
-        /// would repeat the lookup of acquire() and could resolve another entry after a refresh.
+        // One lent executive, with the slot from which it was taken and the key under which its
+        // result is recorded.
+        //
+        // The key travels with the lease because a failure found during the conversion must be
+        // cached exactly as one found while acquiring the lease. Recomputing the key at that point
+        // would repeat the lookup of acquire() and could resolve another entry after a refresh.
         struct Lease {
             SlotPtr slot;
             std::unique_ptr<LinguistApi::Executive> executive;
             std::pair<SingerKey, std::string> cacheKey;
         };
 
-        /// Acquires an executive. warm() and convert() share this single acquisition path.
-        ///
-        /// The function is intentionally split into two phases. All inexpensive steps run under
-        /// the lock, and the only expensive step, creating an executive, which loads dictionaries
-        /// and opens models, runs outside it. Holding the session lock during that step would make
-        /// a probe() on an unrelated singer wait for a model to open, which defeats the purpose of
-        /// the pool.
+        // Acquires an executive. warm() and convert() share this single acquisition path.
+        //
+        // The function is intentionally split into two phases. All inexpensive steps run under
+        // the lock, and the only expensive step, creating an executive, which loads dictionaries
+        // and opens models, runs outside it. Holding the session lock during that step would make
+        // a probe() on an unrelated singer wait for a model to open, which defeats the purpose of
+        // the pool.
         srt::Expected<Lease> acquire(const SingerRef &singer, std::string_view language) {
             SlotPtr slot;
             std::pair<SingerKey, std::string> cacheKey;
@@ -617,7 +617,7 @@ namespace wolf {
             return Lease{slot, built.take(), cacheKey};
         }
 
-        /// Returns the marker set that applies to one singer. The caller holds the lock.
+        // Returns the marker set that applies to one singer. The caller holds the lock.
         std::vector<std::string> reservedFor(const SingerRef &singer) const {
             bool ambiguous = false;
             if (const auto entry = catalog->find(singer, ambiguous)) {

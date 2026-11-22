@@ -41,9 +41,9 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_Verifier)
 
-/// All three entry types must work. The original implementation from which this code was ported
-/// compiled only the expression type and silently dropped the other two, so a declaration could
-/// have no effect without any diagnostic.
+// All three entry types must work. The original implementation from which this code was ported
+// compiled only the expression type and silently dropped the other two, so a declaration could
+// have no effect without any diagnostic.
 BOOST_AUTO_TEST_CASE(test_Verifier_HonoursAllThreeTypes) {
     const auto dictionary = writeFile("words.txt", "alpha\tsomething\nbeta\tother\n\n");
 
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(test_Verifier_HonoursAllThreeTypes) {
     fs::remove(dictionary);
 }
 
-/// Expressions must match the whole word, and several expressions form one alternation.
+// Expressions must match the whole word, and several expressions form one alternation.
 BOOST_AUTO_TEST_CASE(test_Verifier_MatchesWholeWords) {
     auto entries = parse(R"json([
         { "type": "regex", "value": ["([A-Za-z]+)", "([0-9]+)"], "mode": "convert" }
@@ -87,11 +87,11 @@ BOOST_AUTO_TEST_CASE(test_Verifier_MatchesWholeWords) {
     BOOST_CHECK(modes[3] == wolf::VerifyMode::Copy);
 }
 
-/// Each pattern of an entry keeps its own inline flags. A flag remains in effect until the end of
-/// its enclosing group.
-///
-/// Regression: joining the patterns with a bare `|` must not apply the flags of the first pattern
-/// to the second.
+// Each pattern of an entry keeps its own inline flags. A flag remains in effect until the end of
+// its enclosing group.
+//
+// Regression: joining the patterns with a bare `|` must not apply the flags of the first pattern
+// to the second.
 BOOST_AUTO_TEST_CASE(test_Verifier_KeepsInlineFlagsToTheirOwnPattern) {
     auto entries = parse(R"json([
         { "type": "regex", "value": ["(?i)abc", "XYZ"], "mode": "convert" }
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(test_Verifier_KeepsInlineFlagsToTheirOwnPattern) {
     BOOST_CHECK(modes[3] == wolf::VerifyMode::Copy);
 }
 
-/// A pattern that contains an ungrouped alternation still matches only whole words.
+// A pattern that contains an ungrouped alternation still matches only whole words.
 BOOST_AUTO_TEST_CASE(test_Verifier_KeepsEachPatternsAlternationInside) {
     auto entries = parse(R"json([
         { "type": "regex", "value": ["a|b", "c"], "mode": "convert" }
@@ -122,11 +122,11 @@ BOOST_AUTO_TEST_CASE(test_Verifier_KeepsEachPatternsAlternationInside) {
     BOOST_CHECK(modes[4] == wolf::VerifyMode::Copy);
 }
 
-/// A missing dictionary and an unreadable dictionary are different faults, distinguished by the
-/// error code and identified by path.
-///
-/// Regression: the verifier must not report both as "not found", and must not accept a directory
-/// in place of the file as an empty dictionary.
+// A missing dictionary and an unreadable dictionary are different faults, distinguished by the
+// error code and identified by path.
+//
+// Regression: the verifier must not report both as "not found", and must not accept a directory
+// in place of the file as an empty dictionary.
 BOOST_AUTO_TEST_CASE(test_Verifier_SeparatesAMissingDictionaryFromAnUnreadableOne) {
     auto entries = parse(R"json([
         { "type": "dict", "value": ["placeholder"], "mode": "convert" }
@@ -155,8 +155,8 @@ BOOST_AUTO_TEST_CASE(test_Verifier_SeparatesAMissingDictionaryFromAnUnreadableOn
     fs::remove_all(directory);
 }
 
-/// The property classes used by the shipped language packages require a full Unicode regular
-/// expression engine.
+// The property classes used by the shipped language packages require a full Unicode regular
+// expression engine.
 BOOST_AUTO_TEST_CASE(test_Verifier_UnderstandsUnicodeProperties) {
     auto entries = parse(R"json([
         { "type": "regex", "value": ["([\\p{Han}])+"], "mode": "convert" }
@@ -170,8 +170,8 @@ BOOST_AUTO_TEST_CASE(test_Verifier_UnderstandsUnicodeProperties) {
     BOOST_CHECK(modes[2] == wolf::VerifyMode::Copy);
 }
 
-/// A malformed declaration fails the package. Otherwise, each of these declarations would be a
-/// rule that silently never applies.
+// A malformed declaration fails the package. Otherwise, each of these declarations would be a
+// rule that silently never applies.
 BOOST_AUTO_TEST_CASE(test_Verifier_RejectsMalformedEntries) {
     BOOST_CHECK(rejection(R"json([{ "type": "glob", "value": ["a"], "mode": "copy" }])json")
                     .find("unknown") != std::string::npos);

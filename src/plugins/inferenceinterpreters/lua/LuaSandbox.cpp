@@ -18,7 +18,7 @@ namespace wolf::lua {
 
     namespace {
 
-        /// Restores the stack top recorded at construction when the scope exits by any path.
+        // Restores the stack top recorded at construction when the scope exits by any path.
         class StackGuard {
         public:
             explicit StackGuard(lua_State *state) : m_state(state), m_top(lua_gettop(state)) {
@@ -220,8 +220,8 @@ namespace wolf::lua {
             lua_setglobal(state, "utf8");
         }
 
-        /// Opens the standard libraries, removes every facility that reaches outside the process
-        /// or loads additional code, and installs the utf8 library.
+        // Opens the standard libraries, removes every facility that reaches outside the process
+        // or loads additional code, and installs the utf8 library.
         void sandbox(lua_State *state) {
             luaL_openlibs(state);
             static const char *const removed[] = {
@@ -264,13 +264,13 @@ namespace wolf::lua {
 
     namespace {
 
-        /// Registry key under which each state stores the address of its interrupt flag. The
-        /// address of this variable is unique to this translation unit, so no other registry
-        /// entry can collide with the key.
+        // Registry key under which each state stores the address of its interrupt flag. The
+        // address of this variable is unique to this translation unit, so no other registry
+        // entry can collide with the key.
         char interruptKey = 0;
 
-        /// Runs every HOOK_INTERVAL instructions and raises an error that ends the call if the
-        /// interrupt flag is set.
+        // Runs every HOOK_INTERVAL instructions and raises an error that ends the call if the
+        // interrupt flag is set.
         void interruptHook(lua_State *state, lua_Debug *) {
             lua_pushlightuserdata(state, &interruptKey);
             lua_rawget(state, LUA_REGISTRYINDEX);
@@ -281,11 +281,11 @@ namespace wolf::lua {
             }
         }
 
-        /// Number of instructions between hook invocations. The interval is small enough for a
-        /// prompt response to an interrupt and large enough to keep the overhead negligible.
+        // Number of instructions between hook invocations. The interval is small enough for a
+        // prompt response to an interrupt and large enough to keep the overhead negligible.
         constexpr int HOOK_INTERVAL = 10000;
 
-        /// Runs a prepared call under the interrupt hook.
+        // Runs a prepared call under the interrupt hook.
         int guardedCall(lua_State *state, int arguments, int results) {
             lua_sethook(state, interruptHook, LUA_MASKCOUNT, HOOK_INTERVAL);
             const auto status = lua_pcall(state, arguments, results, 0);

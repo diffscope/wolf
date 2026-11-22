@@ -33,14 +33,14 @@ namespace wolf::chain {
 
     namespace {
 
-        /// Shape of the G2P contract exports: the language pairs the module produces, its
-        /// symbols, and openSet.
+        // Shape of the G2P contract exports: the language pairs the module produces, its
+        // symbols, and openSet.
         constexpr ExportsShape G2P_EXPORTS{true, "symbols", false, true};
 
-        /// The highest configuration generation this build reads.
+        // The highest configuration generation this build reads.
         constexpr int FORMAT_VERSION = 1;
 
-        /// Maximum number of steps. A longer chain is rejected as a declaration error.
+        // Maximum number of steps. A longer chain is rejected as a declaration error.
         constexpr std::size_t MAX_STEPS = 50;
 
         constexpr char DICT_KIND[] = "g2p-dict-tsv@1";
@@ -53,9 +53,9 @@ namespace wolf::chain {
             Fallback,
         };
 
-        /// One configured step. The step kinds use disjoint fields, but there are five kinds with
-        /// at most three values each, so a single struct is easier to read than a class
-        /// hierarchy.
+        // One configured step. The step kinds use disjoint fields, but there are five kinds with
+        // at most three values each, so a single struct is easier to read than a class
+        // hierarchy.
         struct Step {
             StepKind kind = StepKind::Verify;
 
@@ -87,7 +87,7 @@ namespace wolf::chain {
             std::vector<Step> steps;
         };
 
-        /// Working state of one word during a pass through the chain.
+        // Working state of one word during a pass through the chain.
         struct ChainWord {
             std::string lyric;
             std::string text;
@@ -97,21 +97,21 @@ namespace wolf::chain {
             G2pApi::Error error = G2pApi::Error::None;
             G2pApi::HitSource hitSource = G2pApi::HitSource::Unspecified;
 
-            /// Whether the input ordering of the contract already determined the result for this
-            /// word. This flag differs from an error: a word on which a step failed still reaches
-            /// the fallback step, whereas a settled word is complete before any step runs.
+            // Whether the input ordering of the contract already determined the result for this
+            // word. This flag differs from an error: a word on which a step failed still reaches
+            // the fallback step, whereas a settled word is complete before any step runs.
             bool settled = false;
 
-            /// Returns whether a producing step may still process this word. Each word receives
-            /// its pronunciation from exactly one source, and therefore the producing steps may
-            /// appear in any order.
+            // Returns whether a producing step may still process this word. Each word receives
+            // its pronunciation from exactly one source, and therefore the producing steps may
+            // appear in any order.
             bool eligible() const {
                 return !settled && mode == G2pApi::Mode::Convert && pronunciation.empty();
             }
         };
 
-        /// Returns \a candidates with \a pronunciation as the first element and without further
-        /// occurrences of \a pronunciation.
+        // Returns \a candidates with \a pronunciation as the first element and without further
+        // occurrences of \a pronunciation.
         std::vector<std::string> leadWith(const std::string &pronunciation,
                                           const std::vector<std::string> &candidates) {
             std::vector<std::string> result{pronunciation};
@@ -404,11 +404,11 @@ namespace wolf::chain {
             return steps;
         }
 
-        /// Checks that every role a model step names is bound to a G2P module.
-        ///
-        /// The check runs after the bindings are created and before Commit, which is the only
-        /// stage at which the contract of the target is known and a rejection still fails the
-        /// load.
+        // Checks that every role a model step names is bound to a G2P module.
+        //
+        // The check runs after the bindings are created and before Commit, which is the only
+        // stage at which the contract of the target is known and a rejection still fails the
+        // load.
         class ImportValidator : public srt::ContribImportValidator {
         public:
             srt::Expected<void> validateImports(const srt::ContribSpec &spec) const override {
@@ -470,15 +470,15 @@ namespace wolf::chain {
 
             // See ExecutiveBase: quit() and wait() are deliberately not overridden.
 
-            /// Forwards a stop request to the backends of the steps, the way the linguist executive
-            /// forwards it to its own stages (A51). A model or a script backend is exactly the wait
-            /// that a caller wants to interrupt, and a batch sitting inside one of them sees no
-            /// flag of this executive, so without this the request would only take effect at the
-            /// next step boundary.
-            ///
-            /// A batch fills the map while it runs, on its own thread, so every access to it is
-            /// guarded and the backends are stopped once the guard is released: a backend may
-            /// return through this executive while its own stop runs.
+            // Forwards a stop request to the backends of the steps, the way the linguist executive
+            // forwards it to its own stages (A51). A model or a script backend is exactly the wait
+            // that a caller wants to interrupt, and a batch sitting inside one of them sees no
+            // flag of this executive, so without this the request would only take effect at the
+            // next step boundary.
+            //
+            // A batch fills the map while it runs, on its own thread, so every access to it is
+            // guarded and the backends are stopped once the guard is released: a backend may
+            // return through this executive while its own stop runs.
             void onStop() override {
                 std::vector<G2pApi::Executive *> backends;
                 {
@@ -562,10 +562,10 @@ namespace wolf::chain {
             }
 
         private:
-            /// Converts the working words into contract output.
-            ///
-            /// Also called if a conversion stops partway, so that the caller receives the partial
-            /// result of the chain rather than an error.
+            // Converts the working words into contract output.
+            //
+            // Also called if a conversion stops partway, so that the caller receives the partial
+            // result of the chain rather than an error.
             static std::unique_ptr<G2pApi::Result> collect(std::vector<ChainWord> &words) {
                 auto result = std::make_unique<G2pApi::Result>();
                 result->words.reserve(words.size());
@@ -667,16 +667,16 @@ namespace wolf::chain {
                 return result;
             }
 
-            /// Converts the eligible words with the backend of \a step.
-            ///
-            /// A backend that cannot be built is an error of the whole batch whenever the step has
-            /// work to do: no word can be converted without it, and a fallback step further down
-            /// the chain would rewrite such word-level failures into successes, which would hide
-            /// that the backend never ran. A batch without an eligible word gives the step nothing
-            /// to do, and a missing backend is then no failure at all: every word was settled by an
-            /// earlier step, no word depends on this backend, and the batch result is complete
-            /// without it. Failures of the words that a running backend reports stay word-level
-            /// failures.
+            // Converts the eligible words with the backend of \a step.
+            //
+            // A backend that cannot be built is an error of the whole batch whenever the step has
+            // work to do: no word can be converted without it, and a fallback step further down
+            // the chain would rewrite such word-level failures into successes, which would hide
+            // that the backend never ran. A batch without an eligible word gives the step nothing
+            // to do, and a missing backend is then no failure at all: every word was settled by an
+            // earlier step, no word depends on this backend, and the batch result is complete
+            // without it. Failures of the words that a running backend reports stay word-level
+            // failures.
             srt::Expected<void> runModel(const Step &step, std::vector<ChainWord> &words) {
                 auto resolved = resolveBackend(step.role);
                 if (!resolved) {
@@ -810,7 +810,7 @@ namespace wolf::chain {
 
             const Configuration *m_configuration;
             Api::Common::L1::LanguageScheme m_binding;
-            /// Guards \c m_backends: the map is filled while a batch runs, and read by onStop().
+            // Guards \c m_backends: the map is filled while a batch runs, and read by onStop().
             std::mutex m_backendsMutex;
             std::map<std::string, G2pApi::Executive *> m_backends;
         };

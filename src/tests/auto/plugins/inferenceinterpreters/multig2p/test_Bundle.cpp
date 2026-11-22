@@ -14,14 +14,14 @@ using wolf::multig2p::Vocabulary;
 
 namespace {
 
-    /// Writes \a content to a scratch file and returns its path.
+    // Writes \a content to a scratch file and returns its path.
     fs::path writeJson(const std::string &name, const std::string &content) {
         const auto path = fs::temp_directory_path() / ("wolf-multig2p-" + name + ".json");
         std::ofstream(path, std::ios::binary) << content;
         return path;
     }
 
-    /// Loads \a content as a T and returns the error, failing the case if it loads.
+    // Loads \a content as a T and returns the error, failing the case if it loads.
     template <class T>
     srt::Error refusal(const std::string &name, const std::string &content) {
         const auto path = writeJson(name, content);
@@ -41,8 +41,8 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_Bundle)
 
-/// The reserved symbols are found by name wherever the table puts them, and the ids of the
-/// other symbols are their positions.
+// The reserved symbols are found by name wherever the table puts them, and the ids of the
+// other symbols are their positions.
 BOOST_AUTO_TEST_CASE(test_Bundle_LocatesReservedSymbolsByName) {
     const auto path = writeJson("vocab", R"({
     "symbols": ["zh/pinyin/a", "<pad>", "<unk>", "en/arpabet/hh", "<eos>", "<bos>"]
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(test_Bundle_RefusesMalformedVocabularies) {
                  "is not valid JSON");
 }
 
-/// The language id is the position in the list, and the bundle names files rather than paths.
+// The language id is the position in the list, and the bundle names files rather than paths.
 BOOST_AUTO_TEST_CASE(test_Bundle_ReadsFilesAndLanguages) {
     const auto path = writeJson("bundle", R"({
     "bundle_version": 1,
@@ -119,8 +119,8 @@ BOOST_AUTO_TEST_CASE(test_Bundle_ReadsFilesAndLanguages) {
     BOOST_CHECK_EQUAL(bundle->languageId("ko"), -1);
 }
 
-/// A version above the one this build reads is not a malformed file but a newer one, and the
-/// error says so.
+// A version above the one this build reads is not a malformed file but a newer one, and the
+// error says so.
 BOOST_AUTO_TEST_CASE(test_Bundle_RefusesVersionsItCannotRead) {
     const std::string rest = R"("files": {"encoder": "e.onnx"}, "languages": ["zh"])";
     checkRefused(refusal<Bundle>("bundle-newer", R"({"bundle_version": 2, )" + rest + "}"),
