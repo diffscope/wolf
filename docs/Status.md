@@ -62,7 +62,7 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 | 最小构建（`-DWOLF_DISABLE_LUAJIT=ON`） | LuaJIT 缺席时 `wolflua` 不构建，`test_LuaInterpreters` 与 `test_LuaSandbox` 不注册。其余测试通过，注册条件见 `src/tests/auto/CMakeLists.txt` 与 `src/tests/auto/plugins/CMakeLists.txt` |
 | ThreadSanitizer | 全部用例通过。告警只出现在两个二进制中，且整条调用栈都位于**未插桩的第三方 `.so`** 内：`test_MultiG2pInterpreter`（`libonnxruntime.so`，既有告警）与 `test_LinguistRuntime`（`libsynthrt.so` 的 `ITask`；wolf 在本轮开始使用其 worker 路径后首次出现，见 Q7）。pinyin 并发预热与双会话两个用例均无告警 |
 | Task TSan 复核 | 2026-11-18 以插桩的 synthrt、stdcorelib 与 stdcorelib-plugin 连续执行 `test_ITask` 100 次，12 个用例、70 条断言无报告。Q7 关闭 |
-| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出 15 个包，CTest 以该树为数据源通过（A67） |
+| 端口安装树 | `vcpkg install wolf-lang-packages[...]` 安装出默认的 6 个包（`cmn`、`jpn`、`yue`、`zxx` 与两个后端），CTest 以该树为数据源通过（A67） |
 | 下游消费 | CI 在安装后构建 `.github/consumer`：按 README 的写法 `find_package(synthrt-wolf)` 并链接；检查 `synthrt::wolf` 目标与安装包中不含 Support 头文件，检查导入的插件目标，并运行程序，检查这些目标所在的两个类别目录。把私有依赖放回公开链接接口时，配置期断言即失败 |
 | 版本区间 | 消费者夹具钉在修订 2，由安装的修订 3 供给：解析结果版本为 `1.0.0.3`，请求侧不是该版本（A68；用例为 `test_LinguistLoad.cpp` 的 `ServesAConsumerPinnedToAnOlderRevision`） |
 | 归档 | `make-lang-release.py --verify` 解开归档后与源逐文件比对通过 |
