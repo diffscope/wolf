@@ -175,7 +175,7 @@ namespace wolf::Api::Linguist::L1 {
     /// state(), not by an error.
     ///
     /// The G2P, S2P and Onset executives follow the same rule, and wolf::LinguistSession handles a
-    /// cancelled CancelToken in the same way.
+    /// canceled CancelToken in the same way.
     ///
     /// This behavior intentionally differs from analysis executives built on synthrt, which report
     /// a stop as an error from start(). A linguist batch is a sequence of independent words, and
@@ -268,7 +268,7 @@ namespace wolf::Api::Linguist::L1 {
         /// Returns the wolf pipeline extension of \a singer, or nullptr if the singer carries none.
         ///
         /// This function combines two steps: finding the extension registered under the identifier
-        /// of the pipeline executive and casting it to this type. The cast is a static cast; a
+        /// of the pipeline executive and casting it to this type. The cast is a static cast. A
         /// debug build with RTTI asserts the dynamic type, and the identifier establishes the type.
         /// A singer carries no extension if it declares no language that resolves to a linguist
         /// contribution.

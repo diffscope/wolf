@@ -22,7 +22,7 @@
 /// Common setup shared by the wolf tests.
 ///
 /// The build defines a WOLF_TEST_*_PLUGIN_DIR macro for each plugin category that a test requires
-/// and none for the other categories; configure() therefore sets only the plugin paths defined for
+/// and none for the other categories. It therefore sets only the plugin paths defined for
 /// this translation unit.
 namespace wolf::test {
 
@@ -48,8 +48,8 @@ namespace wolf::test {
 
     /// Returns the directory of the converted language packages, as specified by the
     /// WOLF_LANG_PACKAGES_SOURCE environment variable, or an empty path if the variable is unset.
-    /// The packages are generated, and a checkout in which the converter has not run contains none;
-    /// an empty path therefore indicates that the dependent test must be skipped.
+    /// The packages are generated, and a checkout in which the converter has not run contains none.
+    /// An empty path therefore indicates that the dependent test must be skipped.
     inline std::filesystem::path convertedRoot() {
         if (const char *override = std::getenv("WOLF_LANG_PACKAGES_SOURCE")) {
             return std::filesystem::path(override);

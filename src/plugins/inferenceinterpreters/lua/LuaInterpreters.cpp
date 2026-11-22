@@ -158,7 +158,7 @@ namespace wolf::lua {
                     }
                     auto converted = m_sandbox->callForStrings(S2P_ENTRY, pronunciation);
                     if (!converted) {
-                        // A script call ended by the interrupt is reported as cancelled rather
+                        // A script call ended by the interrupt is reported as canceled rather
                         // than as failed: returning the completed part lets the task interface
                         // settle the task as Canceled, whereas an error would settle it as
                         // Failed.

@@ -22,12 +22,12 @@ namespace wolf::pinyin {
 
     /// One cpp-pinyin engine bound to one dialect and one dictionary root.
     ///
-    /// The 2.x library has no process-global dictionary path: an engine is opened against the root
-    /// it is given and owns that association. Two engines of one process may therefore read two
-    /// different roots, which the 1.x line could not do.
+    /// The library has no process-global dictionary path: an engine is opened against the root it
+    /// is given and owns that association. Two engines of one process may therefore read two
+    /// different roots.
     ///
     /// An engine is not thread-safe for the mutating calls, but every conversion below is
-    /// read-only: after construction the upstream library documents `query` as safe on a shared
+    /// read-only: after construction the upstream library documents \c query as safe on a shared
     /// instance. Each executive still owns its own engine, because the configuration of a module
     /// carries the root and the two languages of one voicebank must not serialize.
     class Engine {
@@ -39,8 +39,8 @@ namespace wolf::pinyin {
         /// The engine matches its phrase tables across adjacent characters, so a caller that
         /// passes characters one at a time loses all phrase-level disambiguation.
         ///
-        /// Characters the library cannot accept as one element -- anything outside the Basic
-        /// Multilingual Plane becomes a surrogate pair in its UTF-16 view -- are skipped and
+        /// Characters the library cannot accept as one element (anything outside the Basic
+        /// Multilingual Plane becomes a surrogate pair in its UTF-16 view) are skipped and
         /// answered with an empty result, so that one rare character cannot fail the whole run.
         ///
         /// \return One entry per input character, in input order.
@@ -52,12 +52,6 @@ namespace wolf::pinyin {
     };
 
     /// Builds engines of the cpp-pinyin 2.x line.
-    ///
-    /// This class used to be an arbiter of the process-wide dictionary root: the 1.x library kept
-    /// that root in a global that its engine constructor read, so two roots in one process silently
-    /// disabled each other and the first one was reserved for the lifetime of a configuration. The
-    /// 2.x library takes the root as an argument to `open`, so the arbiter has nothing left to
-    /// arbitrate and is gone.
     class PinyinEngineRegistry {
     public:
         /// Returns whether \a ref names an engine that this build includes.

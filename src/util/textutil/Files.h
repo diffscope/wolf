@@ -26,8 +26,9 @@ namespace wolf {
     /// Returns the error for a file that could not be read, with the code that fileErrorCode()
     /// determines and a message that names the file.
     ///
-    /// \a what names the kind of file, such as "S2P dictionary". The message reads
-    /// "<what> not found: <path>" or "failed to open the <what>: <path>".
+    /// \a what names the kind of file, such as <tt>S2P dictionary</tt>. The message reads
+    /// <tt>&lt;what&gt; not found: &lt;path&gt;</tt> or
+    /// <tt>failed to open the &lt;what&gt;: &lt;path&gt;</tt>.
     srt::Error fileError(const std::filesystem::path &path, std::string_view what);
 
     /// Removes the line decorations of the text resources that this family reads: a UTF-8 byte

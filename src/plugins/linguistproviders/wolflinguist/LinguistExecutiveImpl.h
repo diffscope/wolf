@@ -30,7 +30,7 @@ namespace wolf {
 
     protected:
         /// Runs one conversion. The ExecutiveTask behind this executive sets the task state and
-        /// owns the worker thread; this function performs only the conversion.
+        /// owns the worker thread. This function performs only the conversion.
         Batch runBatch(const Api::Linguist::L1::ConvertInput &input) override;
 
         /// Forwards a stop request to the existing members. Each stage receives the whole batch in
@@ -46,7 +46,7 @@ namespace wolf {
         /// conversion.
         ///
         /// \return A null result, without starting the stage, if a stop request is pending after
-        /// the stage has been created; the caller then returns the results completed so far. The
+        /// the stage has been created. The caller then returns the results completed so far. The
         /// error of the stage if the stage fails. Otherwise, the result of the stage.
         template <class Stage, class Input>
         auto runStage(Stage &stage, const Input &input) -> decltype(stage.start(input));
@@ -67,7 +67,7 @@ namespace wolf {
 
         /// Returns the Onset executive and creates it on first use.
         ///
-        /// \return nullptr if the composition declares no onset import, which is valid; every
+        /// \return nullptr if the composition declares no onset import, which is valid. Every
         /// position is then marked as not an onset. An error if the executive cannot be created.
         /// Otherwise, the Onset executive.
         srt::Expected<Api::Onset::L1::Executive *> onset();

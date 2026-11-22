@@ -73,9 +73,9 @@ namespace wolf {
     }
 
     fs::path pathFromManifest(std::string_view text) {
-        // `\` is a separator on Windows and an ordinary character in a POSIX file name. A reader
-        // that passed the declared string directly to the file system would therefore open
-        // different files on the two platforms. The separator is rewritten before the string
+        // A backslash is a separator on Windows and an ordinary character in a POSIX file name.
+        // A reader that passed the declared string directly to the file system would therefore
+        // open different files on the two platforms. The separator is rewritten before the string
         // reaches the host file system. The synthrt loader normalizes the paths that it resolves
         // in the same way (pathFromManifest in PackageLoader).
         std::string normalized(text);

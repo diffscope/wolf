@@ -19,8 +19,9 @@ namespace wolf::multig2p {
 
     /// One model of a bundle and the file it was resolved to.
     struct ModelFile {
-        /// The logical model name recorded in the bundle ("encoder", "decoder_step_init",
-        /// "decoder_step"). The name belongs to the resource format rather than to any declaration.
+        /// The logical model name recorded in the bundle: <tt>encoder</tt>,
+        /// <tt>decoder_step_init</tt> or <tt>decoder_step</tt>. The name belongs to the resource
+        /// format rather than to any declaration.
         std::string logical;
 
         /// The file of that model inside the bundle directory.
@@ -72,8 +73,8 @@ namespace wolf::multig2p {
 
         /// Converts \a words, which all belong to one language, into token id sequences.
         ///
-        /// \return one sequence per word, in input order, without the begin and end markers; the
-        /// sequences decoded so far if \a stopped is set; or an error if a tensor cannot be
+        /// \return One sequence per word, in input order, without the begin and end markers. The
+        /// sequences decoded so far if \a stopped is set. An error if a tensor cannot be
         /// created or a model run fails.
         ///
         /// \a stopped is checked between decode steps, which are the only boundaries in this

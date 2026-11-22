@@ -143,7 +143,7 @@ namespace wolf {
 
         // Enrols one executive for the duration of a conversion.
         //
-        // Returns false if the token was already cancelled, in which case the conversion must not
+        // Returns false if the token was already canceled, in which case the conversion must not
         // start. Returning false here, instead of calling stop() and starting, ensures that a
         // cancellation before the batch takes effect. Otherwise the executive would consume the
         // request and run the whole chain.
@@ -335,7 +335,7 @@ namespace wolf {
             for (const auto &package : unit.loadedPackages()) {
                 for (auto spec : package.contributions(srt::SingerCategory::NAME)) {
                     // Every contribution of the singer category is a SingerSpec. as<>() is a
-                    // static cast; a debug build with RTTI asserts the dynamic type.
+                    // static cast. A debug build with RTTI asserts the dynamic type.
                     auto singer = spec->as<srt::SingerSpec>();
                     SingerLanguages languages;
                     if (auto read = readSingerLanguages(*singer)) {
@@ -852,10 +852,10 @@ namespace wolf {
         }
 
         if (!token.m_impl->enrol(executive.get())) {
-            // Cancelled before this batch began. The executive was not started, and it returns
+            // Canceled before this batch began. The executive was not started, and it returns
             // to the pool directly. The caller receives the words that the session resolved
             // itself and detects the cancellation by querying the token, which is the only way to
-            // distinguish a cancelled conversion from a conversion with empty output.
+            // distinguish a canceled conversion from a conversion with empty output.
             m_impl->giveBack(slot, std::string(language), std::move(executive), true);
             return result;
         }
@@ -867,7 +867,7 @@ namespace wolf {
         const bool reusable = !token.cancelled();
 
         if (!converted) {
-            // The stopping rule wins over a failure that raced with it: a cancelled token is not an
+            // The stopping rule wins over a failure that raced with it: a canceled token is not an
             // error (see LinguistSession.h), so the caller receives the words the session resolved
             // itself and no failure is recorded. Recording one would fault the route for a stop
             // that the host asked for, and the next unstopped conversion would report the fault

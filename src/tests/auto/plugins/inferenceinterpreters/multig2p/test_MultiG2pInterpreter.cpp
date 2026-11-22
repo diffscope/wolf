@@ -54,7 +54,7 @@ namespace {
                               wolf::test::readPluginManifest(WOLF_TEST_PLUGIN_MANIFEST))
 
     // The directory of the converted packages. The shared backend contains 14 MiB of models and
-    // is therefore never committed; every test in this file requires it.
+    // is therefore never committed. Every test in this file requires it.
     using wolf::test::convertedRoot;
 
     // Every test in this file requires the shared model backend package, the ONNX driver plugin
@@ -82,7 +82,7 @@ namespace {
     // \a runtimeDir, and registers it as the backend shared by the whole unit. A module never
     // loads its own driver.
     //
-    // \return \c true if the driver was registered; \c false if the driver plugin is missing or
+    // \return \c true if the driver was registered. \c false if the driver plugin is missing or
     //         the driver could not be created or initialized.
     bool registerDriver(ds::InferenceDriverFactory &factory, srt::SynthUnit &unit,
                         const fs::path &runtimeDir = fs::path(WOLF_TEST_ONNXRUNTIME_DIR)) {
@@ -567,7 +567,7 @@ BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_RefusesTheBatchWithoutAFallbackToo
 // so a backend that cannot be built is no failure at all: the task succeeds and every word keeps
 // the verdict of the ordering.
 //
-// This case uses the chain and the pair of the first case above; only the words differ, which
+// This case uses the chain and the pair of the first case above. Only the words differ, which
 // isolates the work of the step from the state of its backend.
 BOOST_AUTO_TEST_CASE(test_MultiG2pInterpreter_SucceedsWhenNoWordNeedsTheBackend) {
     srt::SynthUnit unit;

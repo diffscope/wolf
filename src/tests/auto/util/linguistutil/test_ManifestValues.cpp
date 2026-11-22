@@ -32,7 +32,7 @@ namespace {
 BOOST_AUTO_TEST_SUITE(test_ManifestValues)
 
 // The published schema for exports.languages specifies the structure of a pair. The loader must
-// agree with the schema; otherwise a schema-invalid package could still load, and the schema
+// agree with the schema. Otherwise a schema-invalid package could still load, and the schema
 // would be documentation rather than a contract.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_PairsMatchTheirGrammar) {
     auto read = wolf::readLanguageSchemes(parse(R"json([{ "language": "cmn", "scheme": "pinyin" },
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_PairsMatchTheirGrammar) {
     BOOST_CHECK(rejection(R"json([{ "language": "eng", "scheme": "arpabet-" }])json")
                     .find("malformed scheme") != std::string::npos);
 
-    // Otherwise a misspelt key would leave the correct key absent and the pair silently
+    // Otherwise a misspelled key would leave the correct key absent and the pair silently
     // incomplete.
     BOOST_CHECK(rejection(R"json([{ "language": "eng", "scheme": "arpabet", "note": "x" }])json")
                     .find("unknown key") != std::string::npos);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_ImportOptionsMustBeAnEmptyObject) {
 
 // A string set written as a path follows the same rule as every other reader: a missing file
 // yields FileNotFound, an existing file that cannot be read yields FileNotOpen, and both messages
-// name the path. Regression: the two faults must not be collapsed into FileNotOpen.
+// name the path. The two faults must not be collapsed into FileNotOpen.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_NamesTheStringSetFileItCannotRead) {
     namespace fs = std::filesystem;
     const auto base = fs::temp_directory_path() / "wolf_manifest_values";
@@ -130,10 +130,10 @@ BOOST_AUTO_TEST_CASE(test_ManifestValues_NamesTheStringSetFileItCannotRead) {
     fs::remove_all(base);
 }
 
-// A declared path treats `\` as a separator, as the specification requires, so the same
-// declaration names the same file on a host that recognizes only `/` as a separator. On such a
-// host, a reader that passed the string to the file system unchanged would look for a single file
-// whose name contains backslashes.
+// A declared path treats a backslash as a separator, as the specification requires, so the same
+// declaration names the same file on a host that recognizes only a forward slash as a separator.
+// On such a host, a reader that passed the string to the file system unchanged would look for a
+// single file whose name contains backslashes.
 BOOST_AUTO_TEST_CASE(test_ManifestValues_BackslashesSeparateDeclaredPaths) {
     namespace fs = std::filesystem;
     BOOST_CHECK(wolf::pathFromManifest("assets\\dict\\words.txt") ==

@@ -269,10 +269,10 @@ namespace wolf {
         /// reports the route Unavailable afterwards. A per-word failure is a result of the
         /// conversion and is not cached.
         ///
-        /// A cancelled \a token is not an error, according to the stopping rule of
+        /// A canceled \a token is not an error, according to the stopping rule of
         /// LinguistExecutive. The result holds the words finished before the cancellation took
         /// effect, and the words not reached are returned in their unconverted form. A caller
-        /// distinguishes a cancelled conversion from a completed conversion by querying the
+        /// distinguishes a canceled conversion from a completed conversion by querying the
         /// token.
         srt::Expected<std::unique_ptr<Api::Linguist::L1::ConvertResult>>
             convert(const SingerRef &singer, std::string_view language,

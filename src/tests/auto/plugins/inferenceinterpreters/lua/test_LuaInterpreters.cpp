@@ -190,8 +190,8 @@ end
 
 // The iterator of the utf8 library stands in for the standard one, so a position the script hands
 // it must be handled the way the standard library handles it: a position at or before the start
-// restarts the iteration, and a position past the text ends it. Such a position used to reach the
-// decoder unchecked, where a negative one became a huge offset.
+// restarts the iteration, and a position past the text ends it. The decoder must clamp a negative
+// position, which would otherwise become a huge offset.
 BOOST_AUTO_TEST_CASE(test_LuaInterpreters_ClampsTheUtf8IteratorPosition) {
     srt::SynthUnit unit;
     auto handle = load(unit, writePackage("utf8-position", "S2P", R"(

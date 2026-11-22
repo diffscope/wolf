@@ -96,7 +96,7 @@ namespace {
 
 BOOST_AUTO_TEST_SUITE(test_PinyinInterpreter)
 
-// Regression: both languages resolve through one dictionary root; no engine may disable another.
+// Both languages resolve through one dictionary root. No engine may disable another.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesBothLanguagesAtOnce) {
     srt::SynthUnit unit;
     configure(unit);
@@ -115,11 +115,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesBothLanguagesAtOnce) {
 
 // The two languages of one voicebank must warm concurrently, not sequentially.
 //
-// The 1.x arbiter held a lock around the publication of the process-global dictionary path, and
-// this case pinned that the lock did not cover engine construction. The 2.x library has neither
-// the global path nor the lock, but the property still holds: two `Engine::open` calls for one
-// root must not serialize, and under ThreadSanitizer this case still checks the upstream
-// constructor for data races.
+// Two Engine::open calls for one root must not serialize. Under ThreadSanitizer this case also
+// checks the upstream constructor for data races.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BuildsEnginesConcurrently) {
     srt::SynthUnit unit;
     configure(unit);
@@ -154,7 +151,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_BuildsEnginesConcurrently) {
                 (*result)->words[0].pronunciation != expected) {
                 ++wrong;
             }
-            // Deletion detaches a child from its pipeline; children that are not deleted
+            // Deletion detaches a child from its pipeline. Children that are not deleted
             // accumulate.
             delete *linguist;
         }
@@ -269,9 +266,8 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_FallsBackThroughTheChain) {
 
 // Two packages that ship different dictionary roots coexist.
 //
-// The 1.x library kept one dictionary root in a process-global variable, so a second root had to
-// be rejected by an arbiter. The 2.x library takes the root as an argument to `Engine::open`, so
-// both roots are simply loaded; this test pins that the second load no longer fails.
+// The library takes the root as an argument to Engine::open, so both roots are simply loaded.
+// This test pins that the second load succeeds.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesTwoDictionaryRoots) {
     srt::SynthUnit unit;
     configure(unit);
@@ -293,8 +289,7 @@ BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ServesTwoDictionaryRoots) {
 // A failed load must not leave state behind that stops the next load.
 //
 // The rollback fixture fails on a second, broken module after the pinyin module was configured.
-// The 1.x arbiter had to release the process-wide root here; the 2.x library has no such root, so
-// what this test pins now is the weaker but still useful property that the failed transaction does
+// The pinyin engine owns no process-wide root, so the test pins that the failed transaction does
 // not poison the unit.
 BOOST_AUTO_TEST_CASE(test_PinyinInterpreter_ReturnsTheRootWhenTheLoadFails) {
     srt::SynthUnit unit;

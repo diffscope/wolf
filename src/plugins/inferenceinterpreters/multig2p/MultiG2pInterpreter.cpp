@@ -215,7 +215,7 @@ namespace wolf::multig2p {
                 }
                 mapped = languageMap.take();
             } else if (key == "maxLen") {
-                // The decoder counts steps with an `int` (`Decoder.cpp`:287), so a value
+                // The decoder counts steps with an int (Decoder.cpp:287), so a value
                 // that does not fit one is rejected instead of being narrowed: it would
                 // become zero or negative, the loop would not run at all, and every word
                 // would come back as its first token alone.

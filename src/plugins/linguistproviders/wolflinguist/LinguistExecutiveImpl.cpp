@@ -47,11 +47,11 @@ namespace wolf {
         // after the cut with an empty pronunciation and no error, which is indistinguishable from
         // a conversion to an empty result, and those words were then passed to the later stages.
         // The chain variant rejects a short batch from its backend and the session rejects a
-        // short batch from this executive; this check applies the same rule at the third point at
+        // short batch from this executive. This check applies the same rule at the third point at
         // which the mismatch can occur. A stop request is the only exception: a canceled stage
         // returns the entries it completed, and the caller expects a partial result in that case.
         //
-        // \return Success if \a produced equals \a requested; otherwise an InvalidFormat error.
+        // \return Success if \a produced equals \a requested. Otherwise an InvalidFormat error.
         srt::Expected<void> checkBatchSize(std::size_t produced, std::size_t requested,
                                            const char *stage) {
             if (produced == requested) {
@@ -91,7 +91,7 @@ namespace wolf {
     }
 
     void LinguistExecutiveImpl::onStop() {
-        // The conversion loop checks the flag between stages; the members are stopped here as
+        // The conversion loop checks the flag between stages. The members are stopped here as
         // well, because a stage runs a whole batch in one call.
         if (auto g2p = m_g2p.load()) {
             (void) g2p->stop();
@@ -160,7 +160,7 @@ namespace wolf {
 
     srt::Expected<Api::S2p::L1::Executive *> LinguistExecutiveImpl::s2p() {
         if (!m_s2p.load()) {
-            // An absent S2P import is valid, as is an absent onset import; the composition then
+            // An absent S2P import is valid, as is an absent onset import. The composition then
             // ends at the pronunciation layer.
             if (!spec().findImport(LinguistApi::ROLE_S2P)) {
                 return nullptr;
@@ -337,7 +337,7 @@ namespace wolf {
             return result;
         }
 
-        // Pass three: onsets. A composition without an onset member is not an error; every
+        // Pass three: onsets. A composition without an onset member is not an error. Every
         // position is marked as not an onset, which is the result that the contract specifies
         // for an uncovered position.
         auto marker = onset();

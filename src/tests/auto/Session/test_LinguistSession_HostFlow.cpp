@@ -63,7 +63,7 @@ namespace {
     //
     // This class is not part of wolf and is not intended to become part of it. It is written out
     // so that the domain can be evaluated by the work it leaves to a host. Everything below that
-    // is not a project decision is work that every host would repeat; the session layer exists
+    // is not a project decision is work that every host would repeat. The session layer exists
     // to absorb that work.
     class Host {
     public:
@@ -104,7 +104,7 @@ namespace {
             return m_extension->defaultLanguage();
         }
 
-        // Returns whether \a language is ready; a host performs this check before it allows the
+        // Returns whether \a language is ready. A host performs this check before it allows the
         // user to enter text in the language.
         //
         // The host keeps two caches because each repeated request to the domain incurs its cost
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_DeclaresItsLanguages) {
     // A language that this voicebank does not declare is rejected rather than partially built.
     BOOST_CHECK(!host.ensureLanguageReady("eng"));
 
-    // A repeated request builds nothing, including the request for the failed language; the host
+    // A repeated request builds nothing, including the request for the failed language. The host
     // currently maintains that failure cache itself.
     BOOST_CHECK(host.ensureLanguageReady("cmn"));
     BOOST_CHECK(!host.ensureLanguageReady("eng"));
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_ConvertsALineInTwoStages) {
     BOOST_CHECK(notes[1].onsets[0]);
     BOOST_CHECK(!notes[1].onsets[1]);
 
-    // The reserved marker became a single phoneme; the slur produced no phonemes.
+    // The reserved marker became a single phoneme. The slur produced no phonemes.
     BOOST_REQUIRE_EQUAL(notes[2].phonemes.size(), 1u);
     BOOST_CHECK_EQUAL(notes[2].phonemes[0], "SP");
     BOOST_CHECK(notes[4].phonemes.empty());
@@ -362,7 +362,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_FollowsAnEditedPronunciation)
     Host host(unit);
     openFixture(host);
 
-    // 行 reads xing in isolation and hang in the name of a bank; only the user can determine the
+    // 行 reads xing in isolation and hang in the name of a bank. Only the user can determine the
     // intended reading.
     std::vector<Note> notes = {
         {"cmn", "\xE8\xA1\x8C"}
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_FollowsAnEditedPronunciation)
 }
 
 // Checks that every syllable produced by the G2P of the language is present in the dictionary of
-// the voicebank; otherwise an ordinary word converts to a reading and then to no phonemes. The
+// the voicebank. Otherwise an ordinary word converts to a reading and then to no phonemes. The
 // sample covers the retroflex initials, the compound finals and the ü finals, which are the
 // syllables most prone to split-rule errors.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_CoversTheSyllablesTheG2pProduces) {
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_HostFlow_TheSameLineThroughTheSession)
     BOOST_CHECK(session.probe(singer, "cmn").hasSeparatePronunciationLayer);
     BOOST_CHECK(!session.probe(singer, "eng").hasSeparatePronunciationLayer);
 
-    // Stage A. SP is sent with the other words; the session converts it and never passes it to
+    // Stage A. SP is sent with the other words. The session converts it and never passes it to
     // the language.
     LinguistApi::ConvertInput first;
     first.depth = LinguistApi::Depth::Pronunciation;

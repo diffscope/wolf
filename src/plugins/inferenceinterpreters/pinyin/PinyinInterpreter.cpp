@@ -42,7 +42,7 @@ namespace wolf::pinyin {
         // Checks that \a ref names an engine compiled into this plugin. An unknown ref is a
         // declaration error and is reported at load time rather than at conversion time.
         //
-        // \return Success if the ref is known; otherwise a FeatureNotSupported error.
+        // \return Success if the ref is known. Otherwise a FeatureNotSupported error.
         srt::Expected<void> checkEngineRef(const std::string &position, const std::string &ref) {
             if (!PinyinEngineRegistry::isKnownRef(ref)) {
                 return srt::Error(srt::Error::FeatureNotSupported,
@@ -178,7 +178,7 @@ namespace wolf::pinyin {
             // without a pronunciation, and the fallback step of the chain determines its result.
             //
             // \return A word with the error PhonemeGenerationFailed if the word has no characters
-            // or if any character has no reading; otherwise the converted word with its
+            // or if any character has no reading. Otherwise the converted word with its
             // candidates.
             static G2pApi::WordOutput assemble(const std::vector<CharacterResult> &converted,
                                                std::size_t begin, std::size_t end) {
@@ -298,9 +298,8 @@ namespace wolf::pinyin {
                                                             stdc::path::to_utf8(result->dictRoot));
         }
 
-        // The 2.x library takes the dictionary root as an argument to Engine::open, so
-        // there is no process-wide root to claim here. Two packages that ship different
-        // roots coexist, which the 1.x arbiter could not allow.
+        // The library takes the dictionary root as an argument to Engine::open, so there is no
+        // process-wide root to claim here. Two packages that ship different roots coexist.
         return std::unique_ptr<srt::ContribConfiguration>(std::move(result));
     }
 

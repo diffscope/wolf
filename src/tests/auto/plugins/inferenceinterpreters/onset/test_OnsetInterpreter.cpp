@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_LeavesUncoveredPositionsFalse) {
     BOOST_CHECK(onsets[1]);
 }
 
-// The wildcard matches any phoneme, including phonemes absent from the type table; a derived
+// The wildcard matches any phoneme, including phonemes absent from the type table. A derived
 // recognition set is therefore a lower bound rather than the complete coverage.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_WildcardCoversUnregistered) {
     srt::SynthUnit unit;
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_RejectsMalformedRules) {
 // Both cases fail in the loader that measures and hashes the files declared by a package. That
 // loader reports the error before any plugin reads the file, and its message does not name the
 // file. The loader in this plugin is reached through the other route, in which a voicebank
-// specifies its own rule file; the messages of these two faults are therefore checked in that
+// specifies its own rule file. The messages of these two faults are therefore checked in that
 // route rather than here.
 BOOST_AUTO_TEST_CASE(test_OnsetInterpreter_SeparatesAMissingFileFromAnUnreadableOne) {
     {

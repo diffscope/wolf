@@ -743,7 +743,7 @@ namespace wolf::chain {
                 for (std::size_t i = 0; i < run.size(); ++i) {
                     auto &word = words[run[i]];
                     const auto &produced = result->words[i];
-                    // Word-level errors of the backend are passed through unchanged; the chain
+                    // Word-level errors of the backend are passed through unchanged. The chain
                     // defines no error codes of its own.
                     word.error = produced.error;
                     if (produced.error != G2pApi::Error::None || produced.pronunciation.empty()) {

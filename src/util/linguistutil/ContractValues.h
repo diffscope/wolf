@@ -48,7 +48,7 @@ namespace wolf {
     /// A key that the shape does not name is rejected, so that a misspelled key fails the package
     /// instead of silently omitting the intended declaration. A string set specified as a path is
     /// resolved against the directory of the declaration. \a what names the block in error
-    /// messages, such as "exports" or "linguist exports".
+    /// messages, such as <tt>exports</tt> or <tt>linguist exports</tt>.
     srt::Expected<ContractExports> readContractExports(const srt::ContribSpec &spec,
                                                        const ExportsShape &shape,
                                                        std::string_view what);

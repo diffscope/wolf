@@ -131,8 +131,8 @@ BOOST_AUTO_TEST_CASE(test_S2pInterpreter_DictLooksUpWholePronunciation) {
     BOOST_CHECK(convert(*handle, "absent").empty());
 }
 
-// The mapping variant substitutes each phoneme individually and passes through unlisted phonemes;
-// its output set is therefore the target column together with every unlisted input phoneme.
+// The mapping variant substitutes each phoneme individually and passes through unlisted phonemes.
+// Its output set is therefore the target column together with every unlisted input phoneme.
 BOOST_AUTO_TEST_CASE(test_S2pInterpreter_MappingPassesThroughUnlisted) {
     srt::SynthUnit unit;
     auto handle =

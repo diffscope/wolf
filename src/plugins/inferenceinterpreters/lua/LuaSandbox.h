@@ -25,8 +25,8 @@ namespace wolf::lua {
         ///
         /// \a chunkName names the script in error messages.
         ///
-        /// \return the sandbox; a FeatureNotSupported error if the interpreter cannot be created;
-        /// an InvalidFormat error if \a source does not compile or fails to run.
+        /// \return The sandbox. A FeatureNotSupported error if the interpreter cannot be created.
+        /// An InvalidFormat error if \a source does not compile or fails to run.
         static srt::Expected<std::unique_ptr<Sandbox>> create(const std::string &source,
                                                               const std::string &chunkName);
 
@@ -36,7 +36,7 @@ namespace wolf::lua {
         ///
         /// A check at word boundaries is insufficient because a script can loop indefinitely, so
         /// the interpreter also checks the request between instruction batches. The interrupted
-        /// call fails, and the caller reports the conversion as cancelled rather than as an
+        /// call fails, and the caller reports the conversion as canceled rather than as an
         /// incorrect result.
         void interrupt() noexcept;
 
@@ -48,7 +48,7 @@ namespace wolf::lua {
 
         /// Calls the global function \a name with one string argument.
         ///
-        /// \return the elements of the returned table; an InvalidFormat error if the call fails,
+        /// \return The elements of the returned table. An InvalidFormat error if the call fails,
         /// the function does not return a table, or the table holds an element that is not a
         /// string.
         srt::Expected<std::vector<std::string>> callForStrings(const std::string &name,
@@ -56,7 +56,7 @@ namespace wolf::lua {
 
         /// Calls the global function \a name with a table of strings.
         ///
-        /// \return the elements of the returned table; the same errors as callForStrings(), and an
+        /// \return The elements of the returned table. The same errors as callForStrings(), and an
         /// InvalidFormat error if the table length differs from the size of \a argument or the
         /// table holds an element that is not a boolean.
         srt::Expected<std::vector<bool>>
@@ -71,7 +71,7 @@ namespace wolf::lua {
 
     /// Reads a script from disk.
     ///
-    /// \return the script source; an error if the file cannot be opened; an InvalidFormat error
+    /// \return The script source. An error if the file cannot be opened. An InvalidFormat error
     /// if the file is empty.
     srt::Expected<std::string> readScript(const std::filesystem::path &path);
 

@@ -26,7 +26,7 @@ namespace {
     //
     // The linguist category belongs to wolf and the inference category to synthrt, so the two
     // categories have separate search paths even though both plugins are built in this repository.
-    // A search path contains one subdirectory per plugin; these paths are therefore the parent
+    // A search path contains one subdirectory per plugin. These paths are therefore the parent
     // directories of the plugin directories.
     void configurePlugins(srt::SynthUnit &unit) {
         std::vector<fs::path> linguist = {fs::path(WOLF_TEST_LINGUIST_PLUGIN_DIR)};
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_OpenSetDefaultsToClosed) {
 
 // The contract publishes a schema for exports, and the loader rejects every key that the schema
 // rejects. A key that the contract does not define is a misspelling, and a declaration with a
-// misspelt field states less than its author intended.
+// misspelled field states less than its author intended.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Load_RefusesAnUnknownExportsKey) {
     srt::SynthUnit unit;
     configurePlugins(unit);

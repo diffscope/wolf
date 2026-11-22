@@ -165,7 +165,7 @@ namespace wolf::lua {
             const auto *text = luaL_checklstring(state, 1, &size);
             const auto position = luaL_checkinteger(state, 2);
             // The standard iterator treats a position at or below the start as the start and a
-            // position past the text as the end of the iteration; anything inside the text is the
+            // position past the text as the end of the iteration. Anything inside the text is the
             // character the caller stepped over. Clamping the position here is also what keeps
             // every offset used below inside the text, whatever the caller passed.
             std::size_t index = 0;
@@ -321,7 +321,7 @@ namespace wolf::lua {
         // The interrupt below is a count hook, and LuaJIT does not check hooks inside compiled
         // traces: a loop that runs long enough to be compiled is exactly the loop that can no
         // longer be stopped. This behavior was measured: with the compiler enabled, a bare
-        // `while true do end` runs indefinitely with the hook installed.
+        // A bare while-true loop runs indefinitely with the hook installed.
         //
         // The compiler therefore stays disabled. These scripts perform a few string operations
         // per word, for which the cost of interpretation is negligible, and the ability to stop a

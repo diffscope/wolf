@@ -192,8 +192,8 @@ namespace wolf::multig2p {
         const auto resolved = models.take();
 
         // A model is loaded into the slot that its logical name selects, rather than into the slot
-        // at the same position. The two lists used to be aligned by position, where reordering
-        // LOGICAL silently swapped two models: nothing in the compiler or in the tests compared a
+        // at the same position. Aligning the two lists by position would silently swap two models
+        // when LOGICAL is reordered, and nothing in the compiler or in the tests would compare a
         // name with the slot that received it. The guard below reports a name that has no slot,
         // which is what an edit that extends LOGICAL without extending this lookup hits.
         const auto slotFor = [&decoder](const std::string &logical) {

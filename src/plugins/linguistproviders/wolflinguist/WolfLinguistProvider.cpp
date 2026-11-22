@@ -95,7 +95,7 @@ namespace wolf {
         // target, which the linguist category has already validated, so a malformed key cannot
         // match, and a separate rule could only conflict with this one.
         //
-        // \return Success if the entry is valid; otherwise an error that describes the first
+        // \return Success if the entry is valid. Otherwise an error that describes the first
         // violation.
         srt::Expected<void> validateSingerLanguage(const srt::ContribSpec &singer,
                                                    const SingerLanguage &entry) {
@@ -221,7 +221,7 @@ namespace wolf {
                             // the three roles only, so a misspelled role such as linguist/onsets
                             // loads and leaves the composition with fewer stages than the
                             // declaration lists. Rejecting the role would change which packages
-                            // load; the lint rejects it, and the loader reports a warning.
+                            // load. The lint rejects it, and the loader reports a warning.
                             logCategory().srtWarning(
                                 "linguist %1 imports the role \"%2\", which the %3 contract "
                                 "does not bind; the import is ignored",

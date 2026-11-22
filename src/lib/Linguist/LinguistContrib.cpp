@@ -44,14 +44,14 @@ namespace wolf {
         // module declaration root and requires that unknown fields in such objects not cause
         // rejection. A category that rejected them would cause every field that the framework
         // adds later to fail to load in earlier builds of wolf. Strict validation applies where
-        // wolf defines the schema: `exports`, `configuration` and `imports[].options`.
+        // wolf defines the schema: exports, configuration and imports[].options.
         //
         // The warning loses no error. A misspelled required field still fails, because the
         // intended field is then missing. Only a misspelled optional field is reported as a
         // warning instead of an error, which is the tradeoff that the specification requires.
         void warnAboutUnknownFields(const srt::JsonObject &declaration,
                                     const std::filesystem::path *path) {
-            // Common module fields of the framework, as defined by the upper specification. `vars`
+            // Common module fields of the framework, as defined by the upper specification. vars
             // is included although the loader expands and removes it before a category receives
             // the declaration, so that the list is complete.
             static const std::set<std::string_view> framework = {

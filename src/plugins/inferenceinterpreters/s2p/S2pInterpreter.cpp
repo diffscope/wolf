@@ -98,8 +98,8 @@ namespace wolf::s2p {
 
         // Loads the table of a variant through the shared resource cache.
         //
-        // \return The table for the dict and mapping variants; an empty Table for any other
-        // variant; the load error if the table cannot be loaded.
+        // \return The table for the dict and mapping variants. An empty Table for any other
+        // variant. The load error if the table cannot be loaded.
         srt::Expected<Table> loadTable(const std::string &variant, const fs::path &file) {
             auto &cache = ResourceCache::instance();
             if (variant == DictTriplet.variant()) {
@@ -212,7 +212,7 @@ namespace wolf::s2p {
             return file.takeError();
         }
         auto result = std::make_unique<Configuration>(m_variant);
-        // The path is used only to load the table; the direct variant has no table.
+        // The path is used only to load the table. The direct variant has no table.
         auto table = loadTable(m_variant, file.take());
         if (!table) {
             return table.takeError();

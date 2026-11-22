@@ -24,7 +24,7 @@ namespace wolf::pinyin {
         // The registry of the built-in dialects, which the 2.x library keeps in the caller.
         //
         // A function-local static, so that the engines opened against it outlive every static that
-        // could still call into them during shutdown. `Registry` is neither copyable nor movable.
+        // could still call into them during shutdown. Registry is neither copyable nor movable.
         cpp_pinyin::v2::Registry &registry() {
             static cpp_pinyin::v2::Registry instance;
             return instance;
@@ -37,7 +37,7 @@ namespace wolf::pinyin {
             std::size_t units = 0;
             for (const char byte : text) {
                 const auto lead = static_cast<unsigned char>(byte);
-                // Count only the bytes that start a sequence; continuation bytes are skipped.
+                // Count only the bytes that start a sequence. Continuation bytes are skipped.
                 if ((lead & 0xC0) != 0x80) {
                     units += lead >= 0xF0 ? 2 : 1;
                 }
@@ -83,7 +83,7 @@ namespace wolf::pinyin {
                 if (!queried) {
                     // A batch-level failure (the engine is not ready, the dictionaries changed under
                     // it) is reported as "nothing converted" so that the chain falls back. The
-                    // alternative -- failing the whole word -- would turn one bad character into a
+                    // alternative, failing the whole word, would turn one bad character into a
                     // failed conversion of the line.
                     return results;
                 }
@@ -131,9 +131,9 @@ namespace wolf::pinyin {
                               "unknown pinyin engine: " + std::string(ref));
         }
 
-        // The dialect directory is checked before the library is called so that the diagnostic names
-        // the directory the declaration asked for; the library reports the files it could not read,
-        // which is a level lower than the author needs.
+        // The dialect directory is checked before the library is called so that the diagnostic
+        // names the directory the declaration asked for. The library reports the files it could
+        // not read, which is a level lower than the author needs.
         const auto directory = root / std::string(ref);
         std::error_code ec;
         if (!fs::is_directory(directory, ec)) {

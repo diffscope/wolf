@@ -17,7 +17,7 @@ namespace wolf::s2p {
     /// phoneme. Tabs are not separators, because the dictionary formats use tabs as column
     /// separators.
     ///
-    /// \return The phonemes in order; an empty sequence if \a pronunciation contains only
+    /// \return The phonemes in order. An empty sequence if \a pronunciation contains only
     /// spaces or is empty.
     std::vector<std::string> splitPronunciation(std::string_view pronunciation);
 
@@ -36,7 +36,7 @@ namespace wolf::s2p {
         /// A missing entry is not a failure, because Level 1 provides S2P with no per-unit error
         /// channel.
         ///
-        /// \return The phonemes of the entry; an empty sequence if \a pronunciation is absent.
+        /// \return The phonemes of the entry. An empty sequence if \a pronunciation is absent.
         std::vector<std::string> convert(std::string_view pronunciation) const;
 
     private:

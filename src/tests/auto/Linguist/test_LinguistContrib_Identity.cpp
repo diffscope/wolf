@@ -25,7 +25,7 @@ namespace {
     }
 
     // Fails the current test with the error text if \a handle holds an error. Calling error() on
-    // an Expected that holds a value is undefined behavior; the check therefore precedes the
+    // an Expected that holds a value is undefined behavior. The check therefore precedes the
     // construction of the message.
     void requireOpened(const srt::Expected<srt::PackageHandle> &handle, const char *what) {
         if (!handle) {
@@ -116,11 +116,11 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_RejectsMalformedIdentity) {
 // validate only the fields that it defines and forbids rejection because of unknown fields. A
 // category that rejected unknown fields would cause every field that the framework adds later to
 // fail to load on wolf builds that predate the field. Such a forward-compatibility break is not
-// wolf's to impose on its upstream. wolf remains strict for the schemas that it owns: `exports`,
-// `configuration` and `imports[].options` all reject keys that they do not define.
+// wolf's to impose on its upstream. wolf remains strict for the schemas that it owns: exports,
+// configuration and imports[].options all reject keys that they do not define.
 //
-// No validation is lost. A misspelt *required* field still fails because the correctly spelt
-// field is then missing; the identity cases above cover that failure.
+// No validation is lost. A misspelled *required* field still fails because the correctly spelled
+// field is then missing. The identity cases above cover that failure.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_IgnoresUnknownDeclarationField) {
     srt::SynthUnit unit;
     auto handle = openData(unit, fixturePath("unknown-field"));

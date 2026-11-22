@@ -178,8 +178,8 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_ParsesOnceUnderContention) {
 
 // The index must not grow without limit across a session of loading and unloading.
 //
-// Regression: an entry whose value is destroyed with its last holder must be reclaimed, instead
-// of occupying a map node and a control block for the lifetime of the process.
+// An entry whose value is destroyed with its last holder must be reclaimed, instead of occupying
+// a map node and a control block for the lifetime of the process.
 //
 // Each round uses a separate path. Reusing one path would allow the stamp memo to return the
 // previous digest whenever the rewrite preserved both size and modification time, so most rounds
@@ -252,9 +252,9 @@ BOOST_AUTO_TEST_CASE(test_ResourceCache_HandsAFailureToEveryWaiter) {
 
 // A parser that throws must not leave its resource permanently in progress.
 //
-// Regression: the key must not remain in the in-flight index, where later acquisitions would wait
-// on a promise that is never fulfilled and waiting executives would receive a broken promise
-// instead of an error.
+// The key must not remain in the in-flight index, where later acquisitions would wait on a promise
+// that is never fulfilled and waiting executives would receive a broken promise instead of an
+// error.
 BOOST_AUTO_TEST_CASE(test_ResourceCache_SurvivesAParserThatThrows) {
     auto &cache = wolf::ResourceCache::instance();
     Probe::clear();

@@ -90,8 +90,7 @@ BOOST_AUTO_TEST_CASE(test_Verifier_MatchesWholeWords) {
 // Each pattern of an entry keeps its own inline flags. A flag remains in effect until the end of
 // its enclosing group.
 //
-// Regression: joining the patterns with a bare `|` must not apply the flags of the first pattern
-// to the second.
+// Joining the patterns with a bare | must not apply the flags of the first pattern to the second.
 BOOST_AUTO_TEST_CASE(test_Verifier_KeepsInlineFlagsToTheirOwnPattern) {
     auto entries = parse(R"json([
         { "type": "regex", "value": ["(?i)abc", "XYZ"], "mode": "convert" }
@@ -125,8 +124,8 @@ BOOST_AUTO_TEST_CASE(test_Verifier_KeepsEachPatternsAlternationInside) {
 // A missing dictionary and an unreadable dictionary are different faults, distinguished by the
 // error code and identified by path.
 //
-// Regression: the verifier must not report both as "not found", and must not accept a directory
-// in place of the file as an empty dictionary.
+// The verifier must not report both faults as not found, and must not accept a directory in place
+// of the file as an empty dictionary.
 BOOST_AUTO_TEST_CASE(test_Verifier_SeparatesAMissingDictionaryFromAnUnreadableOne) {
     auto entries = parse(R"json([
         { "type": "dict", "value": ["placeholder"], "mode": "convert" }

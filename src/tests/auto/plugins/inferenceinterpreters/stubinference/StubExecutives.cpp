@@ -20,7 +20,7 @@ namespace wolf::stub {
         // The three stubs share the task implementation of the real variants, so that a stub
         // substitutes accurately for a real variant: a stub with an incorrect waitForFinished()
         // would hide exactly the class of defect that the real variants had. A stub has no work to
-        // cancel within a batch, so its runBatch() never reads the stop flag; a stop request still
+        // cancel within a batch, so its runBatch() never reads the stop flag. A stop request still
         // sets the run state to Canceled, as it does for a real variant. The one exception is the
         // hold of StubConfiguration::holdMs, which is what gives a batch something to cancel.
         template <class Base, class Input, class Result>
@@ -28,8 +28,8 @@ namespace wolf::stub {
 
         // Reads the optional exports.languages key shared by G2P and S2P.
         //
-        // \return The declared pairs; an empty list if the exports are not an object or have no
-        // languages key; an error if the value is malformed.
+        // \return The declared pairs. An empty list if the exports are not an object or have no
+        // languages key. An error if the value is malformed.
         srt::Expected<std::vector<Api::Common::L1::LanguageScheme>>
             readOptionalLanguages(const srt::ContribSpec &spec) {
             if (!spec.manifestExports().isObject()) {
@@ -45,8 +45,8 @@ namespace wolf::stub {
 
         // Reads one optional string set from the exports.
         //
-        // \return The strings; an empty list if the exports are not an object or have no \a key;
-        // an error if the value is malformed.
+        // \return The strings. An empty list if the exports are not an object or have no \a key.
+        // An error if the value is malformed.
         srt::Expected<std::vector<std::string>> readOptionalStringSet(const srt::ContribSpec &spec,
                                                                       std::string_view key) {
             if (!spec.manifestExports().isObject()) {
@@ -75,7 +75,7 @@ namespace wolf::stub {
             // A returned batch shorter than its input violates the provider ABI, and three layers
             // reject it: the chain variant for its backend, the linguist executive for its
             // stages, and the session for the executive. No shipped module produces such a batch,
-            // so the stub must produce it; a guard against a contract violation has value only if
+            // so the stub must produce it. A guard against a contract violation has value only if
             // a test demonstrates that the guard triggers.
             std::size_t dropWords = 0;
 

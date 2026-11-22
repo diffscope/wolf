@@ -30,7 +30,7 @@ namespace {
     };
 
     // One task and the two things an executive observes about it: the runs it performed and the
-    // settle callbacks it received. `stopRequested` stands for the flag that the executive sets in
+    // settle callbacks it received. stopRequested stands for the flag that the executive sets in
     // stop() and that the callback reads before consuming it.
     class Fixture {
     public:

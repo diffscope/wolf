@@ -29,12 +29,13 @@ namespace wolf {
 
     /// Reads a declared path as the specification defines it.
     ///
-    /// Spec 2.4 treats `/` and `\` as separators and requires the reader to split and normalize the
-    /// string before passing it to the host file system, so that one declaration names the same
-    /// file on a host that recognizes only `/` as a separator. This function implements that step:
-    /// it rewrites `\` and passes the result to \c stdc::path::from_utf8. Every reader of a
-    /// declared path calls this function instead of implementing the rule separately, so that the
-    /// meaning of a path does not depend on the platform.
+    /// Spec 2.4 treats <tt>/</tt> and <tt>\\</tt> as separators and requires the reader to split
+    /// and normalize the string before passing it to the host file system, so that one declaration
+    /// names the same file on a host that recognizes only <tt>/</tt> as a separator. This function
+    /// implements that step: it rewrites <tt>\\</tt> and passes the result to
+    /// \c stdc::path::from_utf8. Every reader of a declared path calls this function instead of
+    /// implementing the rule separately, so that the meaning of a path does not depend on the
+    /// platform.
     ///
     /// Resolution and further normalization remain the responsibility of the caller, because the
     /// readers differ in whether they accept an absolute path, in the base against which they
@@ -47,7 +48,8 @@ namespace wolf {
     /// validated here instead of by separate copies of the rule.
     bool isLanguageHandle(std::string_view value);
 
-    /// Matches a scheme name: [a-z0-9]+( "-" [a-z0-9]+ )*
+    /// Matches a scheme name: lowercase ASCII letters and digits, with groups separated by a
+    /// hyphen.
     bool isSchemeName(std::string_view value);
 
     /// Reads an optional boolean. An absent value yields \a fallback. A value that is not a

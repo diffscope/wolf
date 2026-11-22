@@ -25,7 +25,7 @@ namespace wolf::Api::S2p::L1 {
         }
 
         /// Pairs whose pronunciations this module consumes. This key is the dual of the G2P key
-        /// of the same name and is equally optional; see G2P for the empty list rule.
+        /// of the same name and is equally optional. See G2P for the empty list rule.
         std::vector<Common::L1::LanguageScheme> languages;
 
         /// Phonemes that this module declares as possible output. Reserved phonemes are

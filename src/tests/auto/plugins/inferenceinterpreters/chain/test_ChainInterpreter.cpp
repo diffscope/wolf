@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_ReportsWhenTheFallbackHasNothingToGiv
 }
 
 // A converted word carries its pronunciation as its first candidate. The dictionary step already
-// satisfies this rule; the case pins it because the candidate list depends on the rule: a caller
+// satisfies this rule. The case pins it because the candidate list depends on the rule: a caller
 // that offers alternatives shows the current pronunciation first.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_LeadsCandidatesWithThePronunciation) {
     srt::SynthUnit unit;
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_StopReachesTheRunningStage) {
     // a slow machine could exceed: a stop that arrived first would be consumed by the start and
     // prove nothing. The subsequent short pause allows the script stage to start running. Whether
     // the stop then arrives inside the script or between two stages, the stop must be handled
-    // promptly and leave the execution Canceled; both conditions are checked below.
+    // promptly and leave the execution Canceled. Both conditions are checked below.
     std::thread stopper([executive, &asked] {
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
         while (executive->state() != srt::ITask::Running &&
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
 
     // The result is not an error: the words completed before the stop are returned converted, the
     // remaining words are returned unconverted, and the token indicates that the conversion was
-    // cancelled.
+    // canceled.
     BOOST_REQUIRE_MESSAGE(result, wolf::test::why(result));
     BOOST_REQUIRE_EQUAL((*result)->words.size(), 1u);
     BOOST_CHECK((*result)->words[0].phonemes.empty());
@@ -485,7 +485,7 @@ BOOST_AUTO_TEST_CASE(test_ChainInterpreter_CancelTokenReachesTheRunningStage) {
 
 // The inference contract specifies an input ordering that every G2P module must follow: an empty
 // lyric is skipped, and a lyric containing whitespace around or inside a word is invalid input.
-// Regression: both cases must be reported as mode=skip, not as a conversion failure.
+// Both cases must be reported as mode=skip, not as a conversion failure.
 BOOST_AUTO_TEST_CASE(test_ChainInterpreter_HonoursTheInputOrdering) {
     srt::SynthUnit unit;
     configure(unit);

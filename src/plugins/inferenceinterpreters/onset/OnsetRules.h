@@ -13,9 +13,9 @@ namespace wolf::onset {
     /// Marks onset positions by matching phoneme patterns.
     ///
     /// A pattern segment is a literal phoneme, the name of a registered phoneme type, or the
-    /// wildcard `*`. Matching runs left to right. At each position the best-fitting rule is applied
-    /// and the scan advances past its pattern. A position that no rule covers is marked false,
-    /// which the contract defines as "not an onset" rather than as an error.
+    /// wildcard <tt>*</tt>. Matching runs left to right. At each position the best-fitting rule
+    /// is applied and the scan advances past its pattern. A position that no rule covers is marked
+    /// false, which the contract defines as <tt>not an onset</tt> rather than as an error.
     ///
     /// The best-fitting rule has the longest pattern. Ties are broken by the number of literal
     /// segments, then by the number of typed segments, then by the earliest literal segment.
@@ -25,12 +25,12 @@ namespace wolf::onset {
     public:
         /// Rule file format version supported by this build.
         ///
-        /// The formatVersion field is optional. A file without it is read as version 1, which is
+        /// The \c formatVersion field is optional. A file without it is read as version 1, which is
         /// the format of every rule file shipped so far. A file that specifies a higher version is
         /// rejected.
         ///
         /// A format change therefore requires raising this constant and the cache generation
-        /// `RULE_KIND` together: the version causes older builds to reject the file, and the
+        /// \c RULE_KIND together. The version causes older builds to reject the file, and the
         /// generation keeps parses of the previous format out of the cache.
         static constexpr int FORMAT_VERSION = 1;
 

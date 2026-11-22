@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
     BOOST_REQUIRE_MESSAGE(started, "startAsync should have started: " +
                                        (started ? std::string() : started.error().toString()));
 
-    // A second execution while the first is running is rejected; it is neither queued nor run.
+    // A second execution while the first is running is rejected. It is neither queued nor run.
     auto second = (*linguist)->startAsync(
         input, [](srt::Expected<std::unique_ptr<LinguistApi::ConvertResult>>) {});
     BOOST_CHECK_MESSAGE(!second, "a second concurrent execution should have been rejected");
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_AsyncFaceIsTheFrameworkTask) {
 // Truncation left every word after the cut with an empty pronunciation and no error, which is
 // indistinguishable from a conversion to an empty result, and those words then continued down the
 // chain. The chain variant already rejects a short batch from its backend, and the session
-// rejects a short batch from the executive; this case covers the same rule at the third location
+// rejects a short batch from the executive. This case covers the same rule at the third location
 // where a short batch can occur. No shipped module miscounts, so the test stub miscounts on
 // request, which verifies that the guard is triggered.
 BOOST_AUTO_TEST_CASE(test_LinguistContrib_Runtime_RefusesAShortBatch) {
