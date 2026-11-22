@@ -240,7 +240,7 @@ Phonetic-Suite-Cmn/                         wolf-lang-cmn/
 
 | 位置 | 内容 |
 | :-- | :-- |
-| **wolf git** | 转换与发布脚本；`wolf/lang-zxx` 的**源文件**（`scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，无资源，约 2 KB，属于源文件而非构建产物，生成到构建目录后不入库）；负面用例夹具的**生成器**（`scripts/make-test-fixtures.py`，41 包 / 141 文件，生成物不入库） |
+| **wolf git** | 转换与发布脚本；`wolf/lang-zxx` 的**源文件**（`scripts/make-test-fixtures.py` 的 `wolf-lang-zxx` 表项，无资源，约 2 KB，属于源文件而非构建产物，生成到构建目录后不入库）；负面用例夹具的**生成器**（`scripts/make-test-fixtures.py`，42 包 / 145 文件，生成物不入库） |
 | **gitignored 暂存目录** | 转换的全部输出，位于 `build/lang-packages/`，由现有 `.gitignore` 的 `build/` 规则覆盖 |
 | **wolf release** | zip 资产与 `manifest.json` |
 | **本仓 overlay 端口** | `scripts/vcpkg-ports/wolf-lang-packages/` 的 `assets.cmake` 与 `vcpkg.json`（生成物，随 release 同步） |

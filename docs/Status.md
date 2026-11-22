@@ -77,7 +77,7 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 | `scripts/convert-g2p-packages.py` | 把旧套件转换为 spec 2.4 格式，并生成 `wolf/g2p-pinyin` |
 | `scripts/make-lang-release.py` | 打包、计算 SHA512、重新生成端口的 `assets.cmake` 与 `version-string`；`--verify` 解开归档与源逐文件比对，不一致时拒绝打包 |
 | `scripts/make-voicebank-fixture.py` | 由语言包生成歌手包形状的夹具，补齐语言包不提供的 S2P 与 onset（发布文档 §3.2） |
-| `scripts/make-test-fixtures.py` | 生成夹具包（41 包 / 141 文件），供读取夹具的用例使用；`--check` 与已有目录逐字节比对，不一致时非零退出 |
+| `scripts/make-test-fixtures.py` | 生成夹具包（42 包 / 145 文件），供读取夹具的用例使用；`--check` 与已有目录逐字节比对，不一致时非零退出 |
 | `scripts/check-declarations.py` | 用 `docs/schemas/` 校验声明，并执行四项打包期 lint（含 `openSet` 推导与 S2P 表内容级恒等）。发布脚本在打包前调用，有错误时拒绝打包 |
 
 夹具包不随仓库分发：生成到构建目录后由 `WOLF_TEST_FIXTURES_SOURCE` 指过去，数据缺失时相关用例以状态 77 报跳过（ctest 记为未运行）。`scripts/test_check_declarations.py` 未配置该变量时会现场生成到临时目录。
