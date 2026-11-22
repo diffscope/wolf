@@ -136,8 +136,9 @@ namespace wolf {
         /// the only accurate declaration for variants with an open or script-defined output set.
         /// The host issues a warning in that case instead.
         ///
-        /// The downcast is unchecked because the provider ABI contract requires the concrete type
-        /// to match the triple that the loader has already compared.
+        /// The downcast is a static cast. A debug build with RTTI asserts the dynamic type, and the
+        /// provider ABI contract requires the concrete type to match the triple that the loader has
+        /// already compared.
         ///
         /// \return Success if the target declares \a pair or declares no pairs. An InvalidFormat
         /// error if the target has no interpreted exports or does not declare \a pair.

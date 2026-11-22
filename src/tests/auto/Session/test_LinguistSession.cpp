@@ -267,9 +267,9 @@ BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersAreAConventionNotAContract) {
     BOOST_CHECK_EQUAL((*result)->words[0].pronunciation, "s p");
 }
 
-/// The marker declaration of a singer (reservedPhonemes in the singer category) takes precedence
-/// over the session-wide set and leaves the session-wide set unchanged for every other singer. No
-/// caller passes the set to the session; the session reads it from the declaration.
+/// The marker declaration of a singer (reservedPhonemes in the DiffSinger singer exports) takes
+/// precedence over the session-wide set and leaves the session-wide set unchanged for every other
+/// singer. No caller passes the set to the session; the session reads it from the declaration.
 BOOST_AUTO_TEST_CASE(test_LinguistSession_MarkersDeclaredBySingerWinOverTheSessionSet) {
     srt::SynthUnit unit;
     configure(unit);

@@ -268,9 +268,9 @@ namespace wolf::Api::Linguist::L1 {
         /// Returns the wolf pipeline extension of \a singer, or nullptr if the singer carries none.
         ///
         /// This function combines two steps: finding the extension registered under the identifier
-        /// of the pipeline executive and casting it to this type. The cast is unchecked in the same
-        /// way as ContribSpecExtension::as(), and the identifier establishes the type. A singer
-        /// carries no extension if it declares no language that resolves to a linguist
+        /// of the pipeline executive and casting it to this type. The cast is a static cast; a
+        /// debug build with RTTI asserts the dynamic type, and the identifier establishes the type.
+        /// A singer carries no extension if it declares no language that resolves to a linguist
         /// contribution.
         static WolfPipelineExtension *from(const srt::SingerSpec &singer);
 

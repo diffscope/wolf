@@ -334,8 +334,8 @@ namespace wolf {
             std::vector<UnmountedSinger> unmounted;
             for (const auto &package : unit.loadedPackages()) {
                 for (auto spec : package.contributions(srt::SingerCategory::NAME)) {
-                    // Every contribution of the singer category is a SingerSpec, and as<>() is an
-                    // unchecked cast, so no check is required.
+                    // Every contribution of the singer category is a SingerSpec. as<>() is a
+                    // static cast; a debug build with RTTI asserts the dynamic type.
                     auto singer = spec->as<srt::SingerSpec>();
                     SingerLanguages languages;
                     if (auto read = readSingerLanguages(*singer)) {
