@@ -75,7 +75,7 @@ auto spec = package->contribution("linguist", "mandarin")
 
 ## 版本与 ABI
 
-当前版本为 0.2.0.0。**1.0 之前不作任何 ABI 保证。** 宿主用到的大多数类型都是公开头文件中的值类型，即 `LanguageStatus`、`LanguageEntry`、`SingerEntry`、`SingerRef` 以及 `Api/` 下的所有载荷。新增字段会改变这类类型的大小，新增虚函数会改变 `WolfPipelineExtension` 这类契约接口的虚表。混用以两个版本的头文件编译出的对象属于未定义行为，而不是链接错误，因此不会有任何诊断。
+当前版本为 0.3.0.0。**1.0 之前不作任何 ABI 保证。** 宿主用到的大多数类型都是公开头文件中的值类型，即 `LanguageStatus`、`LanguageEntry`、`SingerEntry`、`SingerRef` 以及 `Api/` 下的所有载荷。新增字段会改变这类类型的大小，新增虚函数会改变 `WolfPipelineExtension` 这类契约接口的虚表。混用以两个版本的头文件编译出的对象属于未定义行为，而不是链接错误，因此不会有任何诊断。
 
 公开头文件是 `Api/`、`Linguist/`、`Session/` 与 `Support/` 下的头文件，加上根头 `wolf/wolf_global.h`。`wolf/Support` 是必须每进程唯一的两个组件，资源缓存 `wolf::ResourceCache` 与 wolf 的日志类别 `wolf::logCategory()`，由 libwolf 导出，宿主与基于 wolf 构建的 provider 都可以使用。本仓库插件共用的无状态辅助代码以隐藏可见性编入 `src/util` 下的静态库：`linguistutil` 是清单与契约值的读取、校验器与输入规则，`textutil` 是文本资源的读取与 UTF-8，`executiveutil` 是执行体基类，只有头文件。libwolf 与每个插件私有链接自己用到的库，这些库不安装，没有任何二进制导出它们的符号。在本仓库之外构建的 provider 只依赖已安装的头文件与 synthrt。
 
