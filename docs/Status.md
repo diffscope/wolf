@@ -48,7 +48,7 @@ wolf 新增公开 `wolf/Support/ErrorCode.h` 与独立 `wolf` error category。�
 ## 构建与安装
 
 - **依赖来源**：全部依赖经 vcpkg 安装，清单为 `scripts/vcpkg-manifest/vcpkg.json`。vcpkg 与 overlay 由 `scripts/vcpkg-workspace.cmake` 按 `scripts/vcpkg-sources.json` 检出到 `deps/`，依赖安装在 `deps/vcpkg/installed`。端口按序从两个 overlay 解析：本仓的 `scripts/vcpkg-ports/`（`synthrt-main`、`wolf-lang-packages`）优先于共享的 `stdware/vcpkg-overlay`。
-- **清单特性**：`onnx`（必需，经 `synthrt-main[onnx]` 构建 dsinfer 与 ONNX 驱动）、`lang-packages`（经 `wolf-lang-packages` 端口安装已发布的语言包）、`tests`（Boost.Test）。
+- **清单特性**：`onnx`（可选，经 `synthrt-main[onnx]` 提供 ONNX Runtime 与 ONNX 驱动；dsinfer 由基础端口始终安装）、`lang-packages`（经 `wolf-lang-packages` 端口安装已发布的语言包）、`tests`（Boost.Test）。
 - **缓存变量**：`WOLF_LANG_PACKAGES_SOURCE` 指定解包后的语言包目录，非空时取代端口安装树；`WOLF_VOICEBANK_FIXTURE_SOURCE` 指定 `scripts/make-voicebank-fixture.py` 生成的歌手包夹具，只有 `test_HostFlow` 读取。缺少数据的测试以状态 77 退出，CTest 将其报告为跳过。`WOLF_DISABLE_LUAJIT` 显式选出最小构建。
 - **安装布局**：插件安装在 `lib/synthrt-wolf/plugins/<category>/<name>/`，`<category>` 为 `inferenceinterpreters` 或 `linguistproviders`，构建树布局相同。宿主加入哪些目录见 [LinguistRuntime.md](LinguistRuntime.md) §1.1，CMake 包把安装的插件导出为导入目标，安装的插件清单见 [LinguistDistribution.md](LinguistDistribution.md) §7.1。CMake 包的版本兼容性为 `AnyNewerVersion`。
 - **公开头与 Support**：安装的公开头为 `Api/`、`Linguist/`、`Session/`、`Support/` 与根头 `wolf/wolf_global.h`。`Support/` 是必须每进程唯一的资源缓存与日志类别，从 libwolf 以 `WOLF_EXPORT` 导出，属于公开 API。无状态帮助函数编入 `src/util` 下的静态库 `linguistutil` 与 `textutil`，执行体基类在只有头文件的 `executiveutil` 中（隐藏可见性，libwolf 与插件按需私有链接，不安装，不从任何二进制导出）。

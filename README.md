@@ -96,7 +96,7 @@ Every dependency, including synthrt, is installed through vcpkg from the manifes
 
 Boost.Test is required only to build the tests.
 
-`multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. dsinfer is a required dependency: wolf links it for the model backend and for the DiffSinger singer exports. The required `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`; ONNX Runtime itself comes from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA).
+`multig2p-onnx`, the shared model backend, requires dsinfer and its ONNX Runtime driver. dsinfer is a required dependency and the `synthrt-main` port always installs it: wolf links it for the model backend and for the DiffSinger singer exports. The optional `onnx` feature (`--x-feature=onnx`) adds `synthrt-main[onnx]`, which provides ONNX Runtime from the `onnxruntime-builds` port of the shared overlay (DirectML on Windows, CPU on other platforms, no CUDA). Without it the `multig2p-onnx` variant cannot run a model.
 
 `lua`, the scripted S2P and Onset variants, requires LuaJIT, which the manifest lists as a plain dependency. `-DWOLF_DISABLE_LUAJIT=ON` excludes it even if LuaJIT is installed. The test stub always declares a `stub-miscount` variant for the fixtures that violate the provider contract deliberately.
 
@@ -123,7 +123,7 @@ The manifest defines three features, each passed after `--` as `--x-feature=<nam
 
 | Feature | Effect |
 | :-- | :-- |
-| `onnx` | Required. Builds dsinfer and its ONNX Runtime driver through `synthrt-main[onnx]`, which enables the `multig2p-onnx` variant. |
+| `onnx` | Optional. Provides ONNX Runtime through `synthrt-main[onnx]`, which the `multig2p-onnx` variant needs at run time. |
 | `lang-packages` | Installs the default suites of the published language packages (`cmn`, `jpn`, `yue`, `zxx` and the backends they require) through the `wolf-lang-packages` port, for use by the tests. |
 | `tests` | Adds Boost.Test. |
 

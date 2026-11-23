@@ -505,6 +505,8 @@ lite 将来采用新框架时，**由 lite 在自身仓库的 vcpkg 中提供所
 
 ### A35 — `synthrt-main` 的 `onnx` feature：ORT 载荷由端口就位
 
+> **现行**：dsinfer 随 synthrt main 始终构建，`onnx` feature 只负责提供 ONNX Runtime 与 ONNX 驱动。下文的 `SYNTHRT_BUILD_DSINFER` 开关描述的是当时的端口形态。
+
 **决策**：`synthrt-main` 端口新增可选 feature `onnx`，打开 `SYNTHRT_BUILD_DSINFER` 与 ONNX 驱动，并依赖共享 overlay 已有的 `onnxruntime-builds`。不启用时行为不变（dsinfer 关闭）。
 
 > **后续（A80）**：synthrt 已改为自行 `find_package(onnxruntime-builds)`，下文「由端口铺设头文件」一段已从端口中删除。
@@ -583,7 +585,7 @@ dsinfer 在 main 线上随 synthrt 一起安装自己的 CMake 包（`lib/cmake/
 
 ### A40 — 带外部后端的变体条件构建
 
-**决策**：`multig2p-onnx`（需要 dsinfer）与 `lua`（需要 LuaJIT）按依赖是否存在条件构建。测试桩是测试程序中的静态插件，其声明由构建条件决定，**只声明本次构建未承载的三元组**。
+**决策**：`lua`（需要 LuaJIT）按依赖是否存在条件构建。`multig2p-onnx` 链接的 dsinfer 已是硬依赖，因此始终构建。测试桩是测试程序中的静态插件，其声明由构建条件决定，**只声明本次构建未承载的三元组**。
 
 **理由**：两个变体各自依赖一份体量可观的外部依赖，不做模型推理的构建不应为此承担代价（与 A35 把 ONNX 做成 opt-in 的理由相同）。
 

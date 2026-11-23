@@ -96,7 +96,7 @@ CMake 3.19 或更高版本，以及 Git，用于检出 vcpkg 及其 overlay。
 
 只有构建测试时才需要 Boost.Test。
 
-`multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。dsinfer 是硬依赖：wolf 为模型后端和 DiffSinger singer exports 链接它。必需的 `onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。
+`multig2p-onnx`，共享的模型后端，需要 dsinfer 及其 ONNX Runtime 驱动。dsinfer 是硬依赖：wolf 为模型后端和 DiffSinger singer exports 链接它。可选的 `onnx` feature（`--x-feature=onnx`）加入 `synthrt-main[onnx]`，由它提供 ONNX Runtime；ONNX Runtime 本身来自共享 overlay 的 `onnxruntime-builds` 端口（Windows 上为 DirectML，其他平台为 CPU，没有 CUDA）。没有它时 `multig2p-onnx` 变体无法运行模型。
 
 `lua`，脚本化的 S2P 与 Onset 变体，需要 LuaJIT，清单把它列为普通依赖。`-DWOLF_DISABLE_LUAJIT=ON` 即使 LuaJIT 已安装也会排除它。测试桩总是声明一个 `stub-miscount` 变体，供故意违反 provider 契约的夹具使用。
 
@@ -123,7 +123,7 @@ powershell -Command "Invoke-WebRequest -OutFile scripts/vcpkg-workspace.cmake ht
 
 | Feature | 作用 |
 | :-- | :-- |
-| `onnx` | 必需。经由 `synthrt-main[onnx]` 构建 dsinfer 及其 ONNX Runtime 驱动，从而启用 `multig2p-onnx` 变体。 |
+| `onnx` | 可选。经由 `synthrt-main[onnx]` 提供 ONNX Runtime，`multig2p-onnx` 变体在运行期需要它。 |
 | `lang-packages` | 经由 `wolf-lang-packages` 端口安装已发布语言包的默认套件（`cmn`、`jpn`、`yue`、`zxx` 及它们需要的后端），供测试使用。 |
 | `tests` | 加入 Boost.Test。 |
 

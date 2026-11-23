@@ -432,7 +432,7 @@ wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-po
 ]
 ```
 
-清单定义三个 feature：`onnx`（必需，启用 `synthrt-main[onnx]`）、`lang-packages`（依赖 `wolf-lang-packages`）与 `tests`（依赖 `boost-test`）。
+清单定义三个 feature：`onnx`（可选，启用 `synthrt-main[onnx]` 以提供 ONNX Runtime）、`lang-packages`（依赖 `wolf-lang-packages`）与 `tests`（依赖 `boost-test`）。
 
 | 端口 | 类型 | 位置 | 说明 |
 | :-- | :-- | :-- | :-- |
@@ -457,8 +457,8 @@ wolf 在此之上**增加一层本仓 overlay**（A29），即 `scripts/vcpkg-po
 
 - `vcpkg_from_git(URL https://github.com/diffscope/synthrt.git REF <提交> HEAD_REF onnxruntime-builds-uptake)`，按提交获取，无需归档哈希；`version-string` 为 `onnxruntime-builds-uptake`；
 - 依赖：`qmsetup`、`stduuid`、`stdcorelib`、`stdcorelib-plugin`、`blake3`、`sparsepp`、`bit7z`；
-- **缺省 `SYNTHRT_BUILD_DSINFER=OFF`**：dsinfer 的命令行工具硬依赖 `onnxdriver`，而后者在没有 onnxruntime 时不构建（`dsinfer/plugins/inferencedrivers/onnxdriver/CMakeLists.txt:1-4` 直接 return），`add_dependencies` 因找不到目标而在配置期失败。wolf 语言域需要的 `inference` 与 `singer` 两个类别都在 synthrt 本体中，不在 dsinfer 中；
-- **必需 feature `onnx`**：为 `multig2p-onnx` 变体启用 dsinfer 与 ONNX 驱动。DiffSinger singer exports 由 dsinfer 本体解析，与 ONNX 驱动无关，见 §6.1.1；
+- **dsinfer 始终构建**：端口显式传入 `SYNTHRT_BUILD_DSINFER=ON`。ONNX 驱动只在 `onnxruntime-builds` 存在时构建（`dsinfer/plugins/inferencedrivers/onnxdriver/CMakeLists.txt:1-4` 直接 return），因此基础安装提供 dsinfer 本体，`onnx` feature 提供 ONNX Runtime 与驱动；
+- **可选 feature `onnx`**：为 `multig2p-onnx` 变体提供 ONNX Runtime 与 ONNX 驱动。DiffSinger singer exports 由 dsinfer 本体解析，与 ONNX 驱动无关，见 §6.1.1；
 - A11 已合入 synthrt 的 `onnxruntime-builds-uptake` 分支，因此端口不带补丁，直接固定在该分支的提交上（A26 补记）。
 
 #### 6.1.1 feature `onnx`：ORT 载荷由端口提供
@@ -604,7 +604,7 @@ cpp-pinyin 端口的 `usage` 建议把 `dict/` 复制到可执行文件所在目
 
 ### 7.5 条件构建的可观察后果
 
-`multig2p` 与 `lua` 按依赖是否存在条件构建（A40）。**最小构建**（无 dsinfer、无 LuaJIT）与**完整构建**只有两处差别：安装树少两个插件目录；测试少两个（15 个对 17 个）。
+`multig2p` 始终构建（dsinfer 为硬依赖），`lua` 按 LuaJIT 是否存在条件构建（A40）。**最小构建**（无 LuaJIT）与**完整构建**只差 lua 插件目录，以及 `test_LuaInterpreters` 与 `test_LuaSandbox` 两个用例。
 
 **15 个包在两种构建下都能加载通过**，因为最小构建中的测试桩会补上缺失的三元组。但这只在测试构建中成立：桩插件不进入安装树，**发行的最小构建加载 `wolf/g2p-multi` 会失败**。
 
