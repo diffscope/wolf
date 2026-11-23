@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsSingerLanguageMap) {
     auto *singer = handle->contribution("singer", "s");
     BOOST_REQUIRE(singer != nullptr);
 
-    auto languages = wolf::readSingerLanguages(*singer);
+    auto languages = wolf::SingerLanguages::read(*singer);
     BOOST_REQUIRE_MESSAGE(static_cast<bool>(languages), "language map should have been read");
     BOOST_CHECK_EQUAL(languages->defaultLanguage, "cmn");
     BOOST_REQUIRE_EQUAL(languages->entries.size(), 2u);
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_ReadsReservedPhonemesFromExpo
     auto handle = openData(unit, fixturePath("singer-markers"));
     requireOpened(handle, "singer-markers");
 
-    auto languages = wolf::readSingerLanguages(*handle->contribution("singer", "s"));
+    auto languages = wolf::SingerLanguages::read(*handle->contribution("singer", "s"));
     BOOST_REQUIRE(languages);
     BOOST_REQUIRE_EQUAL(languages->reservedPhonemes.size(), 1u);
     BOOST_CHECK_EQUAL(languages->reservedPhonemes[0], "EP");
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_AcceptsSingerWithoutLanguages
     auto handle = openData(unit, fixturePath("singer-none"));
     requireOpened(handle, "singer-none");
 
-    auto languages = wolf::readSingerLanguages(*handle->contribution("singer", "s"));
+    auto languages = wolf::SingerLanguages::read(*handle->contribution("singer", "s"));
     BOOST_REQUIRE(static_cast<bool>(languages));
     BOOST_CHECK(languages->empty());
     BOOST_CHECK(languages->defaultLanguage.empty());
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_MalformedSingerLanguageMapIsR
         requireOpened(handle, entry.fixture);
         auto *singer = handle->contribution("singer", "s");
         BOOST_REQUIRE(singer != nullptr);
-        auto languages = wolf::readSingerLanguages(*singer);
+        auto languages = wolf::SingerLanguages::read(*singer);
         BOOST_REQUIRE_MESSAGE(!languages,
                               std::string("should have been refused: ") + entry.fixture);
         const auto message = languages.error().toString();
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(test_LinguistContrib_Identity_LanguageMapIsRefusedOnOtherCa
     requireOpened(handle, "unknown-field");
     auto *linguist = handle->contribution(wolf::LINGUIST_CATEGORY, "cmn-pinyin");
     BOOST_REQUIRE(linguist != nullptr);
-    auto languages = wolf::readSingerLanguages(*linguist);
+    auto languages = wolf::SingerLanguages::read(*linguist);
     BOOST_CHECK(!languages);
 }
 

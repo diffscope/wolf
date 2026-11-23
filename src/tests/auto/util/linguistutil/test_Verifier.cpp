@@ -25,14 +25,14 @@ namespace {
 
     std::vector<wolf::VerifyEntry> parse(const std::string &json) {
         auto value = srt::JsonValue::fromJson(json, false, nullptr);
-        auto entries = wolf::readVerifyEntries(value, "verify");
+        auto entries = wolf::VerifyEntry::readList(value, "verify");
         BOOST_REQUIRE_MESSAGE(entries, "the entries should have parsed");
         return entries.take();
     }
 
     std::string rejection(const std::string &json) {
         auto value = srt::JsonValue::fromJson(json, false, nullptr);
-        auto entries = wolf::readVerifyEntries(value, "verify");
+        auto entries = wolf::VerifyEntry::readList(value, "verify");
         BOOST_REQUIRE_MESSAGE(!entries, "the entries should have been rejected: " + json);
         return entries.error().toString();
     }

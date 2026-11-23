@@ -275,7 +275,7 @@ LinguistSession
 
 前两条**是 G2P 契约的义务**，由模块侧承担：三个 G2P 变体各自遵守，并共用一个判定组件（与 `Verifier` 的理由相同：同一条规则的两份副本终将分叉）。该组件即 `wolf::classifyLyric()`（`linguistutil/InputRules.h`），三个变体在执行任何步骤之前先调用它。
 
-第三条**是宿主惯例**，由会话侧承担，分两层：歌手自身声明的标记集合优先。`reservedPhonemes` 属于 DiffSinger singer 的 `exports`，由 DiffSinger provider 在 Load 时解析成 typed `Exports` 并对每个模型校验；会话在扫描目录时通过 `readSingerLanguages()` 读入 `SingerEntry::reservedMarkers`，宿主无需转交。未声明的歌手使用会话级集合，缺省为 `{SP, AP}`，采用其他记法的宿主可通过 `setReservedMarkers()` 替换。域契约 §4 已规定保留音素不进入 `exports.phonemes`，两处口径一致。
+第三条**是宿主惯例**，由会话侧承担，分两层：歌手自身声明的标记集合优先。`reservedPhonemes` 属于 DiffSinger singer 的 `exports`，由 DiffSinger provider 在 Load 时解析成 typed `Exports` 并对每个模型校验；会话在扫描目录时通过 `SingerLanguages::read()` 读入 `SingerEntry::reservedMarkers`，宿主无需转交。未声明的歌手使用会话级集合，缺省为 `{SP, AP}`，采用其他记法的宿主可通过 `setReservedMarkers()` 替换。域契约 §4 已规定保留音素不进入 `exports.phonemes`，两处口径一致。
 
 **项目专属标记仍归宿主**：连音符、`+` 后缀、切分标记属于 lite 的工程模型，不是语言域的概念。宿主对这类词预置 `pronunciation`，或不将其送入会话。
 

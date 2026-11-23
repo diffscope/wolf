@@ -18,6 +18,7 @@ namespace wolf {
         Invalid, ///< Contains whitespace: the word passes through with InvalidInput.
     };
 
+    /// Returns the verdict for \a lyric under the ordering described above.
     LyricVerdict classifyLyric(std::string_view lyric) noexcept;
 
 }

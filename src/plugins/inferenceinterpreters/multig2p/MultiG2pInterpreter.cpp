@@ -187,7 +187,7 @@ namespace wolf::multig2p {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         MultiG2pInterpreter::createExports(const srt::ContribSpec &spec) const {
-        auto read = readContractExports(spec, G2P_EXPORTS, "exports");
+        auto read = ContractExports::read(spec, G2P_EXPORTS, "exports");
         if (!read) {
             return read.takeError();
         }
@@ -209,7 +209,7 @@ namespace wolf::multig2p {
         std::vector<LanguageMapEntry> mapped;
         for (const auto &[key, item] : value.toObject()) {
             if (key == "languageMap") {
-                auto languageMap = readLanguageMap(item);
+                auto languageMap = LanguageMapEntry::readList(item);
                 if (!languageMap) {
                     return languageMap.takeError();
                 }
@@ -256,7 +256,7 @@ namespace wolf::multig2p {
             return srt::Error(srt::Error::InvalidFormat,
                               "the multig2p configuration needs a languageMap");
         }
-        if (auto reconciled = reconcileLanguageMap(spec, mapped); !reconciled) {
+        if (auto reconciled = LanguageMapEntry::reconcile(spec, mapped); !reconciled) {
             return reconciled.takeError();
         }
         for (auto &entry : mapped) {

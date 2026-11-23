@@ -41,23 +41,16 @@ namespace wolf {
         std::vector<Api::Common::L1::LanguageScheme> languages;
         std::vector<std::string> strings;
         bool openSet = false;
-    };
 
-    /// Reads the exports block of \a spec.
-    ///
-    /// A key that the shape does not name is rejected, so that a misspelled key fails the package
-    /// instead of silently omitting the intended declaration. A string set specified as a path is
-    /// resolved against the directory of the declaration. \a what names the block in error
-    /// messages, such as <tt>exports</tt> or <tt>linguist exports</tt>.
-    srt::Expected<ContractExports> readContractExports(const srt::ContribSpec &spec,
-                                                       const ExportsShape &shape,
-                                                       std::string_view what);
-
-    /// One entry of a languageMap: a contract pair and the engine or bundle language that serves
-    /// the pair.
-    struct LanguageMapEntry {
-        Api::Common::L1::LanguageScheme pair;
-        std::string ref;
+        /// Reads the exports block of \a spec.
+        ///
+        /// A key that the shape does not name is rejected, so that a misspelled key fails the
+        /// package instead of silently omitting the intended declaration. A string set specified
+        /// as a path is resolved against the directory of the declaration. \a what names the
+        /// block in error messages, such as <tt>exports</tt> or <tt>linguist exports</tt>.
+        static srt::Expected<ContractExports> read(const srt::ContribSpec &spec,
+                                                   const ExportsShape &shape,
+                                                   std::string_view what);
     };
 
     /// Validates a ref according to the rules of the variant that reads the map. \a position names
@@ -65,20 +58,28 @@ namespace wolf {
     using LanguageMapRefCheck =
         std::function<srt::Expected<void>(const std::string &position, const std::string &ref)>;
 
-    /// Reads the languageMap of a configuration: a non-empty array of objects that carry a
-    /// language, a scheme and a ref, with no repeated pair.
-    ///
-    /// If \a checkRef is supplied, it is called for each ref as the ref is read, so that a ref
-    /// that the variant cannot serve is rejected at the entry that names it.
-    srt::Expected<std::vector<LanguageMapEntry>>
-        readLanguageMap(const srt::JsonValue &value, const LanguageMapRefCheck &checkRef = {});
+    /// One entry of a languageMap: a contract pair and the engine or bundle language that serves
+    /// the pair.
+    struct LanguageMapEntry {
+        Api::Common::L1::LanguageScheme pair;
+        std::string ref;
 
-    /// Checks that exports.languages of \a spec and \a languageMap describe the same set of pairs.
-    ///
-    /// The first is the contract declaration and the second is the implementation declaration.
-    /// Neither can be derived from the other, and both are therefore written and reconciled.
-    srt::Expected<void> reconcileLanguageMap(const srt::ContribSpec &spec,
+        /// Reads the languageMap of a configuration: a non-empty array of objects that carry a
+        /// language, a scheme and a ref, with no repeated pair.
+        ///
+        /// If \a checkRef is supplied, it is called for each ref as the ref is read, so that a ref
+        /// that the variant cannot serve is rejected at the entry that names it.
+        static srt::Expected<std::vector<LanguageMapEntry>>
+            readList(const srt::JsonValue &value, const LanguageMapRefCheck &checkRef = {});
+
+        /// Checks that exports.languages of \a spec and \a languageMap describe the same set of
+        /// pairs.
+        ///
+        /// The first is the contract declaration and the second is the implementation declaration.
+        /// Neither can be derived from the other, and both are therefore written and reconciled.
+        static srt::Expected<void> reconcile(const srt::ContribSpec &spec,
                                              const std::vector<LanguageMapEntry> &languageMap);
+    };
 
     /// Reads the formatVersion of a variant configuration.
     ///

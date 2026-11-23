@@ -151,7 +151,7 @@ namespace wolf {
         return modes;
     }
 
-    srt::Expected<std::vector<VerifyEntry>> readVerifyEntries(const srt::JsonValue &value,
+    srt::Expected<std::vector<VerifyEntry>> VerifyEntry::readList(const srt::JsonValue &value,
                                                               std::string_view what) {
         const std::string context(what);
         if (!value.isArray()) {

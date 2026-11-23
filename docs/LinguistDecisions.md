@@ -343,11 +343,11 @@ lite 将来采用新框架时，**由 lite 在自身仓库的 vcpkg 中提供所
 2. **过渡承载：桩 singer provider + `configuration`**：`configuration` 本就在 `SingerCategory` 白名单内，其内容由 variant 全权规定。wolf 提供一个测试用 singer provider 插件（`SingerProvider` 基类已实现 `createExports`/`createImportOptions`/ `createImportBinding`，桩只需覆盖 `createConfiguration`，约 30 行），测试歌手把映射放进 `configuration.languages`；
 3. **落地路径：端口附带 patch**：`vcpkg_from_github(... PATCHES ...)` 是 vcpkg 的标准机制。把 A11 的两个字段作为补丁随 `synthrt-main` 端口分发，语义精确、CI 可复现，且无须等待上游合并。
 
-**收敛纪律**：第 2 条的读取必须封装在**单个函数**（`readSingerLanguages(const SingerSpec &)`）中。该函数当时读取 `manifestConfiguration()`，A11 落地后改为读取 `spec.languages()`，切换点只有一处。
+**收敛纪律**：第 2 条的读取必须封装在**单个函数**（`SingerLanguages::read(const SingerSpec &)`）中。该函数当时读取 `manifestConfiguration()`，A11 落地后改为读取 `spec.languages()`，切换点只有一处。
 
 **不长期使用 `configuration` 的理由**：这是 A11 已否决的备选（与「`configuration` 不携带任何语言列表」冲突，且只对特定 singer variant 成立，第三方 singer 契约无法复用）。本条只把它降为 **过渡承载**，不改变 A11 的目标形态。
 
-**补记（2026-09-13）**：A11 已在 synthrt 落地（上游分支 `onnxruntime-builds-uptake`：`SingerSpec::languages()` / `defaultLanguage()`，形状与 role 存在性由 `SingerCategory` 在开包时校验；spec 2.4 歌手模块的声明文件一节已同步）。wolf 侧按收敛纪律只修改一处：`readSingerLanguages()` 改为读取 `SingerSpec`，删除 `configuration` 分支，全部测试歌手声明的两个字段上移到声明根；`check-declarations.py` 对仍留在 `configuration` 中的映射报错，避免其被加载器静默忽略。第 3 条的端口 patch 不再需要：`synthrt-main` 端口直接固定在该分支的提交上。
+**补记（2026-09-13）**：A11 已在 synthrt 落地（上游分支 `onnxruntime-builds-uptake`：`SingerSpec::languages()` / `defaultLanguage()`，形状与 role 存在性由 `SingerCategory` 在开包时校验；spec 2.4 歌手模块的声明文件一节已同步）。wolf 侧按收敛纪律只修改一处：`SingerLanguages::read()` 改为读取 `SingerSpec`，删除 `configuration` 分支，全部测试歌手声明的两个字段上移到声明根；`check-declarations.py` 对仍留在 `configuration` 中的映射报错，避免其被加载器静默忽略。第 3 条的端口 patch 不再需要：`synthrt-main` 端口直接固定在该分支的提交上。
 
 ---
 

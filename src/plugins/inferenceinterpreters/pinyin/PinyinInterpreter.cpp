@@ -225,7 +225,7 @@ namespace wolf::pinyin {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         PinyinInterpreter::createExports(const srt::ContribSpec &spec) const {
-        auto read = readContractExports(spec, G2P_EXPORTS, "exports");
+        auto read = ContractExports::read(spec, G2P_EXPORTS, "exports");
         if (!read) {
             return read.takeError();
         }
@@ -259,7 +259,7 @@ namespace wolf::pinyin {
                 }
                 dictRoot = pathFromManifest(item.toString());
             } else if (key == "languageMap") {
-                auto languageMap = readLanguageMap(item, checkEngineRef);
+                auto languageMap = LanguageMapEntry::readList(item, checkEngineRef);
                 if (!languageMap) {
                     return languageMap.takeError();
                 }
@@ -281,7 +281,7 @@ namespace wolf::pinyin {
             return srt::Error(srt::Error::InvalidFormat,
                               "the pinyin configuration requires a languageMap");
         }
-        if (auto reconciled = reconcileLanguageMap(spec, result->languageMap); !reconciled) {
+        if (auto reconciled = LanguageMapEntry::reconcile(spec, result->languageMap); !reconciled) {
             return reconciled.takeError();
         }
 

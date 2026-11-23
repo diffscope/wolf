@@ -7,7 +7,7 @@
 
 namespace wolf {
 
-    srt::Expected<ContractExports> readContractExports(const srt::ContribSpec &spec,
+    srt::Expected<ContractExports> ContractExports::read(const srt::ContribSpec &spec,
                                                        const ExportsShape &shape,
                                                        std::string_view what) {
         const std::string context(what);
@@ -66,7 +66,7 @@ namespace wolf {
     }
 
     srt::Expected<std::vector<LanguageMapEntry>>
-        readLanguageMap(const srt::JsonValue &value, const LanguageMapRefCheck &checkRef) {
+        LanguageMapEntry::readList(const srt::JsonValue &value, const LanguageMapRefCheck &checkRef) {
         if (!value.isArray()) {
             return srt::Error(srt::Error::InvalidFormat, "languageMap must be an array");
         }
@@ -118,7 +118,7 @@ namespace wolf {
         return entries;
     }
 
-    srt::Expected<void> reconcileLanguageMap(const srt::ContribSpec &spec,
+    srt::Expected<void> LanguageMapEntry::reconcile(const srt::ContribSpec &spec,
                                              const std::vector<LanguageMapEntry> &languageMap) {
         const auto &exports = spec.manifestExports();
         if (!exports.isObject() || exports.toObject().count("languages") == 0) {

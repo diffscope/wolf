@@ -368,6 +368,6 @@ k 路并发对应 k 棵子树，即 k 组 G2P / S2P / Onset 执行体（§4.1）
 
 | 方面 | 现状 |
 | :-- | :-- |
-| 歌手侧 `languages` / `defaultLanguage` / `reservedPhonemes` | 属于 DiffSinger singer 的 `exports`。Load 后由 DiffSinger provider 解析成 typed `Exports`，wolf 的 `readSingerLanguages()` 读取该对象；DataOnly 下读取 `manifestExports()`。形状与 role 存在性由 DiffSinger provider 在 Acquire 校验 |
+| 歌手侧 `languages` / `defaultLanguage` / `reservedPhonemes` | 属于 DiffSinger singer 的 `exports`。Load 后由 DiffSinger provider 解析成 typed `Exports`，wolf 的 `SingerLanguages::read()` 读取该对象；DataOnly 下读取 `manifestExports()`。形状与 role 存在性由 DiffSinger provider 在 Acquire 校验 |
 
 取消的现行规则见决策台账 A73 及其补记：子执行体在入口读到未消费的停止请求时以 `Canceled` 返回；linguist 执行体识别出并非本次转换发出的停止请求时，重试一次该阶段。

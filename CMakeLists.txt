@@ -12,8 +12,10 @@ cmake_minimum_required(VERSION 3.19)
 #
 # 0.3.0.0 unifies Task cancellation and callback semantics with synthrt and adds the wolf error
 # category.
+#
+# 0.4.0.0 moves the singer language reader onto SingerLanguages.
 project(synthrt-wolf
-    VERSION 0.3.0.0
+    VERSION 0.4.0.0
     LANGUAGES CXX
     DESCRIPTION "Orchestratable Linguistic Framework"
     HOMEPAGE_URL "https://github.com/diffscope/wolf"

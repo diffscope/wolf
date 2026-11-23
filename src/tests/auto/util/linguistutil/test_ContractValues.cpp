@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(language_map_preserves_order_and_runs_variant_validation) {
         R"([{"language":"eng","scheme":"ipa","ref":"en"},{"language":"cmn","scheme":"pinyin","ref":"zh"}])",
         false);
     int calls = 0;
-    auto map = wolf::readLanguageMap(
+    auto map = wolf::LanguageMapEntry::readList(
         value,
         [&calls](const std::string &position, const std::string &ref) -> srt::Expected<void> {
             ++calls;
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(language_map_preserves_order_and_runs_variant_validation) {
     BOOST_CHECK_EQUAL(map.value()[0].ref, "en");
     BOOST_CHECK_EQUAL(map.value()[1].ref, "zh");
     BOOST_CHECK_EQUAL(calls, 2);
-    auto refused = wolf::readLanguageMap(
+    auto refused = wolf::LanguageMapEntry::readList(
         value, [](const std::string &, const std::string &) -> srt::Expected<void> {
             return srt::Error(srt::Error::FeatureNotSupported, "unknown engine");
         });
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(language_map_preserves_order_and_runs_variant_validation) {
         const auto &text :
         {"[]", "{}", R"([{"language":"eng","scheme":"ipa","ref":""}])",
          R"([{"language":"eng","scheme":"ipa","ref":"x"},{"language":"eng","scheme":"ipa","ref":"y"}])"}) {
-        auto invalid = wolf::readLanguageMap(srt::JsonValue::fromJson(text, false));
+        auto invalid = wolf::LanguageMapEntry::readList(srt::JsonValue::fromJson(text, false));
         BOOST_REQUIRE(!invalid);
         BOOST_CHECK(invalid.error().code() == srt::Error::InvalidFormat);
     }

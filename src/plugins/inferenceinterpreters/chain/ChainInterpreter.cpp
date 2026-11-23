@@ -170,7 +170,7 @@ namespace wolf::chain {
                     return srt::Error(srt::Error::InvalidFormat,
                                       "unknown verify step parameter: " + key);
                 }
-                auto read = readVerifyEntries(item, "verify entries");
+                auto read = VerifyEntry::readList(item, "verify entries");
                 if (!read) {
                     return read.takeError();
                 }
@@ -826,7 +826,7 @@ namespace wolf::chain {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         ChainInterpreter::createExports(const srt::ContribSpec &spec) const {
-        auto read = readContractExports(spec, G2P_EXPORTS, "exports");
+        auto read = ContractExports::read(spec, G2P_EXPORTS, "exports");
         if (!read) {
             return read.takeError();
         }

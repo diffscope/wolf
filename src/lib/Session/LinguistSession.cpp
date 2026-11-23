@@ -338,7 +338,7 @@ namespace wolf {
                     // static cast. A debug build with RTTI asserts the dynamic type.
                     auto singer = spec->as<srt::SingerSpec>();
                     SingerLanguages languages;
-                    if (auto read = readSingerLanguages(*singer)) {
+                    if (auto read = SingerLanguages::read(*singer)) {
                         languages = std::move(*read);
                     }
                     auto extension = LinguistApi::WolfPipelineExtension::from(*singer);

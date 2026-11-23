@@ -32,6 +32,14 @@ namespace wolf {
         std::vector<std::string> value;
 
         VerifyMode mode = VerifyMode::Convert;
+
+        /// Reads an array of verify entries.
+        ///
+        /// \a what names the enclosing key in error messages. Entry structures are validated here,
+        /// so that a malformed rule fails the package instead of the first word that the rule
+        /// would match.
+        static srt::Expected<std::vector<VerifyEntry>> readList(const srt::JsonValue &value,
+                                                                std::string_view what);
     };
 
     /// Classifies words as convert or copy.
@@ -61,14 +69,6 @@ namespace wolf {
         class Impl;
         std::unique_ptr<Impl> _impl;
     };
-
-    /// Reads an array of verify entries.
-    ///
-    /// \a what names the enclosing key in error messages. Entry structures are validated here, so
-    /// that a malformed rule fails the package instead of the first word that the rule would
-    /// match.
-    srt::Expected<std::vector<VerifyEntry>> readVerifyEntries(const srt::JsonValue &value,
-                                                              std::string_view what);
 
 }
 

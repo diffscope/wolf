@@ -82,7 +82,7 @@ namespace wolf::onset {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         OnsetInterpreter::createExports(const srt::ContribSpec &spec) const {
-        auto read = readContractExports(spec, ONSET_EXPORTS, "exports");
+        auto read = ContractExports::read(spec, ONSET_EXPORTS, "exports");
         if (!read) {
             return read.takeError();
         }

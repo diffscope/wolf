@@ -245,7 +245,7 @@ namespace wolf {
                     // The language map of the singer specifies language identity, not the role
                     // names: a role is a local slot name, and the map assigns a language to each
                     // role.
-                    auto languages = readSingerLanguages(spec);
+                    auto languages = SingerLanguages::read(spec);
                     if (!languages) {
                         return languages.takeError();
                     }
@@ -405,7 +405,7 @@ namespace wolf {
         if (!isSingerSpec(spec)) {
             return result;
         }
-        auto languages = readSingerLanguages(spec);
+        auto languages = SingerLanguages::read(spec);
         if (!languages) {
             return languages.takeError();
         }
@@ -450,7 +450,7 @@ namespace wolf {
         WolfLinguistProvider::createExports(const srt::ContribSpec &spec) const {
         // Both the phoneme inventory and the exports block that contains it are required.
         constexpr ExportsShape shape{false, "phonemes", true, true, false};
-        auto read = readContractExports(spec, shape, "linguist exports");
+        auto read = ContractExports::read(spec, shape, "linguist exports");
         if (!read) {
             return read.takeError();
         }

@@ -87,7 +87,7 @@ namespace wolf {
 
     }
 
-    srt::Expected<SingerLanguages> readSingerLanguages(const srt::ContribSpec &singer) {
+    srt::Expected<SingerLanguages> SingerLanguages::read(const srt::ContribSpec &singer) {
         if (singer.locator().category() != srt::SingerCategory::NAME) {
             return srt::Error(srt::Error::InvalidArgument,
                               "the language map belongs to singer declarations, not to " +

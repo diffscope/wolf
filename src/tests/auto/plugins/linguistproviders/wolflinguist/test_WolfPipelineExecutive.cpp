@@ -5,7 +5,7 @@
 
 BOOST_AUTO_TEST_CASE(pipeline_routes_languages_and_supervises_created_linguists) {
     LoadedTree tree;
-    auto languages = wolf::readSingerLanguages(tree.singer());
+    auto languages = wolf::SingerLanguages::read(tree.singer());
     BOOST_REQUIRE(languages);
     wolf::WolfPipelineExecutive pipeline(tree.singer(), languages.take());
     BOOST_CHECK(pipeline.languages() == std::vector<std::string>({"zxx"}));

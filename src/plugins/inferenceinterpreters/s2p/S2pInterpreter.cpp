@@ -193,7 +193,7 @@ namespace wolf::s2p {
 
     srt::Expected<std::unique_ptr<srt::ContribExports>>
         S2pInterpreter::createExports(const srt::ContribSpec &spec) const {
-        auto read = readContractExports(spec, S2P_EXPORTS, "exports");
+        auto read = ContractExports::read(spec, S2P_EXPORTS, "exports");
         if (!read) {
             return read.takeError();
         }
